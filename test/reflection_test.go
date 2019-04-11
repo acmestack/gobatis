@@ -10,13 +10,13 @@ package test
 
 import (
     "fmt"
-    "github.com/xfali/GoBatis"
-    "github.com/xfali/GoBatis/reflection"
+    "github.com/xfali/gobatis"
+    "github.com/xfali/gobatis/reflection"
     "testing"
 )
 
 type TestStruct1 struct {
-    TestTable GoBatis.TableName "test_table"
+    TestTable gobatis.TableName "test_table"
     Username  string            `xfield:"username"`
     Password  string            `xfield:"password"`
 }
@@ -28,7 +28,7 @@ func TestReflection1(t *testing.T) {
 }
 
 type TestStruct2 struct {
-    TestTable GoBatis.TableName
+    TestTable gobatis.TableName
     Username  string            `xfield:"-"`
     Password  string            `-`
 }

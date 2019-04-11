@@ -8,7 +8,7 @@
 
 package statement
 
-import "github.com/xfali/GoBatis/handler"
+import "github.com/xfali/gobatis/handler"
 
 type SimpleStatment struct {
     sql           string

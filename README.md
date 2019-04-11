@@ -1,4 +1,4 @@
-# GoBatis
+# gobatis
 
 [![GoDoc](https://godoc.org/github.com/)](https://godoc.org)
 [![Travis Build Status](https://travis-ci.org/)](https://travis-ci.org/)

@@ -19,7 +19,7 @@ type MysqlDataSource struct {
     Charset  string
 }
 
-func (ds *MysqlDataSource) Type() string {
+func (ds *MysqlDataSource) DriverName() string {
     return "mysql"
 }
 

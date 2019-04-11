@@ -8,4 +8,6 @@
 
 package handler
 
-type ResultHandler func(interface{})
+type ResultHandler interface {
+    Deserialize(columns []string, value []interface{}) (interface{}, error)
+}

@@ -9,9 +9,9 @@
 package executor
 
 import (
-    "github.com/xfali/GoBatis/errors"
-    "github.com/xfali/GoBatis/statement"
-    "github.com/xfali/GoBatis/transaction"
+    "github.com/xfali/gobatis/errors"
+    "github.com/xfali/gobatis/statement"
+    "github.com/xfali/gobatis/transaction"
 )
 
 type SimpleExecutor struct {
@@ -37,7 +37,7 @@ func (exec *SimpleExecutor) Close(rollback bool) {
     }
 }
 
-func (exec *SimpleExecutor) Query(statement statement.MappedStatement, params ...interface{}) error {
+func (exec *SimpleExecutor) Query(statement *statement.MappedStatement, params ...interface{}) error {
     if exec.closed {
         return  errors.EXECUTOR_QUERY_ERROR
     }
@@ -47,14 +47,14 @@ func (exec *SimpleExecutor) Query(statement statement.MappedStatement, params ..
         return errors.EXECUTOR_GET_CONNECTION_ERROR
     }
 
-    stmt, err := conn.Prepare(statement.Sql())
+    stmt, err := conn.Prepare(statement.Sql)
     if err != nil {
         return err
     }
-    return stmt.Query(params)
+    return stmt.Query(statement.ResultHandler, statement.IterFunc, params)
 }
 
-func (exec *SimpleExecutor) Exec(statement statement.MappedStatement, params ...interface{}) (int64, error) {
+func (exec *SimpleExecutor) Exec(statement *statement.MappedStatement, params ...interface{}) (int64, error) {
     if exec.closed {
         return 0, errors.EXECUTOR_QUERY_ERROR
     }
@@ -64,7 +64,7 @@ func (exec *SimpleExecutor) Exec(statement statement.MappedStatement, params ...
         return 0, errors.EXECUTOR_GET_CONNECTION_ERROR
     }
 
-    stmt, err := conn.Prepare(statement.Sql())
+    stmt, err := conn.Prepare(statement.Sql)
     if err != nil {
         return 0, err
     }

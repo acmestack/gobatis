@@ -11,9 +11,9 @@ package transaction
 import (
     "database/sql"
     _ "github.com/go-sql-driver/mysql"
-    "github.com/xfali/GoBatis/connection"
-    "github.com/xfali/GoBatis/datasource"
-    "github.com/xfali/GoBatis/errors"
+    "github.com/xfali/gobatis/connection"
+    "github.com/xfali/gobatis/datasource"
+    "github.com/xfali/gobatis/errors"
 )
 
 type MysqlTransaction struct {

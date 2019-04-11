@@ -6,7 +6,7 @@
  * Description: 
  */
 
-package GoBatis
+package gobatis
 
 type SqlRunner int
 

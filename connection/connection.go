@@ -8,8 +8,12 @@
 
 package connection
 
+import "github.com/xfali/gobatis/handler"
+
+type IterFunc func(idx int64, bean interface{}) bool
+
 type Statement interface {
-    Query(params ...interface{}) error
+    Query(handler handler.ResultHandler, iterFunc IterFunc, params ...interface{}) error
     Exec(params ...interface{}) (int64, error)
 }
 

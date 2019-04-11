@@ -9,7 +9,7 @@
 package transaction
 
 import (
-    "github.com/xfali/GoBatis/connection"
+    "github.com/xfali/gobatis/connection"
 )
 
 type Transaction interface {

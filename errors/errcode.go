@@ -16,16 +16,19 @@ type ErrCode struct {
     fmtErr  string `json:"-"`
 }
 
-var EXECUTOR_COMMIT_ERROR *ErrCode = New("11001", "executor was closed when transaction commit")
-var EXECUTOR_BEGIN_ERROR *ErrCode = New("11002", "executor was closed when transaction begin")
-var EXECUTOR_QUERY_ERROR *ErrCode = New("11003", "executor was closed when exec sql")
-var EXECUTOR_GET_CONNECTION_ERROR *ErrCode = New("11003", "executor get connection error")
-var TRANSACTION_WITHOUT_BEGIN *ErrCode = New("12001", "Transaction without begin")
-var TRANSACTION_COMMIT_ERROR *ErrCode = New("12002", "Transaction commit error")
-var CONNECTION_PREPARE_ERROR *ErrCode = New("13001", "Connection prepare error")
-var STATEMENT_QUERY_ERROR *ErrCode = New("14001", "statement query error")
-var STATEMENT_EXEC_ERROR *ErrCode = New("14002", "statement exec error")
-var QUERY_TYPE_ERROR *ErrCode = New("15001", "select data convert error")
+var Parse_MODEL_TABLEINFO_FAILED *ErrCode = New("11001", "Parse Model's table info failed")
+var MODEL_NOT_REGISTER *ErrCode = New("11001", "Register model not found")
+var EXECUTOR_COMMIT_ERROR *ErrCode = New("21001", "executor was closed when transaction commit")
+var EXECUTOR_BEGIN_ERROR *ErrCode = New("21002", "executor was closed when transaction begin")
+var EXECUTOR_QUERY_ERROR *ErrCode = New("21003", "executor was closed when exec sql")
+var EXECUTOR_GET_CONNECTION_ERROR *ErrCode = New("21003", "executor get connection error")
+var TRANSACTION_WITHOUT_BEGIN *ErrCode = New("22001", "Transaction without begin")
+var TRANSACTION_COMMIT_ERROR *ErrCode = New("22002", "Transaction commit error")
+var CONNECTION_PREPARE_ERROR *ErrCode = New("23001", "Connection prepare error")
+var STATEMENT_QUERY_ERROR *ErrCode = New("24001", "statement query error")
+var STATEMENT_EXEC_ERROR *ErrCode = New("24002", "statement exec error")
+var QUERY_TYPE_ERROR *ErrCode = New("25001", "select data convert error")
+var RESULT_ISNOT_POINTER *ErrCode = New("31001", "result type is not pointer")
 
 func New(code, message string) *ErrCode {
     ret := &ErrCode{

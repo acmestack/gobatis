@@ -8,7 +8,14 @@
 
 package statement
 
-type MappedStatement interface {
-    Type() int
-    Sql() string
+import (
+    "github.com/xfali/gobatis/connection"
+    "github.com/xfali/gobatis/handler"
+)
+
+type MappedStatement struct {
+    Type          int
+    Sql           string
+    ResultHandler handler.ResultHandler
+    IterFunc      connection.IterFunc
 }

@@ -10,8 +10,9 @@ package connection
 
 import (
     "database/sql"
-    "github.com/xfali/GoBatis/errors"
-    "github.com/xfali/GoBatis/logging"
+    "github.com/xfali/gobatis/errors"
+    "github.com/xfali/gobatis/handler"
+    "github.com/xfali/gobatis/logging"
 )
 
 type MysqlConnection sql.DB
@@ -26,7 +27,7 @@ func (c *MysqlConnection) Prepare(sqlStr string) (Statement, error) {
     return (*MysqlStatement)(s), nil
 }
 
-func (s *MysqlStatement) Query(params ...interface{}) error {
+func (s *MysqlStatement) Query(handler handler.ResultHandler, iterFunc IterFunc, params ...interface{}) error {
     stmt := (*sql.Stmt)(s)
     rows, err := stmt.Query(params)
     if err != nil {
@@ -36,16 +37,25 @@ func (s *MysqlStatement) Query(params ...interface{}) error {
 
     columns, _ := rows.Columns()
     scanArgs := make([]interface{}, len(columns))
-    values := make([][]byte, len(columns))
+    values := make([]interface{}, len(columns))
 
     for j := range values {
         scanArgs[j] = &values[j]
     }
+    var index int64 = 0
     for rows.Next() {
         if err := rows.Scan(scanArgs); err == nil {
             for _, col := range values {
                 logging.Debug("%v", col)
             }
+            result, err := handler.Deserialize(columns, values)
+            if err == nil {
+                stop := iterFunc(index, result)
+                if stop {
+                    break
+                }
+            }
+            index++
         }
     }
     return nil
@@ -62,17 +72,4 @@ func (s *MysqlStatement) Exec(params ...interface{}) (int64, error) {
         return 0, errors.STATEMENT_QUERY_ERROR
     }
     return ret, nil
-}
-
-func (s *MysqlStatement) row2Slice(rows *sql.Rows, fields []string, bean interface{}) ([]interface{}, error) {
-    scanResults := make([]interface{}, len(fields))
-    for i := 0; i < len(fields); i++ {
-        var cell interface{}
-        scanResults[i] = &cell
-    }
-    if err := rows.Scan(scanResults...); err != nil {
-        return nil, err
-    }
-
-    return scanResults, nil
 }

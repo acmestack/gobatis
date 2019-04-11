@@ -8,22 +8,24 @@
 
 package session
 
-import "github.com/xfali/GoBatis/handler"
+import "github.com/xfali/gobatis/handler"
 
 type Session interface {
     Close(rollback bool)
 
-    Select(handler handler.ResultHandler, sql string, params ... string) error
+    SelectOne(handler handler.ResultHandler, sql string, params ...interface{}) (interface{}, error)
 
-    Insert(sql string, params ... string) int64
+    Select(handler handler.ResultHandler, sql string, params ...interface{}) ([]interface{}, error)
 
-    Update(sql string, params ... string) int64
+    Insert(sql string, params ...interface{}) int64
 
-    Delete(sql string, params ... string) int64
+    Update(sql string, params ...interface{}) int64
+
+    Delete(sql string, params ...interface{}) int64
+
+    Begin()
 
     Commit()
 
     Rollback()
 }
-
-
