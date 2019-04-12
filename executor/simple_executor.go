@@ -51,7 +51,7 @@ func (exec *SimpleExecutor) Query(statement *statement.MappedStatement, params .
     if err != nil {
         return err
     }
-    return stmt.Query(statement.ResultHandler, statement.IterFunc, params)
+    return stmt.Query(statement.ResultHandler, statement.IterFunc, params...)
 }
 
 func (exec *SimpleExecutor) Exec(statement *statement.MappedStatement, params ...interface{}) (int64, error) {
@@ -68,7 +68,7 @@ func (exec *SimpleExecutor) Exec(statement *statement.MappedStatement, params ..
     if err != nil {
         return 0, err
     }
-    return stmt.Exec(params)
+    return stmt.Exec(params...)
 }
 
 func (exec *SimpleExecutor) Begin() error {

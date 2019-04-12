@@ -46,7 +46,7 @@ func (sess *DefaultSqlSession) SelectOne(handler handler.ResultHandler, sql stri
         ret = bean
         return false
     }
-    err := sess.executor.Query(sess.getStatement(sql, handler, iterFunc), params)
+    err := sess.executor.Query(sess.getStatement(sql, handler, iterFunc), params...)
     if err != nil {
         return nil, err
     }
@@ -60,7 +60,7 @@ func (sess *DefaultSqlSession) Select(handler handler.ResultHandler, sql string,
         ret = append(ret, bean)
         return true
     }
-    err := sess.executor.Query(sess.getStatement(sql, handler, iterFunc), params)
+    err := sess.executor.Query(sess.getStatement(sql, handler, iterFunc), params...)
     if err != nil {
         return nil, err
     }

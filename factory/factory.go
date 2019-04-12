@@ -9,9 +9,11 @@
 package factory
 
 import (
+    "github.com/xfali/gobatis/logging"
     "github.com/xfali/gobatis/session"
 )
 
 type Factory interface {
     CreateSession() session.Session
+    LogFunc() logging.LogFunc
 }

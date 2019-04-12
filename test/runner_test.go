@@ -11,6 +11,7 @@ package test
 import (
     "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/factory"
+    "github.com/xfali/gobatis/logging"
     "github.com/xfali/gobatis/session/runner"
     "testing"
 )
@@ -29,13 +30,15 @@ func TestRunner(t *testing.T) {
         DBName:   "test",
         Username: "root",
         Password: "123",
-        Charset:  "utf-8",
+        Charset:  "utf8",
 
         MaxConn:     1000,
         MaxIdleConn: 500,
+
+        Log: logging.DefaultLogf,
     }
     fac.Init()
     mgr := runner.NewSqlManager(&fac)
-    mgr.RegisterSql("queryTest", "select * from test_table where id = ?")
+    mgr.RegisterSql("queryTest", "select * from test_table where id = #{0}")
     mgr.Select("queryTest").Params(100, 200).Result(&testV)
 }

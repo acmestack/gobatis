@@ -29,7 +29,7 @@ func (c *MysqlConnection) Prepare(sqlStr string) (Statement, error) {
 
 func (s *MysqlStatement) Query(handler handler.ResultHandler, iterFunc IterFunc, params ...interface{}) error {
     stmt := (*sql.Stmt)(s)
-    rows, err := stmt.Query(params)
+    rows, err := stmt.Query(params...)
     if err != nil {
         return errors.STATEMENT_QUERY_ERROR
     }
@@ -63,7 +63,7 @@ func (s *MysqlStatement) Query(handler handler.ResultHandler, iterFunc IterFunc,
 
 func (s *MysqlStatement) Exec(params ...interface{}) (int64, error) {
     stmt := (*sql.Stmt)(s)
-    result, err := stmt.Exec(params)
+    result, err := stmt.Exec(params...)
     if err != nil {
         return 0, errors.STATEMENT_QUERY_ERROR
     }

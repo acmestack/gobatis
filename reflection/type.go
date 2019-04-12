@@ -27,14 +27,16 @@ type TableInfo struct {
     //表名
     Name string
     //字段信息
-    Fields []FieldInfo
+    //Fields []FieldInfo
+    FieldMap map[string]reflect.Value
     //表字段和实体字段映射关系
     TypeMap map[string]string
 }
 
 func newTableInfo() *TableInfo {
     return &TableInfo{
-        TypeMap: map[string]string{},
+        FieldMap: map[string]reflect.Value{},
+        TypeMap:  map[string]string{},
     }
 }
 
@@ -64,9 +66,10 @@ func GetTableInfo(model interface{}) (*TableInfo, error) {
 
         //没有tag,表字段名与实体字段名一致
         if rtf.Tag == "" {
-            f := FieldInfo{Name: rtf.Name, Value: rvf}
             tableInfo.TypeMap[rtf.Name] = rtf.Name
-            tableInfo.Fields = append(tableInfo.Fields, f)
+            //f := FieldInfo{Name: rtf.Name, Value: rvf}
+            //tableInfo.Fields = append(tableInfo.Fields, f)
+            tableInfo.FieldMap[rtf.Name] = rvf
             continue
         }
 
@@ -81,12 +84,25 @@ func GetTableInfo(model interface{}) (*TableInfo, error) {
         } else if tagName != "" {
             fieldName = tagName
         }
-        f := FieldInfo{Name: fieldName, Value: rvf}
         tableInfo.TypeMap[rtf.Name] = fieldName
-        tableInfo.Fields = append(tableInfo.Fields, f)
+        //f := FieldInfo{Name: fieldName, Value: rvf}
+        //tableInfo.Fields = append(tableInfo.Fields, f)
+        tableInfo.FieldMap[fieldName] = rvf
         continue
     }
     return tableInfo, nil
+}
+
+func (ti *TableInfo) MapValue() map[string]interface{} {
+    params := map[string]interface{}{}
+    for k, v := range ti.FieldMap {
+        if !v.CanInterface() {
+            v = reflect.Indirect(v)
+        }
+        params[k] = v.Interface()
+    }
+    params["tablename"] = ti.Name
+    return params
 }
 
 func ReflectValue(bean interface{}) reflect.Value {

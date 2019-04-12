@@ -18,6 +18,9 @@ type ErrCode struct {
 
 var Parse_MODEL_TABLEINFO_FAILED *ErrCode = New("11001", "Parse Model's table info failed")
 var MODEL_NOT_REGISTER *ErrCode = New("11001", "Register model not found")
+var PARSE_SQL_VAR_ERROR *ErrCode = New("12001", "SQL PARSE ERROR")
+var PARSE_SQL_PARAM_ERROR *ErrCode = New("12002", "SQL PARSE parameter error")
+var PARSE_SQL_PARAM_VAR_NUMBER_ERROR *ErrCode = New("12003", "SQL PARSE parameter var number error")
 var EXECUTOR_COMMIT_ERROR *ErrCode = New("21001", "executor was closed when transaction commit")
 var EXECUTOR_BEGIN_ERROR *ErrCode = New("21002", "executor was closed when transaction begin")
 var EXECUTOR_QUERY_ERROR *ErrCode = New("21003", "executor was closed when exec sql")
@@ -34,7 +37,7 @@ func New(code, message string) *ErrCode {
     ret := &ErrCode{
         Code: code,
         Message: message,
-        fmtErr: fmt.Sprintf("{ \"code\" : \"%s\", \"msg\" : \"%s\"", code, message),
+        fmtErr: fmt.Sprintf("{ \"code\" : \"%s\", \"msg\" : \"%s\" }", code, message),
     }
     return ret
 }

@@ -26,6 +26,7 @@ type DefaultFactory struct {
 
     MaxConn     int
     MaxIdleConn int
+    Log         logging.LogFunc
 
     ds          datasource.DataSource
     transaction transaction.Transaction
@@ -44,5 +45,9 @@ func (f *DefaultFactory) Init() {
 }
 
 func (f *DefaultFactory) CreateSession() session.Session {
-    return session.NewDefaultSqlSession(logging.DefaultLogf, f.transaction, executor.NewSimpleExecutor(f.transaction), false)
+    return session.NewDefaultSqlSession(f.Log, f.transaction, executor.NewSimpleExecutor(f.transaction), false)
+}
+
+func (f *DefaultFactory) LogFunc() logging.LogFunc {
+    return f.Log
 }

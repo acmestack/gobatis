@@ -11,6 +11,9 @@ package runner
 import (
     "github.com/xfali/gobatis/factory"
     "github.com/xfali/gobatis/handler"
+    "github.com/xfali/gobatis/logging"
+    "github.com/xfali/gobatis/parsing/sqlparser"
+    "github.com/xfali/gobatis/reflection"
     "github.com/xfali/gobatis/session"
     "reflect"
 )
@@ -33,38 +36,76 @@ type SqlRunner struct {
     resultHandler handler.ResultHandler
     session       session.Session
     sql           string
-    params        []interface{}
+    action        string
+    metadata      *sqlparser.Metadata
+    log           logging.LogFunc
 }
 
-func (this *SqlManager) newSqlRunner(sqlId string) *SqlRunner {
+func (this *SqlManager) newSqlRunner(action, sqlId string) *SqlRunner {
     if sql, ok := this.sqlmap[sqlId]; ok {
-        return &SqlRunner{session: this.factory.CreateSession(), sql: sql}
+        return &SqlRunner{action: action, log: this.factory.LogFunc(), session: this.factory.CreateSession(), sql: sql}
     }
     return nil
 }
 
 func (this *SqlManager) Select(sqlId string) *SqlRunner {
-    return this.newSqlRunner(sqlId)
+    return this.newSqlRunner(sqlparser.SELECT, sqlId)
 }
 
 func (this *SqlManager) Update(sqlId string) *SqlRunner {
-    return this.newSqlRunner(sqlId)
+    return this.newSqlRunner(sqlparser.UPDATE, sqlId)
 }
 
 func (this *SqlManager) Delete(sqlId string) *SqlRunner {
-    return this.newSqlRunner(sqlId)
+    return this.newSqlRunner(sqlparser.DELETE, sqlId)
 }
 
 func (this *SqlManager) Insert(sqlId string) *SqlRunner {
-    return this.newSqlRunner(sqlId)
+    return this.newSqlRunner(sqlparser.INSERT, sqlId)
 }
 
 func (this *SqlRunner) Params(params ...interface{}) *SqlRunner {
-    this.params = params
+    this.metadata = nil
+    md, err := sqlparser.ParseWithParams(this.sql, params...)
+    if err == nil {
+        if this.action == md.Action {
+            this.metadata = md
+        } else {
+            this.log(logging.WARN, "sql action not match expect %s get %s", this.action, md.Action)
+        }
+    } else {
+        this.log(logging.WARN, "%s", err.Error())
+    }
+    return this
+}
+
+func (this *SqlRunner) ParamType(paramVar interface{}) *SqlRunner {
+    this.metadata = nil
+    ti, err := reflection.GetTableInfo(&paramVar)
+    if err != nil {
+        return this
+    } else {
+        this.log(logging.WARN, "%s", err.Error())
+    }
+    params := ti.MapValue()
+    md, err := sqlparser.ParseWithParamMap(this.sql, params)
+    if err == nil {
+        if this.action == md.Action {
+            this.metadata = md
+        } else {
+            this.log(logging.WARN, "sql action not match expect %s get %s", this.action, md.Action)
+        }
+    } else {
+        this.log(logging.WARN, "%s", err.Error())
+    }
     return this
 }
 
 func (this *SqlRunner) Result(bean interface{}) *SqlRunner {
+    if this.metadata == nil {
+        this.log(logging.WARN, "Sql Matadata is nil")
+        return nil
+    }
     rt := reflect.TypeOf(bean)
     if rt.Kind() != reflect.Ptr {
         return nil
@@ -77,13 +118,13 @@ func (this *SqlRunner) Result(bean interface{}) *SqlRunner {
     switch rt.Kind() {
     case reflect.Slice:
         //FIXME: bean append in loop
-        v, err := this.session.Select(this.resultHandler, this.sql, this.params...)
+        v, err := this.session.Select(this.resultHandler, this.metadata.PrepareSql, this.metadata.Params...)
         if err == nil {
             rv.Set(reflect.ValueOf(v))
         }
         break
     case reflect.Struct:
-        v, err := this.session.SelectOne(this.resultHandler, this.sql, this.params...)
+        v, err := this.session.SelectOne(this.resultHandler, this.metadata.PrepareSql, this.metadata.Params...)
         if err == nil {
             rv.Set(reflect.ValueOf(v))
         }

@@ -41,8 +41,8 @@ func TestReflection2(t *testing.T) {
 
 func printTableInfo(table *reflection.TableInfo) {
     fmt.Printf("table name is %s\n", table.Name)
-    for _, v := range  table.Fields {
-        fmt.Printf("field : %s, value %s\n", v.Name, v.Value)
+    for k, v := range  table.FieldMap {
+        fmt.Printf("field : %s, value %s\n", k, v)
     }
 
     for k, v := range  table.TypeMap {
