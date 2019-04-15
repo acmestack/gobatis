@@ -14,51 +14,49 @@ import (
 )
 
 var (
-    c_EMPTY_STRING       string
-    c_BOOL_DEFAULT       bool
-    c_BYTE_DEFAULT       byte
-    c_COMPLEX64_DEFAULT  complex64
-    c_COMPLEX128_DEFAULT complex128
-    c_FLOAT32_DEFAULT    float32
-    c_FLOAT64_DEFAULT    float64
-    c_INT64_DEFAULT      int64
-    c_UINT64_DEFAULT     uint64
-    c_INT32_DEFAULT      int32
-    c_UINT32_DEFAULT     uint32
-    c_INT16_DEFAULT      int16
-    c_UINT16_DEFAULT     uint16
-    c_INT8_DEFAULT       int8
-    c_UINT8_DEFAULT      uint8
-    c_INT_DEFAULT        int
-    c_UINT_DEFAULT       uint
-    c_TIME_DEFAULT       time.Time
+    EMPTY_STRING       string
+    BOOL_DEFAULT       bool
+    BYTE_DEFAULT       byte
+    COMPLEX64_DEFAULT  complex64
+    COMPLEX128_DEFAULT complex128
+    FLOAT32_DEFAULT    float32
+    FLOAT64_DEFAULT    float64
+    INT64_DEFAULT      int64
+    UINT64_DEFAULT     uint64
+    INT32_DEFAULT      int32
+    UINT32_DEFAULT     uint32
+    INT16_DEFAULT      int16
+    UINT16_DEFAULT     uint16
+    INT8_DEFAULT       int8
+    UINT8_DEFAULT      uint8
+    INT_DEFAULT        int
+    UINT_DEFAULT       uint
+    TIME_DEFAULT       time.Time
 )
 
 var (
-    IntType   = reflect.TypeOf(c_INT_DEFAULT)
-    Int8Type  = reflect.TypeOf(c_INT8_DEFAULT)
-    Int16Type = reflect.TypeOf(c_INT16_DEFAULT)
-    Int32Type = reflect.TypeOf(c_INT32_DEFAULT)
-    Int64Type = reflect.TypeOf(c_INT64_DEFAULT)
+    IntType   = reflect.TypeOf(INT_DEFAULT)
+    Int8Type  = reflect.TypeOf(INT8_DEFAULT)
+    Int16Type = reflect.TypeOf(INT16_DEFAULT)
+    Int32Type = reflect.TypeOf(INT32_DEFAULT)
+    Int64Type = reflect.TypeOf(INT64_DEFAULT)
 
-    UintType   = reflect.TypeOf(c_UINT_DEFAULT)
-    Uint8Type  = reflect.TypeOf(c_UINT8_DEFAULT)
-    Uint16Type = reflect.TypeOf(c_UINT16_DEFAULT)
-    Uint32Type = reflect.TypeOf(c_UINT32_DEFAULT)
-    Uint64Type = reflect.TypeOf(c_UINT64_DEFAULT)
+    UintType   = reflect.TypeOf(UINT_DEFAULT)
+    Uint8Type  = reflect.TypeOf(UINT8_DEFAULT)
+    Uint16Type = reflect.TypeOf(UINT16_DEFAULT)
+    Uint32Type = reflect.TypeOf(UINT32_DEFAULT)
+    Uint64Type = reflect.TypeOf(UINT64_DEFAULT)
 
-    Float32Type = reflect.TypeOf(c_FLOAT32_DEFAULT)
-    Float64Type = reflect.TypeOf(c_FLOAT64_DEFAULT)
+    Float32Type = reflect.TypeOf(FLOAT32_DEFAULT)
+    Float64Type = reflect.TypeOf(FLOAT64_DEFAULT)
 
-    Complex64Type  = reflect.TypeOf(c_COMPLEX64_DEFAULT)
-    Complex128Type = reflect.TypeOf(c_COMPLEX128_DEFAULT)
+    Complex64Type  = reflect.TypeOf(COMPLEX64_DEFAULT)
+    Complex128Type = reflect.TypeOf(COMPLEX128_DEFAULT)
 
-    StringType = reflect.TypeOf(c_EMPTY_STRING)
-    BoolType   = reflect.TypeOf(c_BOOL_DEFAULT)
-    ByteType   = reflect.TypeOf(c_BYTE_DEFAULT)
+    StringType = reflect.TypeOf(EMPTY_STRING)
+    BoolType   = reflect.TypeOf(BOOL_DEFAULT)
+    ByteType   = reflect.TypeOf(BYTE_DEFAULT)
     BytesType  = reflect.SliceOf(ByteType)
 
-    TimeType = reflect.TypeOf(c_TIME_DEFAULT)
+    TimeType = reflect.TypeOf(TIME_DEFAULT)
 )
-
-

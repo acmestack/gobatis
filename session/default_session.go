@@ -41,7 +41,7 @@ func (sess *DefaultSqlSession) Close(rollback bool) {
 
 func (sess *DefaultSqlSession) SelectOne(handler handler.ResultHandler, sql string, params ...interface{}) (interface{}, error) {
     sess.logLastSql(sql, params...)
-    var ret interface{}
+    var ret interface{} = nil
     iterFunc := func(idx int64, bean interface{}) bool {
         ret = bean
         return false
@@ -65,6 +65,15 @@ func (sess *DefaultSqlSession) Select(handler handler.ResultHandler, sql string,
         return nil, err
     }
     return ret, nil
+}
+
+func convertIterFunc(iterFunc IterFunc) connection.IterFunc {
+    return connection.IterFunc(iterFunc)
+}
+
+func (sess *DefaultSqlSession) Query(handler handler.ResultHandler, iterFunc IterFunc, sql string, params ...interface{}) error {
+    sess.logLastSql(sql, params...)
+    return sess.executor.Query(sess.getStatement(sql, handler, convertIterFunc(iterFunc)), params...)
 }
 
 func (sess *DefaultSqlSession) Insert(sql string, params ...interface{}) int64 {
@@ -106,7 +115,7 @@ func (sess *DefaultSqlSession) getStatement(sql string, handler handler.ResultHa
 }
 
 func (sess *DefaultSqlSession) exec(sql string, params ...interface{}) int64 {
-    i, e := sess.executor.Exec(sess.getStatement(sql, nil, nil), params)
+    i, e := sess.executor.Exec(sess.getStatement(sql, nil, nil), params...)
     if e != nil {
         return 0
     } else {

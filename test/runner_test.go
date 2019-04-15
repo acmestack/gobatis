@@ -18,7 +18,7 @@ import (
 )
 
 type TestTable struct {
-    TestTable gobatis.TableName "test_table"
+    TestTable gobatis.ModelName "test_table"
     Username  string            `xfield:"username"`
     Password  string            `xfield:"password"`
 }
@@ -42,5 +42,5 @@ func TestRunner(t *testing.T) {
     mgr := runner.NewSqlManager(&fac)
     mgr.RegisterSql("queryTest", "select * from test_table where id = #{0}")
     config.RegisterModel(&testV)
-    mgr.Select("queryTest").Params(1, 2).Result(&testV)
+    //mgr.Select("queryTest", ).Params(1, 2).Run(&testV)
 }

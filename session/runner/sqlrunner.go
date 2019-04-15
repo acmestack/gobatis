@@ -12,7 +12,6 @@ import (
     "github.com/xfali/gobatis/config"
     "github.com/xfali/gobatis/errors"
     "github.com/xfali/gobatis/factory"
-    "github.com/xfali/gobatis/handler"
     "github.com/xfali/gobatis/logging"
     "github.com/xfali/gobatis/parsing/sqlparser"
     "github.com/xfali/gobatis/reflection"
@@ -34,39 +33,101 @@ func (this *SqlManager) RegisterSql(sqlId string, sql string) *SqlManager {
     return this
 }
 
-type SqlRunner struct {
-    resultHandler handler.ResultHandler
-    session       session.Session
-    sql           string
-    action        string
-    metadata      *sqlparser.Metadata
-    log           logging.LogFunc
+type Runner interface {
+    Params(params ...interface{}) Runner
+    ParamType(paramVar interface{}) Runner
+    Result(bean interface{}) error
 }
 
-func (this *SqlManager) newSqlRunner(action, sqlId string) *SqlRunner {
-    if sql, ok := this.sqlmap[sqlId]; ok {
-        return &SqlRunner{action: action, log: this.factory.LogFunc(), session: this.factory.CreateSession(), sql: sql}
-    }
-    return nil
+type BaseRunner struct {
+    session  session.Session
+    sql      string
+    action   string
+    metadata *sqlparser.Metadata
+    log      logging.LogFunc
+    this     Runner
 }
 
-func (this *SqlManager) Select(sqlId string) *SqlRunner {
-    return this.newSqlRunner(sqlparser.SELECT, sqlId)
+type SelectIterRunner struct {
+    iterFunc session.IterFunc
+    count    int64
+    BaseRunner
 }
 
-func (this *SqlManager) Update(sqlId string) *SqlRunner {
-    return this.newSqlRunner(sqlparser.UPDATE, sqlId)
+type SelectRunner struct {
+    iterFunc session.IterFunc
+    count    int64
+    BaseRunner
 }
 
-func (this *SqlManager) Delete(sqlId string) *SqlRunner {
-    return this.newSqlRunner(sqlparser.DELETE, sqlId)
+type InsertRunner struct {
+    BaseRunner
 }
 
-func (this *SqlManager) Insert(sqlId string) *SqlRunner {
-    return this.newSqlRunner(sqlparser.INSERT, sqlId)
+type UpdateRunner struct {
+    BaseRunner
 }
 
-func (this *SqlRunner) Params(params ...interface{}) *SqlRunner {
+type DeleteRunner struct {
+    BaseRunner
+}
+
+func (this *SqlManager) GetSql(sqlId string) string {
+    return this.sqlmap[sqlId]
+}
+
+func (this *SqlManager) SelectWithIterFunc(sqlId string, iterFunc session.IterFunc) Runner {
+    ret := &SelectIterRunner{}
+    ret.action = sqlparser.SELECT
+    ret.log = this.factory.LogFunc()
+    ret.session = this.factory.CreateSession()
+    ret.iterFunc = iterFunc
+    ret.sql = this.GetSql(sqlId)
+    ret.this = ret
+    return ret
+}
+
+func (this *SqlManager) Select(sqlId string) Runner {
+    ret := &SelectRunner{}
+    ret.action = sqlparser.SELECT
+    ret.log = this.factory.LogFunc()
+    ret.session = this.factory.CreateSession()
+    ret.sql = this.GetSql(sqlId)
+    ret.this = ret
+    return ret
+}
+
+func (this *SqlManager) Update(sqlId string) Runner {
+    ret := &UpdateRunner{}
+    ret.action = sqlparser.UPDATE
+    ret.log = this.factory.LogFunc()
+    ret.session = this.factory.CreateSession()
+    ret.sql = this.GetSql(sqlId)
+    ret.this = ret
+    return ret
+}
+
+func (this *SqlManager) Delete(sqlId string) Runner {
+    ret := &DeleteRunner{}
+    ret.action = sqlparser.DELETE
+    ret.log = this.factory.LogFunc()
+    ret.session = this.factory.CreateSession()
+    ret.sql = this.GetSql(sqlId)
+    ret.this = ret
+    return ret
+}
+
+func (this *SqlManager) Insert(sqlId string) Runner {
+    ret := &InsertRunner{}
+    ret.action = sqlparser.INSERT
+    ret.log = this.factory.LogFunc()
+    ret.session = this.factory.CreateSession()
+    ret.sql = this.GetSql(sqlId)
+    ret.this = ret
+    return ret
+}
+
+func (this *BaseRunner) Params(params ...interface{}) Runner {
     this.metadata = nil
     md, err := sqlparser.ParseWithParams(this.sql, params...)
     if err == nil {
@@ -78,16 +139,15 @@ func (this *SqlRunner) Params(params ...interface{}) *SqlRunner {
     } else {
         this.log(logging.WARN, "%s", err.Error())
     }
-    return this
+    return this.this
 }
 
-func (this *SqlRunner) ParamType(paramVar interface{}) *SqlRunner {
+func (this *BaseRunner) ParamType(paramVar interface{}) Runner {
     this.metadata = nil
     ti, err := reflection.GetTableInfo(&paramVar)
     if err != nil {
-        return this
-    } else {
         this.log(logging.WARN, "%s", err.Error())
+        return this.this
     }
     params := ti.MapValue()
     md, err := sqlparser.ParseWithParamMap(this.sql, params)
@@ -100,10 +160,161 @@ func (this *SqlRunner) ParamType(paramVar interface{}) *SqlRunner {
     } else {
         this.log(logging.WARN, "%s", err.Error())
     }
-    return this
+    return this.this
 }
 
-func (this *SqlRunner) Result(bean interface{}) *SqlRunner {
+func (this *SelectIterRunner) myIterFunc(idx int64, bean interface{}) bool {
+    this.count++
+    return this.iterFunc(idx, bean)
+}
+
+func (this *SelectIterRunner) Result(bean interface{}) error {
+    err := checkBeanValue(reflect.ValueOf(bean))
+    if err != nil {
+        return err
+    }
+    if this.metadata == nil {
+        this.log(logging.WARN, "Sql Matadata is nil")
+        return errors.RUNNER_NOT_READY
+    }
+
+    mi := config.FindModelInfoOfBean(bean)
+    if mi == nil {
+        this.log(logging.WARN, errors.MODEL_NOT_REGISTER.Error())
+        return errors.RESULT_NAME_NOT_FOUND
+    }
+    return this.session.Query(mi, this.myIterFunc, this.metadata.PrepareSql, this.metadata.Params...)
+}
+
+func (this *SelectRunner) Result(bean interface{}) error {
+    if this.metadata == nil {
+        this.log(logging.WARN, "Sql Matadata is nil")
+        return errors.RUNNER_NOT_READY
+    }
+
+    mi := config.FindModelInfoOfBean(bean)
+    if mi == nil {
+        this.log(logging.WARN, errors.MODEL_NOT_REGISTER.Error())
+        return errors.RESULT_NAME_NOT_FOUND
+    }
+    rt := reflect.TypeOf(bean)
+    rv := reflect.ValueOf(bean)
+    err := checkBeanValue(rv)
+    if err != nil {
+        return err
+    }
+    rt = rt.Elem()
+    rv = rv.Elem()
+
+    switch rt.Kind() {
+    case reflect.Slice:
+        //FIXME: bean append in loop
+        retV := rv
+        iterFunc := func(idx int64, bean interface{}) bool {
+            retV = reflect.Append(retV, reflect.ValueOf(bean))
+            return false
+        }
+        err := this.session.Query(mi, iterFunc, this.metadata.PrepareSql, this.metadata.Params...)
+        if err == nil {
+            rv.Set(retV)
+        } else {
+            return err
+        }
+        break
+    default:
+        v, err := this.session.SelectOne(mi, this.metadata.PrepareSql, this.metadata.Params...)
+        if err == nil {
+            retV := reflect.ValueOf(v)
+            if retV.IsValid() {
+                rv.Set(reflect.ValueOf(v))
+            } else {
+                return errors.RESULT_SELECT_EMPTY_VALUE
+            }
+        } else {
+            return err
+        }
+        break
+    }
+    return nil
+}
+
+func (this *InsertRunner) Result(bean interface{}) error {
+    if this.metadata == nil {
+        this.log(logging.WARN, "Sql Matadata is nil")
+        return errors.RUNNER_NOT_READY
+    }
+    var rv reflect.Value
+    if bean != nil {
+        rv = reflect.ValueOf(bean)
+        err := checkBeanValue(rv)
+        if err != nil {
+            return err
+        }
+    }
+    i := this.session.Insert(this.metadata.PrepareSql, this.metadata.Params...)
+    if bean != nil {
+        reflection.SetValue(rv, i)
+    }
+    return nil
+}
+
+func (this *UpdateRunner) Result(bean interface{}) error {
+    if this.metadata == nil {
+        this.log(logging.WARN, "Sql Matadata is nil")
+        return errors.RUNNER_NOT_READY
+    }
+    var rv reflect.Value
+    if bean != nil {
+        rv = reflect.ValueOf(bean)
+        err := checkBeanValue(rv)
+        if err != nil {
+            return err
+        }
+    }
+    i := this.session.Update(this.metadata.PrepareSql, this.metadata.Params...)
+    if bean != nil {
+        reflection.SetValue(rv, i)
+    }
+    return nil
+}
+
+func (this *DeleteRunner) Result(bean interface{}) error {
+    if this.metadata == nil {
+        this.log(logging.WARN, "Sql Matadata is nil")
+        return errors.RUNNER_NOT_READY
+    }
+    var rv reflect.Value
+    if bean != nil {
+        rv = reflect.ValueOf(bean)
+        err := checkBeanValue(rv)
+        if err != nil {
+            return err
+        }
+    }
+    i := this.session.Delete(this.metadata.PrepareSql, this.metadata.Params...)
+    if bean != nil {
+        reflection.SetValue(rv, i)
+    }
+    return nil
+}
+
+func (this *BaseRunner) Result(bean interface{}) error {
+    //FAKE RETURN
+    panic("Cannot be here")
+    //return nil, nil
+}
+
+func checkBeanValue(beanValue reflect.Value) error {
+    if beanValue.Kind() != reflect.Ptr {
+        return errors.RESULT_ISNOT_POINTER
+    } else if beanValue.Elem().Kind() == reflect.Ptr {
+        return errors.RESULT_PTR_VALUE_IS_POINTER
+    }
+    return nil
+}
+
+func (this *BaseRunner) ResultBad(bean interface{}) *BaseRunner {
+    panic("Cannot be here")
     if this.metadata == nil {
         this.log(logging.WARN, "Sql Matadata is nil")
         return nil
@@ -114,7 +325,6 @@ func (this *SqlRunner) Result(bean interface{}) *SqlRunner {
         this.log(logging.WARN, errors.MODEL_NOT_REGISTER.Error())
         return nil
     }
-    this.resultHandler = mi
 
     rt := reflect.TypeOf(bean)
     if rt.Kind() != reflect.Ptr {
@@ -128,15 +338,20 @@ func (this *SqlRunner) Result(bean interface{}) *SqlRunner {
     switch rt.Kind() {
     case reflect.Slice:
         //FIXME: bean append in loop
-        v, err := this.session.Select(this.resultHandler, this.metadata.PrepareSql, this.metadata.Params...)
+        v, err := this.session.Select(mi, this.metadata.PrepareSql, this.metadata.Params...)
         if err == nil {
             rv.Set(reflect.ValueOf(v))
         }
         break
     case reflect.Struct:
-        v, err := this.session.SelectOne(this.resultHandler, this.metadata.PrepareSql, this.metadata.Params...)
+        v, err := this.session.SelectOne(mi, this.metadata.PrepareSql, this.metadata.Params...)
         if err == nil {
-            rv.Set(reflect.ValueOf(v))
+            retV := reflect.ValueOf(v)
+            if retV.IsValid() {
+                rv.Set(reflect.ValueOf(v))
+            } else {
+                return nil
+            }
         }
         break
     }

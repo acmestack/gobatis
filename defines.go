@@ -8,7 +8,7 @@
 
 package gobatis
 
-type TableName string
+type ModelName string
 
 const(
     FIELD_NAME = "xfield"

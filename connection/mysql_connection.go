@@ -12,7 +12,6 @@ import (
     "database/sql"
     "github.com/xfali/gobatis/errors"
     "github.com/xfali/gobatis/handler"
-    "github.com/xfali/gobatis/logging"
 )
 
 type MysqlConnection sql.DB
@@ -45,9 +44,9 @@ func (s *MysqlStatement) Query(handler handler.ResultHandler, iterFunc IterFunc,
     var index int64 = 0
     for rows.Next() {
         if err := rows.Scan(scanArgs...); err == nil {
-            for _, col := range values {
-                logging.Debug("%v", col)
-            }
+            //for _, col := range values {
+            //    logging.Debug("%v", col)
+            //}
             result, err := handler.Deserialize(columns, values)
             if err == nil {
                 stop := iterFunc(index, result)

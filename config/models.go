@@ -25,12 +25,40 @@ type ModelManager struct {
     lock     sync.Mutex
 }
 
-var g_model_mgr ModelManager = ModelManager{modelMap: map[string]*ModelInfo{}}
+var g_model_mgr = &ModelManager{modelMap: map[string]*ModelInfo{}}
+
+func init() {
+    registerBuildin()
+}
+
+func registerBuildin() {
+    g_model_mgr.lock.Lock()
+    defer g_model_mgr.lock.Unlock()
+
+    g_model_mgr.modelMap[reflection.StringType.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.EMPTY_STRING}
+    g_model_mgr.modelMap[reflection.BoolType.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.BOOL_DEFAULT}
+    g_model_mgr.modelMap[reflection.ByteType.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.BYTE_DEFAULT}
+    g_model_mgr.modelMap[reflection.Complex64Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.COMPLEX64_DEFAULT}
+    g_model_mgr.modelMap[reflection.Complex128Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.COMPLEX128_DEFAULT}
+    g_model_mgr.modelMap[reflection.Float32Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.FLOAT32_DEFAULT}
+    g_model_mgr.modelMap[reflection.Float64Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.FLOAT64_DEFAULT}
+    g_model_mgr.modelMap[reflection.Int64Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.INT64_DEFAULT}
+    g_model_mgr.modelMap[reflection.Uint64Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.UINT64_DEFAULT}
+    g_model_mgr.modelMap[reflection.Int32Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.INT32_DEFAULT}
+    g_model_mgr.modelMap[reflection.Uint32Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.UINT32_DEFAULT}
+    g_model_mgr.modelMap[reflection.Int16Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.INT16_DEFAULT}
+    g_model_mgr.modelMap[reflection.Uint16Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.UINT16_DEFAULT}
+    g_model_mgr.modelMap[reflection.Int8Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.INT8_DEFAULT}
+    g_model_mgr.modelMap[reflection.Uint8Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.UINT8_DEFAULT}
+    g_model_mgr.modelMap[reflection.IntType.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.INT_DEFAULT}
+    g_model_mgr.modelMap[reflection.UintType.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.UINT_DEFAULT}
+    g_model_mgr.modelMap[reflection.TimeType.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.TIME_DEFAULT}
+}
 
 func RegisterModel(model interface{}) *errors.ErrCode {
     tableInfo, err := reflection.GetTableInfo(model)
     if err != nil {
-        return errors.Parse_MODEL_TABLEINFO_FAILED
+        return errors.PARSE_MODEL_TABLEINFO_FAILED
     }
     g_model_mgr.lock.Lock()
     defer g_model_mgr.lock.Unlock()
@@ -38,30 +66,51 @@ func RegisterModel(model interface{}) *errors.ErrCode {
     return nil
 }
 
-func FindModelInfo(tableName string) *ModelInfo {
+func RegisterModelWithName(name string, model interface{}) *errors.ErrCode {
+    tableInfo, err := reflection.GetTableInfo(model)
+    if err != nil {
+        return errors.PARSE_MODEL_TABLEINFO_FAILED
+    }
+    g_model_mgr.lock.Lock()
+    defer g_model_mgr.lock.Unlock()
+    g_model_mgr.modelMap[name] = &ModelInfo{TableInfo: tableInfo, Model: model}
+    return nil
+}
+
+func FindModelInfo(name string) *ModelInfo {
     g_model_mgr.lock.Lock()
     defer g_model_mgr.lock.Unlock()
 
-    return g_model_mgr.modelMap[tableName]
+    return g_model_mgr.modelMap[name]
 }
 
 func FindModelInfoOfBean(bean interface{}) *ModelInfo {
-    name := reflection.GetTableName(bean)
+    name := reflection.GetBeanName(bean)
     return FindModelInfo(name)
 }
 
 func (mi *ModelInfo) Deserialize(columns []string, values []interface{}) (interface{}, error) {
     ti := mi.TableInfo
     v := reflect.New(reflect.TypeOf(mi.Model).Elem()).Elem()
-    for i := 0; i < len(columns); i++ {
-        if fieldName, ok := ti.FieldNameMap[columns[i]]; ok {
-            f := v.FieldByName(fieldName)
-            ret := reflection.SetField(f, values[i])
-            if !ret {
-                continue
+    //struct
+    if ti != nil {
+        for i := 0; i < len(columns); i++ {
+            if fieldName, ok := ti.FieldNameMap[columns[i]]; ok {
+                f := v.FieldByName(fieldName)
+                ret := reflection.SetValue(f, values[i])
+                if !ret {
+                    continue
+                }
             }
         }
+    } else {
+        if len(values) > 1 {
+            return nil, errors.DESERIALIZE_FAILED
+        }
+        if !reflection.SetValue(v, values[0]) {
+            return nil, errors.DESERIALIZE_FAILED
+        }
     }
+
     return v.Interface(), nil
 }
-

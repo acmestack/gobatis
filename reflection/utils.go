@@ -10,14 +10,15 @@ package reflection
 
 import (
     "github.com/xfali/gobatis"
+    "github.com/xfali/gobatis/errors"
     "reflect"
     "strconv"
     "strings"
     "time"
 )
 
-var typeTableName gobatis.TableName
-var tableNameType = reflect.TypeOf(typeTableName)
+var typeModelName gobatis.ModelName
+var modelNameType = reflect.TypeOf(typeModelName)
 
 type FieldInfo struct {
     //字段名
@@ -43,7 +44,7 @@ func newTableInfo() *TableInfo {
     }
 }
 
-func GetTableName(model interface{}) string {
+func GetBeanName(model interface{}) string {
     rt := reflect.TypeOf(model)
     rv := reflect.ValueOf(model)
 
@@ -51,19 +52,28 @@ func GetTableName(model interface{}) string {
         rt = rt.Elem()
         rv = rv.Elem()
     }
+
+    if rt.Kind() == reflect.Slice {
+        rt = rt.Elem()
+    }
+
     //Default name is struct name
-    tableName := rt.Name()
+    name := rt.Name()
+
+    if rt.Kind() != reflect.Struct {
+        return name
+    }
 
     //字段解析
     for i, j := 0, rt.NumField(); i < j; i++ {
         rtf := rt.Field(i)
-        if rtf.Type == tableNameType {
+        if rtf.Type == modelNameType {
             if rtf.Tag != "" {
-                tableName = string(rtf.Tag)
+                name = string(rtf.Tag)
             }
         }
     }
-    return tableName
+    return name
 }
 
 func GetTableInfo(model interface{}) (*TableInfo, error) {
@@ -76,6 +86,10 @@ func GetTableInfo(model interface{}) (*TableInfo, error) {
         rt = rt.Elem()
         rv = rv.Elem()
     }
+
+    if rt.Kind() != reflect.Struct {
+       return nil, errors.PARSE_TABLEINFO_NOT_STRUCT
+    }
     //Default name is struct name
     tableInfo.Name = rt.Name()
 
@@ -83,7 +97,7 @@ func GetTableInfo(model interface{}) (*TableInfo, error) {
     for i, j := 0, rt.NumField(); i < j; i++ {
         rtf := rt.Field(i)
         rvf := rv.Field(i)
-        if rtf.Type == tableNameType {
+        if rtf.Type == modelNameType {
             if rtf.Tag != "" {
                 tableInfo.Name = string(rtf.Tag)
             }
@@ -135,7 +149,7 @@ func ReflectValue(bean interface{}) reflect.Value {
     return reflect.Indirect(reflect.ValueOf(bean))
 }
 
-func SetField(f reflect.Value, v interface{}) bool {
+func SetValue(f reflect.Value, v interface{}) bool {
     hasAssigned := false
     rawValue := reflect.Indirect(reflect.ValueOf(v))
     rawValueType := reflect.TypeOf(rawValue.Interface())
@@ -247,6 +261,8 @@ func SetField(f reflect.Value, v interface{}) bool {
                     }
                 }
             }
+        } else {
+            f.Set(reflect.ValueOf(v))
         }
     }
 
