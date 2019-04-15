@@ -171,6 +171,6 @@ func TestDeleteRunner(t *testing.T) {
     testV.Username = "test_user"
     testV.Password = "test_pw"
     i := 0
-    mgr.Update("deleteTest").ParamType(testV).Result(&i)
+    mgr.Delete("deleteTest").ParamType(testV).Result(&i)
     t.Logf("delete %d\n", i)
 }
