@@ -10,6 +10,7 @@ package test
 
 import (
     "github.com/xfali/gobatis"
+    "github.com/xfali/gobatis/config"
     "github.com/xfali/gobatis/factory"
     "github.com/xfali/gobatis/logging"
     "github.com/xfali/gobatis/session/runner"
@@ -40,5 +41,6 @@ func TestRunner(t *testing.T) {
     fac.Init()
     mgr := runner.NewSqlManager(&fac)
     mgr.RegisterSql("queryTest", "select * from test_table where id = #{0}")
-    mgr.Select("queryTest").Params(100, 200).Result(&testV)
+    config.RegisterModel(&testV)
+    mgr.Select("queryTest").Params(1, 2).Result(&testV)
 }

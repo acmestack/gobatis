@@ -47,7 +47,9 @@ func (exec *SimpleExecutor) Query(statement *statement.MappedStatement, params .
         return errors.EXECUTOR_GET_CONNECTION_ERROR
     }
 
+    //FIXME: stmt must be close, use stmtCache instead
     stmt, err := conn.Prepare(statement.Sql)
+    defer stmt.Close()
     if err != nil {
         return err
     }
@@ -64,7 +66,10 @@ func (exec *SimpleExecutor) Exec(statement *statement.MappedStatement, params ..
         return 0, errors.EXECUTOR_GET_CONNECTION_ERROR
     }
 
+    //FIXME: stmt must be close, use stmtCache instead
     stmt, err := conn.Prepare(statement.Sql)
+    defer stmt.Close()
+
     if err != nil {
         return 0, err
     }

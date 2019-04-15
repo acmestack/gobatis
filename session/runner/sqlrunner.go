@@ -9,6 +9,8 @@
 package runner
 
 import (
+    "github.com/xfali/gobatis/config"
+    "github.com/xfali/gobatis/errors"
     "github.com/xfali/gobatis/factory"
     "github.com/xfali/gobatis/handler"
     "github.com/xfali/gobatis/logging"
@@ -106,6 +108,14 @@ func (this *SqlRunner) Result(bean interface{}) *SqlRunner {
         this.log(logging.WARN, "Sql Matadata is nil")
         return nil
     }
+
+    mi := config.FindModelInfoOfBean(bean)
+    if mi == nil {
+        this.log(logging.WARN, errors.MODEL_NOT_REGISTER.Error())
+        return nil
+    }
+    this.resultHandler = mi
+
     rt := reflect.TypeOf(bean)
     if rt.Kind() != reflect.Ptr {
         return nil

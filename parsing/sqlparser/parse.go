@@ -13,6 +13,7 @@ import (
     "github.com/xfali/gobatis/errors"
     "strconv"
     "strings"
+    "unicode"
 )
 
 const (
@@ -176,10 +177,15 @@ func interface2String(i interface{}) string {
 
 func findFirst(subStr string, char rune) int {
     for i, r := range subStr {
-        switch r {
-        case ',', ' ', '\t', '\n', '\r':
+        //switch r {
+        //case ',', ' ', '\t', '\n', '\r':
+        //    return -1
+        //case char:
+        //    return i
+        //}
+        if unicode.IsSpace(r) || r == ',' {
             return -1
-        case char:
+        } else if r == char {
             return i
         }
     }

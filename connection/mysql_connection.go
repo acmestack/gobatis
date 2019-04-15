@@ -44,7 +44,7 @@ func (s *MysqlStatement) Query(handler handler.ResultHandler, iterFunc IterFunc,
     }
     var index int64 = 0
     for rows.Next() {
-        if err := rows.Scan(scanArgs); err == nil {
+        if err := rows.Scan(scanArgs...); err == nil {
             for _, col := range values {
                 logging.Debug("%v", col)
             }
@@ -72,4 +72,9 @@ func (s *MysqlStatement) Exec(params ...interface{}) (int64, error) {
         return 0, errors.STATEMENT_QUERY_ERROR
     }
     return ret, nil
+}
+
+func (s *MysqlStatement) Close() {
+    stmt := (*sql.Stmt)(s)
+    stmt.Close()
 }

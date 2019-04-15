@@ -17,7 +17,7 @@ type ErrCode struct {
 }
 
 var Parse_MODEL_TABLEINFO_FAILED *ErrCode = New("11001", "Parse Model's table info failed")
-var MODEL_NOT_REGISTER *ErrCode = New("11001", "Register model not found")
+var MODEL_NOT_REGISTER *ErrCode = New("11002", "Register model not found")
 var PARSE_SQL_VAR_ERROR *ErrCode = New("12001", "SQL PARSE ERROR")
 var PARSE_SQL_PARAM_ERROR *ErrCode = New("12002", "SQL PARSE parameter error")
 var PARSE_SQL_PARAM_VAR_NUMBER_ERROR *ErrCode = New("12003", "SQL PARSE parameter var number error")

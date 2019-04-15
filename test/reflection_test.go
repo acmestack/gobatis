@@ -45,7 +45,7 @@ func printTableInfo(table *reflection.TableInfo) {
         fmt.Printf("field : %s, value %s\n", k, v)
     }
 
-    for k, v := range  table.TypeMap {
+    for k, v := range  table.FieldNameMap {
         fmt.Printf("origin : %s, map %s\n", k, v)
     }
 }

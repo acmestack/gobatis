@@ -15,6 +15,7 @@ type IterFunc func(idx int64, bean interface{}) bool
 type Statement interface {
     Query(handler handler.ResultHandler, iterFunc IterFunc, params ...interface{}) error
     Exec(params ...interface{}) (int64, error)
+    Close()
 }
 
 type Connection interface {
