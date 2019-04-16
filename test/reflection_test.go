@@ -58,6 +58,15 @@ func TestReflection4(t *testing.T) {
     t.Log(v.Interface())
 }
 
+func TestReflection4_2(t *testing.T) {
+    var i complex128 = complex(1, 2)
+    v := reflect.New(reflect.TypeOf(&i).Elem()).Elem()
+    sv := fmt.Sprintf("%v", i)
+    t.Logf("sv %v\n", sv)
+    reflection.SetValue(v, []byte(sv))
+    t.Log(v.Interface())
+}
+
 func TestReflection5(t *testing.T) {
     setV := []byte("10000")
     v, err := config.FindModelInfo(reflect.TypeOf(reflection.INT_DEFAULT).Name()).Deserialize(nil, []interface{}{setV})

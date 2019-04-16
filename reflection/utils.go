@@ -9,6 +9,7 @@
 package reflection
 
 import (
+    "encoding/json"
     "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/errors"
     "reflect"
@@ -88,7 +89,7 @@ func GetTableInfo(model interface{}) (*TableInfo, error) {
     }
 
     if rt.Kind() != reflect.Struct {
-       return nil, errors.PARSE_TABLEINFO_NOT_STRUCT
+        return nil, errors.PARSE_TABLEINFO_NOT_STRUCT
     }
     //Default name is struct name
     tableInfo.Name = rt.Name()
@@ -149,13 +150,24 @@ func ReflectValue(bean interface{}) reflect.Value {
     return reflect.Indirect(reflect.ValueOf(bean))
 }
 
+func IsSimpleType(bean interface{}) bool {
+    t := reflect.TypeOf(bean)
+    switch t.Kind() {
+    case IntKind, Int8Kind, Int16Kind, Int32Kind, Int64Kind, UintKind, Uint8Kind, Uint16Kind, Uint32Kind, Uint64Kind,
+    Float32Kind, Float64Kind, Complex64Kind, Complex128Kind, StringKind, BoolKind, ByteKind, BytesKind, TimeKind:
+        return true
+    }
+    return false
+}
+
 func SetValue(f reflect.Value, v interface{}) bool {
     hasAssigned := false
     rawValue := reflect.Indirect(reflect.ValueOf(v))
     rawValueType := reflect.TypeOf(rawValue.Interface())
     vv := reflect.ValueOf(rawValue.Interface())
 
-    switch f.Type().Kind() {
+    ft := f.Type()
+    switch ft.Kind() {
     case reflect.Bool:
         switch rawValueType.Kind() {
         case reflect.Bool:
@@ -180,6 +192,36 @@ func SetValue(f reflect.Value, v interface{}) bool {
             if d, ok := vv.Interface().([]uint8); ok {
                 hasAssigned = true
                 f.SetString(string(d))
+            }
+            break
+        }
+        break
+    case reflect.Complex64, reflect.Complex128:
+        switch rawValueType.Kind() {
+        case reflect.Complex64, reflect.Complex128:
+            hasAssigned = true
+            f.SetComplex(vv.Complex())
+            break
+        case reflect.Slice:
+            if rawValueType.ConvertibleTo(BytesType) {
+                d := vv.Bytes()
+                if len(d) > 0 {
+                    if f.CanAddr() {
+                        err := json.Unmarshal(d, f.Addr().Interface())
+                        if err != nil {
+                            return false
+                        }
+                    } else {
+                        x := reflect.New(ft)
+                        err := json.Unmarshal(d, x.Interface())
+                        if err != nil {
+                            return false
+                        }
+                        hasAssigned = true
+                        f.Set(x.Elem())
+                        break
+                    }
+                }
             }
             break
         }

@@ -34,8 +34,7 @@ func (this *SqlManager) RegisterSql(sqlId string, sql string) *SqlManager {
 }
 
 type Runner interface {
-    Params(params ...interface{}) Runner
-    ParamType(paramVar interface{}) Runner
+    Param(params ...interface{}) Runner
     Result(bean interface{}) error
 }
 
@@ -127,7 +126,35 @@ func (this *SqlManager) Insert(sqlId string) Runner {
     return ret
 }
 
-func (this *BaseRunner) Params(params ...interface{}) Runner {
+func (this *BaseRunner) Param(params ...interface{}) Runner {
+    if len(params) == 0 {
+        return this.params()
+    } else if len(params) == 1 {
+        t := reflect.TypeOf(params[0])
+        if t.Kind() == reflect.Ptr {
+            t = t.Elem()
+        }
+        if t.Kind() == reflect.Struct {
+            return this.paramType(params[0])
+        } else {
+            if reflection.IsSimpleType(params[0]) {
+                return this.params(params...)
+            }
+        }
+    } else {
+        for _, v := range params {
+            if !reflection.IsSimpleType(v) {
+                this.log(logging.WARN, "Param error: expect simple type, but get other type")
+                return this.this
+            }
+        }
+        return this.params(params...)
+    }
+    return this.this
+}
+
+
+func (this *BaseRunner) params(params ...interface{}) Runner {
     this.metadata = nil
     md, err := sqlparser.ParseWithParams(this.sql, params...)
     if err == nil {
@@ -142,9 +169,9 @@ func (this *BaseRunner) Params(params ...interface{}) Runner {
     return this.this
 }
 
-func (this *BaseRunner) ParamType(paramVar interface{}) Runner {
+func (this *BaseRunner) paramType(paramVar interface{}) Runner {
     this.metadata = nil
-    ti, err := reflection.GetTableInfo(&paramVar)
+    ti, err := reflection.GetTableInfo(paramVar)
     if err != nil {
         this.log(logging.WARN, "%s", err.Error())
         return this.this
@@ -247,6 +274,7 @@ func (this *InsertRunner) Result(bean interface{}) error {
     if bean != nil {
         rv = reflect.ValueOf(bean)
         err := checkBeanValue(rv)
+        rv = rv.Elem()
         if err != nil {
             return err
         }
@@ -267,6 +295,7 @@ func (this *UpdateRunner) Result(bean interface{}) error {
     if bean != nil {
         rv = reflect.ValueOf(bean)
         err := checkBeanValue(rv)
+        rv = rv.Elem()
         if err != nil {
             return err
         }
@@ -287,6 +316,7 @@ func (this *DeleteRunner) Result(bean interface{}) error {
     if bean != nil {
         rv = reflect.ValueOf(bean)
         err := checkBeanValue(rv)
+        rv = rv.Elem()
         if err != nil {
             return err
         }

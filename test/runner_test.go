@@ -42,7 +42,7 @@ func TestSelectRunner(t *testing.T) {
     mgr := runner.NewSqlManager(&fac)
     mgr.RegisterSql("queryTest", "select * from test_table where id = #{0}")
     config.RegisterModel(&testV)
-    mgr.Select("queryTest").Params(1).Result(&testV)
+    mgr.Select("queryTest").Param(1, 200, 300).Result(&testV)
 
     t.Logf("%v %v", testV.Username, testV.Password)
 }
@@ -67,7 +67,7 @@ func TestSelectRunner2(t *testing.T) {
     mgr.RegisterSql("queryTest", "select * from test_table limit 10")
     config.RegisterModel(&testV)
     testList := []TestTable{}
-    mgr.Select("queryTest").Params().Result(&testList)
+    mgr.Select("queryTest").Param().Result(&testList)
 
     for _, v := range testList {
         t.Logf("%v %v", v.Username, v.Password)
@@ -94,7 +94,7 @@ func TestSelectRunner3(t *testing.T) {
     mgr.RegisterSql("queryTest", "select count(*) from test_table")
     config.RegisterModel(&testV)
     i := 0
-    mgr.Select("queryTest").Params().Result(&i)
+    mgr.Select("queryTest").Param().Result(&i)
 }
 
 func TestInsertRunner(t *testing.T) {
@@ -119,7 +119,7 @@ func TestInsertRunner(t *testing.T) {
     testV.Username = "test_user"
     testV.Password = "test_pw"
     i := 0
-    mgr.Insert("insertTest").ParamType(testV).Result(&i)
+    mgr.Insert("insertTest").Param(testV).Result(&i)
     t.Logf("insert %d\n", i)
 }
 
@@ -145,7 +145,7 @@ func TestUpdateRunner(t *testing.T) {
     testV.Username = "test_user"
     testV.Password = "test_pw"
     i := 0
-    mgr.Update("updateTest").ParamType(testV).Result(&i)
+    mgr.Update("updateTest").Param(testV).Result(&i)
     t.Logf("update %d\n", i)
 }
 
@@ -171,6 +171,6 @@ func TestDeleteRunner(t *testing.T) {
     testV.Username = "test_user"
     testV.Password = "test_pw"
     i := 0
-    mgr.Delete("deleteTest").ParamType(testV).Result(&i)
+    mgr.Delete("deleteTest").Param(testV).Result(&i)
     t.Logf("delete %d\n", i)
 }

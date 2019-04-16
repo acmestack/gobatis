@@ -60,3 +60,30 @@ var (
 
     TimeType = reflect.TypeOf(TIME_DEFAULT)
 )
+
+var (
+    IntKind   = IntType.Kind()
+    Int8Kind  = Int8Type.Kind()
+    Int16Kind = Int16Type.Kind()
+    Int32Kind = Int32Type.Kind()
+    Int64Kind = Int64Type.Kind()
+
+    UintKind   = UintType.Kind()
+    Uint8Kind  = Uint8Type.Kind()
+    Uint16Kind = Uint16Type.Kind()
+    Uint32Kind = Uint32Type.Kind()
+    Uint64Kind = Uint64Type.Kind()
+
+    Float32Kind = Float32Type.Kind()
+    Float64Kind = Float64Type.Kind()
+
+    Complex64Kind  = Complex64Type.Kind()
+    Complex128Kind = Complex128Type.Kind()
+
+    StringKind = StringType.Kind()
+    BoolKind   = BoolType.Kind()
+    ByteKind   = ByteType.Kind()
+    BytesKind  = BytesType.Kind()
+
+    TimeKind = TimeType.Kind()
+)
