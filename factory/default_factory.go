@@ -9,6 +9,7 @@
 package factory
 
 import (
+    "database/sql"
     "github.com/xfali/gobatis/datasource"
     "github.com/xfali/gobatis/executor"
     "github.com/xfali/gobatis/logging"
@@ -29,10 +30,10 @@ type DefaultFactory struct {
     Log         logging.LogFunc
 
     ds          datasource.DataSource
-    transaction transaction.Transaction
+    db          *sql.DB
 }
 
-func (f *DefaultFactory) Init() {
+func (f *DefaultFactory) Init() error {
     f.ds = &datasource.MysqlDataSource{
         Host:     f.Host,
         Port:     f.Port,
@@ -41,11 +42,21 @@ func (f *DefaultFactory) Init() {
         Password: f.Password,
         Charset:  f.Charset,
     }
-    f.transaction = transaction.NewMysqlTransaction(f.ds, f.MaxConn, f.MaxIdleConn)
+
+    db, err := sql.Open(f.ds.DriverName(), f.ds.Url())
+    db.SetMaxOpenConns(f.MaxConn)
+    db.SetMaxIdleConns(f.MaxIdleConn)
+    if err != nil {
+        return err
+    }
+
+    f.db = db
+    return nil
 }
 
 func (f *DefaultFactory) CreateSession() session.Session {
-    return session.NewDefaultSqlSession(f.Log, f.transaction, executor.NewSimpleExecutor(f.transaction), false)
+    tx := transaction.NewMysqlTransaction(f.ds, f.db)
+    return session.NewDefaultSqlSession(f.Log, tx, executor.NewSimpleExecutor(tx), false)
 }
 
 func (f *DefaultFactory) LogFunc() logging.LogFunc {

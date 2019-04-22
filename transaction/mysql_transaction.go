@@ -11,9 +11,13 @@ package transaction
 import (
     "database/sql"
     _ "github.com/go-sql-driver/mysql"
+    "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/connection"
     "github.com/xfali/gobatis/datasource"
     "github.com/xfali/gobatis/errors"
+    "github.com/xfali/gobatis/handler"
+    "github.com/xfali/gobatis/statement"
+    "github.com/xfali/gobatis/util"
 )
 
 type MysqlTransaction struct {
@@ -22,23 +26,21 @@ type MysqlTransaction struct {
     tx *sql.Tx
 }
 
-func NewMysqlTransaction(ds datasource.DataSource, maxConn, maxIdleConn int) *MysqlTransaction {
-    db, err := sql.Open(ds.DriverName(), ds.Url())
-    db.SetMaxOpenConns(maxConn)
-    db.SetMaxIdleConns(maxIdleConn)
-    if err != nil {
-        return nil
-    }
+func NewMysqlTransaction(ds datasource.DataSource, db *sql.DB) *MysqlTransaction {
     ret := &MysqlTransaction{ds: ds, db: db}
     return ret
 }
 
 func (trans *MysqlTransaction) GetConnection() connection.Connection {
-    return (*connection.MysqlConnection)(trans.db)
+    if trans.tx == nil {
+        return (*connection.MysqlConnection)(trans.db)
+    } else {
+        return &TansactionConnection{tx: trans.tx}
+    }
 }
 
 func (trans *MysqlTransaction) Close() {
-    trans.db.Close()
+
 }
 
 func (trans *MysqlTransaction) Begin() error {
@@ -72,4 +74,73 @@ func (trans *MysqlTransaction) Rollback() error {
         return errors.TRANSACTION_COMMIT_ERROR
     }
     return nil
+}
+
+type TansactionConnection struct {
+    tx *sql.Tx
+}
+
+type TransactionStatement struct {
+    tx  *sql.Tx
+    sql string
+}
+
+func (c *TansactionConnection) Prepare(sqlStr string) (statement.Statement, error) {
+    ret := &TransactionStatement{
+        tx:  c.tx,
+        sql: sqlStr,
+    }
+    return ret, nil
+}
+
+func (c *TansactionConnection)Query(handler handler.ResultHandler, iterFunc gobatis.IterFunc, sqlStr string, params ...interface{}) error {
+    db := c.tx
+    rows, err := db.Query(sqlStr, params...)
+    if err != nil {
+        return errors.STATEMENT_QUERY_ERROR
+    }
+    defer rows.Close()
+
+    util.ScanRows(rows, handler, iterFunc)
+    return nil
+}
+
+func (c *TansactionConnection)Exec(sqlStr string, params ...interface{}) (int64, error) {
+    db := c.tx
+    result, err := db.Exec(sqlStr, params...)
+    if err != nil {
+        return 0, errors.STATEMENT_QUERY_ERROR
+    }
+    ret, err := result.RowsAffected()
+    if err != nil {
+        return 0, errors.STATEMENT_QUERY_ERROR
+    }
+    return ret, nil
+}
+
+func (s *TransactionStatement) Query(handler handler.ResultHandler, iterFunc gobatis.IterFunc, params ...interface{}) error {
+    rows, err := s.tx.Query(s.sql, params...)
+    if err != nil {
+        return errors.STATEMENT_QUERY_ERROR
+    }
+    defer rows.Close()
+
+    util.ScanRows(rows, handler, iterFunc)
+    return nil
+}
+
+func (s *TransactionStatement) Exec(params ...interface{}) (int64, error) {
+    result, err := s.tx.Exec(s.sql, params...)
+    if err != nil {
+        return 0, errors.STATEMENT_QUERY_ERROR
+    }
+    ret, err := result.RowsAffected()
+    if err != nil {
+        return 0, errors.STATEMENT_QUERY_ERROR
+    }
+    return ret, nil
+}
+
+func (s *TransactionStatement) Close() {
+
 }

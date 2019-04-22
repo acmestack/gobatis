@@ -10,11 +10,10 @@ package session
 
 import (
     "fmt"
-    "github.com/xfali/gobatis/connection"
+    "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/executor"
     "github.com/xfali/gobatis/handler"
     "github.com/xfali/gobatis/logging"
-    "github.com/xfali/gobatis/statement"
     "github.com/xfali/gobatis/transaction"
 )
 
@@ -67,13 +66,9 @@ func (sess *DefaultSqlSession) Select(handler handler.ResultHandler, sql string,
     return ret, nil
 }
 
-func convertIterFunc(iterFunc IterFunc) connection.IterFunc {
-    return connection.IterFunc(iterFunc)
-}
-
-func (sess *DefaultSqlSession) Query(handler handler.ResultHandler, iterFunc IterFunc, sql string, params ...interface{}) error {
+func (sess *DefaultSqlSession) Query(handler handler.ResultHandler, iterFunc gobatis.IterFunc, sql string, params ...interface{}) error {
     sess.logLastSql(sql, params...)
-    return sess.executor.Query(sess.getStatement(sql, handler, convertIterFunc(iterFunc)), params...)
+    return sess.executor.Query(sess.getStatement(sql, handler, iterFunc), params...)
 }
 
 func (sess *DefaultSqlSession) Insert(sql string, params ...interface{}) int64 {
@@ -92,7 +87,7 @@ func (sess *DefaultSqlSession) Delete(sql string, params ...interface{}) int64 {
 }
 
 func (sess *DefaultSqlSession) Begin() {
-    sess.logLastSql("Commit", "")
+    sess.logLastSql("Begin", "")
     sess.tx.Begin()
 }
 
@@ -110,8 +105,8 @@ func (sess *DefaultSqlSession) logLastSql(sql string, params ...interface{}) {
     sess.Log(logging.INFO, "sql: [%s], param: %s", sql, fmt.Sprint(params))
 }
 
-func (sess *DefaultSqlSession) getStatement(sql string, handler handler.ResultHandler, iterFunc connection.IterFunc) *statement.MappedStatement {
-    return &statement.MappedStatement{Sql: sql, ResultHandler: handler, IterFunc: iterFunc}
+func (sess *DefaultSqlSession) getStatement(sql string, handler handler.ResultHandler, iterFunc gobatis.IterFunc) *executor.ExecParam {
+    return &executor.ExecParam{Sql: sql, ResultHandler: handler, IterFunc: iterFunc}
 }
 
 func (sess *DefaultSqlSession) exec(sql string, params ...interface{}) int64 {

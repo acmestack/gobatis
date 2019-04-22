@@ -8,14 +8,12 @@
 
 package executor
 
-import "github.com/xfali/gobatis/statement"
-
 type Executor interface {
     Close(rollback bool)
 
-    Query(statement *statement.MappedStatement, params ... interface{}) error
+    Query(statement *ExecParam, params ... interface{}) error
 
-    Exec(statement *statement.MappedStatement, params ... interface{}) (int64, error)
+    Exec(statement *ExecParam, params ... interface{}) (int64, error)
 
     Begin() error
 

@@ -14,6 +14,7 @@ import (
 )
 
 type Factory interface {
+    Init() error
     CreateSession() session.Session
     LogFunc() logging.LogFunc
 }

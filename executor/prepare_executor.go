@@ -13,16 +13,16 @@ import (
     "github.com/xfali/gobatis/transaction"
 )
 
-type SimpleExecutor struct {
+type PrepareExecutor struct {
     transaction transaction.Transaction
     closed      bool
 }
 
-func NewSimpleExecutor(transaction transaction.Transaction) *SimpleExecutor {
-    return &SimpleExecutor{transaction: transaction}
+func NewPrepareExecutor(transaction transaction.Transaction) *PrepareExecutor {
+    return &PrepareExecutor{transaction: transaction}
 }
 
-func (exec *SimpleExecutor) Close(rollback bool) {
+func (exec *PrepareExecutor) Close(rollback bool) {
     defer func() {
         if exec.transaction != nil {
             exec.transaction.Close()
@@ -36,7 +36,7 @@ func (exec *SimpleExecutor) Close(rollback bool) {
     }
 }
 
-func (exec *SimpleExecutor) Query(execParam *ExecParam, params ...interface{}) error {
+func (exec *PrepareExecutor) Query(execParam *ExecParam, params ...interface{}) error {
     if exec.closed {
         return  errors.EXECUTOR_QUERY_ERROR
     }
@@ -46,10 +46,16 @@ func (exec *SimpleExecutor) Query(execParam *ExecParam, params ...interface{}) e
         return errors.EXECUTOR_GET_CONNECTION_ERROR
     }
 
-    return conn.Query(execParam.ResultHandler, execParam.IterFunc, execParam.Sql, params...)
+    //FIXME: stmt must be close, use stmtCache instead
+    stmt, err := conn.Prepare(execParam.Sql)
+    defer stmt.Close()
+    if err != nil {
+        return err
+    }
+    return stmt.Query(execParam.ResultHandler, execParam.IterFunc, params...)
 }
 
-func (exec *SimpleExecutor) Exec(execParam *ExecParam, params ...interface{}) (int64, error) {
+func (exec *PrepareExecutor) Exec(execParam *ExecParam, params ...interface{}) (int64, error) {
     if exec.closed {
         return 0, errors.EXECUTOR_QUERY_ERROR
     }
@@ -59,10 +65,17 @@ func (exec *SimpleExecutor) Exec(execParam *ExecParam, params ...interface{}) (i
         return 0, errors.EXECUTOR_GET_CONNECTION_ERROR
     }
 
-    return conn.Exec(execParam.Sql, params...)
+    //FIXME: stmt must be close, use stmtCache instead
+    stmt, err := conn.Prepare(execParam.Sql)
+    defer stmt.Close()
+
+    if err != nil {
+        return 0, err
+    }
+    return stmt.Exec(params...)
 }
 
-func (exec *SimpleExecutor) Begin() error {
+func (exec *PrepareExecutor) Begin() error {
     if exec.closed {
         return errors.EXECUTOR_BEGIN_ERROR
     }
@@ -70,7 +83,7 @@ func (exec *SimpleExecutor) Begin() error {
     return exec.transaction.Begin()
 }
 
-func (exec *SimpleExecutor) Commit(require bool) error {
+func (exec *PrepareExecutor) Commit(require bool) error {
     if exec.closed {
         return errors.EXECUTOR_COMMIT_ERROR
     }
@@ -82,7 +95,7 @@ func (exec *SimpleExecutor) Commit(require bool) error {
     return nil
 }
 
-func (exec *SimpleExecutor) Rollback(require bool) error {
+func (exec *PrepareExecutor) Rollback(require bool) error {
     if !exec.closed {
         if require {
             return exec.transaction.Rollback()

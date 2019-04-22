@@ -9,15 +9,9 @@
 package session
 
 import (
+    "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/handler"
 )
-
-//参数
-//  idx:迭代数
-//  bean:序列化后的值
-//返回值:
-//  打断迭代返回true
-type IterFunc func(idx int64, bean interface{}) bool
 
 type Session interface {
     Close(rollback bool)
@@ -26,7 +20,7 @@ type Session interface {
 
     Select(handler handler.ResultHandler, sql string, params ...interface{}) ([]interface{}, error)
 
-    Query(handler handler.ResultHandler, iterFunc IterFunc, sql string, params ...interface{}) error
+    Query(handler handler.ResultHandler, iterFunc gobatis.IterFunc, sql string, params ...interface{}) error
 
     Insert(sql string, params ...interface{}) int64
 

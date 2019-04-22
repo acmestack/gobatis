@@ -8,16 +8,14 @@
 
 package connection
 
-import "github.com/xfali/gobatis/handler"
-
-type IterFunc func(idx int64, bean interface{}) bool
-
-type Statement interface {
-    Query(handler handler.ResultHandler, iterFunc IterFunc, params ...interface{}) error
-    Exec(params ...interface{}) (int64, error)
-    Close()
-}
+import (
+    "github.com/xfali/gobatis"
+    "github.com/xfali/gobatis/handler"
+    "github.com/xfali/gobatis/statement"
+)
 
 type Connection interface {
-    Prepare(sql string) (Statement, error)
+    Prepare(sql string) (statement.Statement, error)
+    Query(handler handler.ResultHandler, iterFunc gobatis.IterFunc, sql string, params ...interface{}) error
+    Exec(sql string, params ...interface{}) (int64, error)
 }

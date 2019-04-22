@@ -29,6 +29,7 @@ var EXECUTOR_QUERY_ERROR *ErrCode = New("21003", "executor was closed when exec 
 var EXECUTOR_GET_CONNECTION_ERROR *ErrCode = New("21003", "executor get connection error")
 var TRANSACTION_WITHOUT_BEGIN *ErrCode = New("22001", "Transaction without begin")
 var TRANSACTION_COMMIT_ERROR *ErrCode = New("22002", "Transaction commit error")
+var TRANSACTION_BUSINESS_ERROR *ErrCode = New("22003", "Business error in transaction")
 var CONNECTION_PREPARE_ERROR *ErrCode = New("23001", "Connection prepare error")
 var STATEMENT_QUERY_ERROR *ErrCode = New("24001", "statement query error")
 var STATEMENT_EXEC_ERROR *ErrCode = New("24002", "statement exec error")

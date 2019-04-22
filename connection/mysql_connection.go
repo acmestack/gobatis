@@ -10,14 +10,17 @@ package connection
 
 import (
     "database/sql"
+    "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/errors"
     "github.com/xfali/gobatis/handler"
+    "github.com/xfali/gobatis/statement"
+    "github.com/xfali/gobatis/util"
 )
 
 type MysqlConnection sql.DB
 type MysqlStatement sql.Stmt
 
-func (c *MysqlConnection) Prepare(sqlStr string) (Statement, error) {
+func (c *MysqlConnection) Prepare(sqlStr string) (statement.Statement, error) {
     db := (*sql.DB)(c)
     s, err := db.Prepare(sqlStr)
     if err != nil {
@@ -26,7 +29,32 @@ func (c *MysqlConnection) Prepare(sqlStr string) (Statement, error) {
     return (*MysqlStatement)(s), nil
 }
 
-func (s *MysqlStatement) Query(handler handler.ResultHandler, iterFunc IterFunc, params ...interface{}) error {
+func (c *MysqlConnection)Query(handler handler.ResultHandler, iterFunc gobatis.IterFunc, sqlStr string, params ...interface{}) error {
+    db := (*sql.DB)(c)
+    rows, err := db.Query(sqlStr, params...)
+    if err != nil {
+        return errors.STATEMENT_QUERY_ERROR
+    }
+    defer rows.Close()
+
+    util.ScanRows(rows, handler, iterFunc)
+    return nil
+}
+
+func (c *MysqlConnection)Exec(sqlStr string, params ...interface{}) (int64, error) {
+    db := (*sql.DB)(c)
+    result, err := db.Exec(sqlStr, params...)
+    if err != nil {
+        return 0, errors.STATEMENT_QUERY_ERROR
+    }
+    ret, err := result.RowsAffected()
+    if err != nil {
+        return 0, errors.STATEMENT_QUERY_ERROR
+    }
+    return ret, nil
+}
+
+func (s *MysqlStatement) Query(handler handler.ResultHandler, iterFunc gobatis.IterFunc, params ...interface{}) error {
     stmt := (*sql.Stmt)(s)
     rows, err := stmt.Query(params...)
     if err != nil {
@@ -34,29 +62,7 @@ func (s *MysqlStatement) Query(handler handler.ResultHandler, iterFunc IterFunc,
     }
     defer rows.Close()
 
-    columns, _ := rows.Columns()
-    scanArgs := make([]interface{}, len(columns))
-    values := make([]interface{}, len(columns))
-
-    for j := range values {
-        scanArgs[j] = &values[j]
-    }
-    var index int64 = 0
-    for rows.Next() {
-        if err := rows.Scan(scanArgs...); err == nil {
-            //for _, col := range values {
-            //    logging.Debug("%v", col)
-            //}
-            result, err := handler.Deserialize(columns, values)
-            if err == nil {
-                stop := iterFunc(index, result)
-                if stop {
-                    break
-                }
-            }
-            index++
-        }
-    }
+    util.ScanRows(rows, handler, iterFunc)
     return nil
 }
 

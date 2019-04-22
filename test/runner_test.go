@@ -39,8 +39,8 @@ func TestSelectRunner(t *testing.T) {
         Log: logging.DefaultLogf,
     }
     fac.Init()
-    mgr := runner.NewSqlManager(&fac)
-    mgr.RegisterSql("queryTest", "select * from test_table where id = #{0}")
+    mgr := runner.NewSessionManager(&fac)
+    config.RegisterSql("queryTest", "select * from test_table where id = #{0}")
     config.RegisterModel(&testV)
     mgr.Select("queryTest").Param(1, 200, 300).Result(&testV)
 
@@ -63,8 +63,8 @@ func TestSelectRunner2(t *testing.T) {
         Log: logging.DefaultLogf,
     }
     fac.Init()
-    mgr := runner.NewSqlManager(&fac)
-    mgr.RegisterSql("queryTest", "select * from test_table limit 10")
+    mgr := runner.NewSessionManager(&fac)
+    config.RegisterSql("queryTest", "select * from test_table limit 10")
     config.RegisterModel(&testV)
     testList := []TestTable{}
     mgr.Select("queryTest").Param().Result(&testList)
@@ -90,8 +90,8 @@ func TestSelectRunner3(t *testing.T) {
         Log: logging.DefaultLogf,
     }
     fac.Init()
-    mgr := runner.NewSqlManager(&fac)
-    mgr.RegisterSql("queryTest", "select count(*) from test_table")
+    mgr := runner.NewSessionManager(&fac)
+    config.RegisterSql("queryTest", "select count(*) from test_table")
     config.RegisterModel(&testV)
     i := 0
     mgr.Select("queryTest").Param().Result(&i)
@@ -113,8 +113,8 @@ func TestInsertRunner(t *testing.T) {
         Log: logging.DefaultLogf,
     }
     fac.Init()
-    mgr := runner.NewSqlManager(&fac)
-    mgr.RegisterSql("insertTest", "insert into test_table (username, password) value(#{username}, #{password})")
+    mgr := runner.NewSessionManager(&fac)
+    config.RegisterSql("insertTest", "insert into test_table (username, password) value(#{username}, #{password})")
     config.RegisterModel(&testV)
     testV.Username = "test_user"
     testV.Password = "test_pw"
@@ -139,8 +139,8 @@ func TestUpdateRunner(t *testing.T) {
         Log: logging.DefaultLogf,
     }
     fac.Init()
-    mgr := runner.NewSqlManager(&fac)
-    mgr.RegisterSql("updateTest", "update test_table set username = #{username}, password = #{password} where id = 1")
+    mgr := runner.NewSessionManager(&fac)
+    config.RegisterSql("updateTest", "update test_table set username = #{username}, password = #{password} where id = 1")
     config.RegisterModel(&testV)
     testV.Username = "test_user"
     testV.Password = "test_pw"
@@ -165,8 +165,8 @@ func TestDeleteRunner(t *testing.T) {
         Log: logging.DefaultLogf,
     }
     fac.Init()
-    mgr := runner.NewSqlManager(&fac)
-    mgr.RegisterSql("deleteTest", "delete from test_table where username = #{username}, password = #{password}")
+    mgr := runner.NewSessionManager(&fac)
+    config.RegisterSql("deleteTest", "delete from test_table where username = #{username}, password = #{password}")
     config.RegisterModel(&testV)
     testV.Username = "test_user"
     testV.Password = "test_pw"

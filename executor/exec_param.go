@@ -6,15 +6,17 @@
  * Description: 
  */
 
-package statement
+package executor
 
 import (
     "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/handler"
 )
 
-type Statement interface {
-    Query(handler handler.ResultHandler, iterFunc gobatis.IterFunc, params ...interface{}) error
-    Exec(params ...interface{}) (int64, error)
-    Close()
+type ExecParam struct {
+    Type          int
+    Sql           string
+    ResultHandler handler.ResultHandler
+    IterFunc      gobatis.IterFunc
+
 }

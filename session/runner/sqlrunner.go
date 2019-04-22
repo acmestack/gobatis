@@ -9,6 +9,7 @@
 package runner
 
 import (
+    "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/config"
     "github.com/xfali/gobatis/errors"
     "github.com/xfali/gobatis/factory"
@@ -19,23 +20,29 @@ import (
     "reflect"
 )
 
-type SqlManager struct {
-    sqlmap  map[string]string
+type SessionManager struct {
     factory factory.Factory
 }
 
-func NewSqlManager(factory factory.Factory) *SqlManager {
-    return &SqlManager{sqlmap: map[string]string{}, factory: factory}
-}
-
-func (this *SqlManager) RegisterSql(sqlId string, sql string) *SqlManager {
-    this.sqlmap[sqlId] = sql
-    return this
+func NewSessionManager(factory factory.Factory) *SessionManager {
+    return &SessionManager{factory: factory}
 }
 
 type Runner interface {
     Param(params ...interface{}) Runner
     Result(bean interface{}) error
+}
+
+type RunnerFactory interface {
+    Select(sqlId string) Runner
+    Update(sqlId string) Runner
+    Delete(sqlId string) Runner
+    Insert(sqlId string) Runner
+}
+
+type OneSessRunnerFactory struct {
+    log     logging.LogFunc
+    session session.Session
 }
 
 type BaseRunner struct {
@@ -48,13 +55,13 @@ type BaseRunner struct {
 }
 
 type SelectIterRunner struct {
-    iterFunc session.IterFunc
+    iterFunc gobatis.IterFunc
     count    int64
     BaseRunner
 }
 
 type SelectRunner struct {
-    iterFunc session.IterFunc
+    iterFunc gobatis.IterFunc
     count    int64
     BaseRunner
 }
@@ -71,59 +78,88 @@ type DeleteRunner struct {
     BaseRunner
 }
 
-func (this *SqlManager) GetSql(sqlId string) string {
-    return this.sqlmap[sqlId]
+func getSql(sqlId string) string {
+    return config.FindSql(sqlId)
 }
 
-func (this *SqlManager) SelectWithIterFunc(sqlId string, iterFunc session.IterFunc) Runner {
+//使用一个session操作数据库
+func (this *SessionManager) One() RunnerFactory {
+    fac := &OneSessRunnerFactory{
+        log:     this.factory.LogFunc(),
+        session: this.factory.CreateSession(),
+    }
+    return fac
+}
+
+//每次操作数据库都新建一个session
+func (this *SessionManager) Each() RunnerFactory {
+    return this
+}
+
+//开启事务执行语句
+//返回true则提交，返回false回滚
+//抛出异常错误触发回滚
+func (this *SessionManager) Tx(txFunc func(factory RunnerFactory) bool) {
+    fac := &OneSessRunnerFactory{
+        log:     this.factory.LogFunc(),
+        session: this.factory.CreateSession(),
+    }
+    fac.session.Begin()
+    defer func() {
+        if r := recover(); r != nil {
+            fac.session.Rollback()
+            panic(r)
+        }
+    }()
+
+    if txFunc(fac) != true {
+        fac.session.Rollback()
+    } else {
+        fac.session.Commit()
+    }
+}
+
+func (this *SessionManager) SelectWithIterFunc(sqlId string, iterFunc gobatis.IterFunc) Runner {
     ret := &SelectIterRunner{}
     ret.action = sqlparser.SELECT
     ret.log = this.factory.LogFunc()
     ret.session = this.factory.CreateSession()
     ret.iterFunc = iterFunc
-    ret.sql = this.GetSql(sqlId)
+    ret.sql = getSql(sqlId)
     ret.this = ret
     return ret
 }
 
-func (this *SqlManager) Select(sqlId string) Runner {
-    ret := &SelectRunner{}
-    ret.action = sqlparser.SELECT
-    ret.log = this.factory.LogFunc()
-    ret.session = this.factory.CreateSession()
-    ret.sql = this.GetSql(sqlId)
-    ret.this = ret
-    return ret
+func (this *SessionManager) Select(sqlId string) Runner {
+    return createSelect(this.factory.LogFunc(), this.factory.CreateSession(), getSql(sqlId))
 }
 
-func (this *SqlManager) Update(sqlId string) Runner {
-    ret := &UpdateRunner{}
-    ret.action = sqlparser.UPDATE
-    ret.log = this.factory.LogFunc()
-    ret.session = this.factory.CreateSession()
-    ret.sql = this.GetSql(sqlId)
-    ret.this = ret
-    return ret
+func (this *SessionManager) Update(sqlId string) Runner {
+    return createUpdate(this.factory.LogFunc(), this.factory.CreateSession(), getSql(sqlId))
 }
 
-func (this *SqlManager) Delete(sqlId string) Runner {
-    ret := &DeleteRunner{}
-    ret.action = sqlparser.DELETE
-    ret.log = this.factory.LogFunc()
-    ret.session = this.factory.CreateSession()
-    ret.sql = this.GetSql(sqlId)
-    ret.this = ret
-    return ret
+func (this *SessionManager) Delete(sqlId string) Runner {
+    return createDelete(this.factory.LogFunc(), this.factory.CreateSession(), getSql(sqlId))
 }
 
-func (this *SqlManager) Insert(sqlId string) Runner {
-    ret := &InsertRunner{}
-    ret.action = sqlparser.INSERT
-    ret.log = this.factory.LogFunc()
-    ret.session = this.factory.CreateSession()
-    ret.sql = this.GetSql(sqlId)
-    ret.this = ret
-    return ret
+func (this *SessionManager) Insert(sqlId string) Runner {
+    return createInsert(this.factory.LogFunc(), this.factory.CreateSession(), getSql(sqlId))
+}
+
+func (this *OneSessRunnerFactory) Select(sqlId string) Runner {
+    return createSelect(this.log, this.session, getSql(sqlId))
+}
+
+func (this *OneSessRunnerFactory) Update(sqlId string) Runner {
+    return createUpdate(this.log, this.session, getSql(sqlId))
+}
+
+func (this *OneSessRunnerFactory) Delete(sqlId string) Runner {
+    return createDelete(this.log, this.session, getSql(sqlId))
+}
+
+func (this *OneSessRunnerFactory) Insert(sqlId string) Runner {
+    return createInsert(this.log, this.session, getSql(sqlId))
 }
 
 func (this *BaseRunner) Param(params ...interface{}) Runner {
@@ -152,7 +188,6 @@ func (this *BaseRunner) Param(params ...interface{}) Runner {
     }
     return this.this
 }
-
 
 func (this *BaseRunner) params(params ...interface{}) Runner {
     this.metadata = nil
@@ -386,4 +421,44 @@ func (this *BaseRunner) ResultBad(bean interface{}) *BaseRunner {
         break
     }
     return this
+}
+
+func createSelect(log logging.LogFunc, session session.Session, sqlStr string) Runner {
+    ret := &SelectRunner{}
+    ret.action = sqlparser.SELECT
+    ret.log = log
+    ret.session = session
+    ret.sql = sqlStr
+    ret.this = ret
+    return ret
+}
+
+func createUpdate(log logging.LogFunc, session session.Session, sqlStr string) Runner {
+    ret := &UpdateRunner{}
+    ret.action = sqlparser.UPDATE
+    ret.log = log
+    ret.session = session
+    ret.sql = sqlStr
+    ret.this = ret
+    return ret
+}
+
+func createDelete(log logging.LogFunc, session session.Session, sqlStr string) Runner {
+    ret := &DeleteRunner{}
+    ret.action = sqlparser.DELETE
+    ret.log = log
+    ret.session = session
+    ret.sql = sqlStr
+    ret.this = ret
+    return ret
+}
+
+func createInsert(log logging.LogFunc, session session.Session, sqlStr string) Runner {
+    ret := &InsertRunner{}
+    ret.action = sqlparser.INSERT
+    ret.log = log
+    ret.session = session
+    ret.sql = sqlStr
+    ret.this = ret
+    return ret
 }

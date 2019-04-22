@@ -161,6 +161,10 @@ func IsSimpleType(bean interface{}) bool {
 }
 
 func SetValue(f reflect.Value, v interface{}) bool {
+    if v == nil {
+        return false
+    }
+
     hasAssigned := false
     rawValue := reflect.Indirect(reflect.ValueOf(v))
     rawValueType := reflect.TypeOf(rawValue.Interface())
