@@ -65,18 +65,18 @@ func shortFile(file string) string {
 }
 
 func Debug(format string, args ...interface{}) {
-    Log(DEBUG, format, args)
+    Log(DEBUG, format, args...)
 }
 
 func Info(format string, args ...interface{}) {
-    Log(DEBUG, format, args)
+    Log(INFO, format, args...)
 }
 func Warn(format string, args ...interface{}) {
-    Log(DEBUG, format, args)
+    Log(WARN, format, args...)
 }
 func Error(format string, args ...interface{}) {
-    Log(DEBUG, format, args)
+    Log(ERROR, format, args...)
 }
 func Fatal(format string, args ...interface{}) {
-    Log(DEBUG, format, args)
+    Log(FATAL, format, args...)
 }
