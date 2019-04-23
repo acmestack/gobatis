@@ -8,7 +8,18 @@
 
 package xml
 
+import "encoding/xml"
+
+type DynamicData struct {
+    CharData string
+    If       []If    `xml:"if"`
+    Include  Include `xml:"include"`
+    Set      Set     `xml:"set"`
+    Where    Where   `xml:"where"`
+}
+
 type Select struct {
+    XMLName       xml.Name
     Id            string `xml:"id,attr"`
     ParameterType string `xml:"parameterType,attr"`
     ParameterMap  string `xml:"parameterMap,attr"`
@@ -21,13 +32,15 @@ type Select struct {
     StatementType string `xml:"statementType,attr"`
     ResultSetType string `xml:"resultSetType,attr"`
 
-    Include Include `xml:"include"`
-    Where   Where   `xml:"where"`
-    Data    string  `xml:",chardata"`
-    //Data    string  `xml:",innerxml"`
+    //If       []If    `xml:"if"`
+    //Include Include `xml:"include"`
+    //Where   Where   `xml:"where"`
+    //Data    string  `xml:",chardata"`
+    Data string `xml:",innerxml"`
 }
 
 type Insert struct {
+    XMLName          xml.Name
     Id               string `xml:"id,attr"`
     ParameterType    string `xml:"parameterType,attr"`
     FlushCache       string `xml:"flushCache,attr"`
@@ -37,33 +50,40 @@ type Insert struct {
     KeyProperty      string `xml:"keyProperty,attr"`
     KeyColumn        string `xml:"keyColumn,attr"`
 
-    Include Include `xml:"include"`
-    Where   Where   `xml:"where"`
-    Data    string  `xml:",chardata"`
+    //If       []If    `xml:"if"`
+    //Include Include `xml:"include"`
+    //Where   Where   `xml:"where"`
+    //Data    string  `xml:",chardata"`
+    Data string `xml:",innerxml"`
 }
 
 type Update struct {
+    XMLName       xml.Name
     Id            string `xml:"id,attr"`
     ParameterType string `xml:"parameterType,attr"`
     FlushCache    string `xml:"flushCache,attr"`
     Timeout       string `xml:"timeout,attr"`
     StatementType string `xml:"statementType,attr"`
 
-    Include Include `xml:"include"`
-    Set     Set     `xml:"set"`
-    Where   Where   `xml:"where"`
-
-    Data string `xml:",chardata"`
+    //If       []If    `xml:"if"`
+    //Include Include `xml:"include"`
+    //Set     Set     `xml:"set"`
+    //Where   Where   `xml:"where"`
+    //Data    string  `xml:",chardata"`
+    Data string `xml:",innerxml"`
 }
 
 type Delete struct {
+    XMLName       xml.Name
     Id            string `xml:"id,attr"`
     ParameterType string `xml:"parameterType,attr"`
     FlushCache    string `xml:"flushCache,attr"`
     Timeout       string `xml:"timeout,attr"`
     StatementType string `xml:"statementType,attr"`
 
-    Include Include `xml:"include"`
-    Where   Where   `xml:"where"`
-    Data    string  `xml:",chardata"`
+    //If       []If    `xml:"if"`
+    //Include Include `xml:"include"`
+    //Where   Where   `xml:"where"`
+    //Data    string  `xml:",chardata"`
+    Data string `xml:",innerxml"`
 }

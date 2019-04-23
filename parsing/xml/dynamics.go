@@ -9,9 +9,12 @@
 package xml
 
 type Foreach struct {
-    Item      string `xml:"item, attr"`
-    List      string `xml:"list, attr"`
-    Separator string `xml:"separator, attr"`
+    Item       string `xml:"item,attr"`
+    Collection string `xml:"collection,attr"`
+    Separator  string `xml:"separator,attr"`
+    Index      string `xml:"index,attr"`
+    Open       string `xml:"open,attr"`
+    Close      string `xml:"close,attr"`
 }
 
 type Sql struct {

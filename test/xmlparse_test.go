@@ -10,13 +10,13 @@ package test
 
 import (
     "github.com/xfali/gobatis/parsing/xml"
-    "os"
     "testing"
 )
 
 func TestXml(t *testing.T) {
-    xmlFile := os.Getenv("xmlFile")
-    m, err := xml.ParseFile(xmlFile)
+    //xmlFile := os.Getenv("xmlFile")
+    //m, err := xml.ParseFile(xmlFile)
+    m, err := xml.Parse([]byte(test_xml))
     if err != nil {
         t.Fatal(err)
     }
@@ -25,8 +25,9 @@ func TestXml(t *testing.T) {
 }
 
 func TestXmlFormat(t *testing.T) {
-    xmlFile := os.Getenv("xmlFile")
-    m, err := xml.ParseFile(xmlFile)
+    //xmlFile := os.Getenv("xmlFile")
+    //m, err := xml.ParseFile(xmlFile)
+    m, err := xml.Parse([]byte(test_xml))
     if err != nil {
         t.Fatal(err)
     }
