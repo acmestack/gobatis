@@ -10,14 +10,6 @@ package xml
 
 import "encoding/xml"
 
-type DynamicData struct {
-    CharData string
-    If       []If    `xml:"if"`
-    Include  Include `xml:"include"`
-    Set      Set     `xml:"set"`
-    Where    Where   `xml:"where"`
-}
-
 type Select struct {
     XMLName       xml.Name
     Id            string `xml:"id,attr"`
@@ -86,4 +78,8 @@ type Delete struct {
     //Where   Where   `xml:"where"`
     //Data    string  `xml:",chardata"`
     Data string `xml:",innerxml"`
+}
+
+func (a *Select) ParseDynamic() {
+
 }

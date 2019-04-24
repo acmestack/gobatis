@@ -23,31 +23,43 @@ type Mapper struct {
     Delete []Delete `xml:"delete"`
 }
 
-func (m *Mapper) Format() map[string]string {
-    ret := map[string]string{}
+func (m *Mapper) Format() map[string]*DynamicData {
+    ret := map[string]*DynamicData{}
     for _, v := range m.Insert {
         if d, ok := ret[v.Id]; ok {
             logging.Warn("Insert Sql id is duplicates, id: %s, before: %s, after %s\n", v.Id, d, v.Data)
         }
-        ret[v.Id] = strings.TrimSpace(v.Data)
+        d, err := ParseDynamic(strings.TrimSpace(v.Data), m.Sql)
+        if err == nil {
+            ret[v.Id] = d
+        }
     }
     for _, v := range m.Update {
         if d, ok := ret[v.Id]; ok {
             logging.Warn("Update Sql id is duplicates, id: %s, before: %s, after %s\n", v.Id, d, v.Data)
         }
-        ret[v.Id] = strings.TrimSpace(v.Data)
+        d, err := ParseDynamic(strings.TrimSpace(v.Data), m.Sql)
+        if err == nil {
+            ret[v.Id] = d
+        }
     }
     for _, v := range m.Select {
         if d, ok := ret[v.Id]; ok {
             logging.Warn("Select Sql id is duplicates, id: %s, before: %s, after %s\n", v.Id, d, v.Data)
         }
-        ret[v.Id] = strings.TrimSpace(v.Data)
+        d, err := ParseDynamic(strings.TrimSpace(v.Data), m.Sql)
+        if err == nil {
+            ret[v.Id] = d
+        }
     }
     for _, v := range m.Delete {
         if d, ok := ret[v.Id]; ok {
             logging.Warn("Delete Sql id is duplicates, id: %s, before: %s, after %s\n", v.Id, d, v.Data)
         }
-        ret[v.Id] = strings.TrimSpace(v.Data)
+        d, err := ParseDynamic(strings.TrimSpace(v.Data), m.Sql)
+        if err == nil {
+            ret[v.Id] = d
+        }
     }
     return ret
 }

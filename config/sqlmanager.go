@@ -38,7 +38,7 @@ func RegisterMapperFile(file string) {
     }
     ret := mapper.Format()
     for k, v := range ret {
-        g_sql_mgr.sqlMap[k] = v
+        g_sql_mgr.sqlMap[k] = v.OriginData
     }
 }
 

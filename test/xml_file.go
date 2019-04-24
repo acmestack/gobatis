@@ -31,10 +31,10 @@ var test_xml = `
         SELECT count()* FROM PERSON
         <where>
             <if test="#{id} != nil">
-                id = #{id}
+                name = #{name}
             </if>
         </where>
-        and name = #{name}
+        and id &lt; #{id}
     </select>
 
     <select
