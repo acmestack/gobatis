@@ -10,10 +10,8 @@ package xml
 
 import (
     "encoding/xml"
-    "fmt"
     "github.com/xfali/gobatis/logging"
-    "github.com/xfali/gobatis/reflection"
-    "reflect"
+    "github.com/xfali/gobatis/parsing"
     "strings"
     "unicode"
 )
@@ -56,22 +54,6 @@ type Set struct {
     If []If `xml:"if"`
 }
 
-type DynamicData struct {
-    OriginData string
-    //If       []If    `xml:"if"`
-    //Include  Include `xml:"include"`
-    //Set      Set     `xml:"set"`
-    //Where    Where   `xml:"where"`
-
-    dynamicElemMap map[string]DynamicElement
-}
-
-type GetFunc func(key string) string
-
-type DynamicElement interface {
-    Format(func(key string) string) string
-}
-
 //传入方法必须是通过参数名获得参数值
 func (de *Sql) Format(getFunc func(key string) string) string {
     //TODO: 增加变量支持
@@ -107,15 +89,15 @@ func (de *If) Format(getFunc func(key string) string) string {
     return ""
 }
 
-func Compare(src string, getFcun func(key string) string) bool {
+func Compare(src string, getFunc func(key string) string) bool {
     params := strings.Split(src, " ")
     if len(params) > 2 {
-        value := getFcun(params[0])
+        value := getFunc(params[0])
         if value == "" {
             value = "nil"
         }
         switch params[1] {
-        case "=":
+        case "==":
             if value == params[2] {
                 return true
             }
@@ -140,27 +122,56 @@ func (de *Include) Format(getFunc func(key string) string) string {
 func (de *Set) Format(getFunc func(key string) string) string {
     ret := strings.Builder{}
     if len(de.If) > 0 {
-        ret.WriteString(" set ")
+        //ret.WriteString(" set ")
+        add := false
         for i := range de.If {
-            ret.WriteString(de.If[i].Format(getFunc))
-            ret.WriteString(" ")
+            ifStr := de.If[i].Format(getFunc)
+            if ifStr != "" {
+                if add {
+                    ret.WriteString(",")
+                }
+
+                if ifStr[len(ifStr)-1:] == "," {
+                    ret.WriteString(ifStr[:len(ifStr)-1])
+                }
+                add = true
+            }
         }
     }
-    return ret.String()
+    retStr := ret.String()
+    if retStr != "" {
+        retStr = " set " + retStr
+    }
+    return retStr
 }
 
 //传入方法必须是通过参数名获得参数值
 func (de *Where) Format(getFunc func(key string) string) string {
     ret := strings.Builder{}
     if len(de.If) > 0 {
-        ret.WriteString(" where ")
-        //FIXME: where 不会自动移除第一个元素的AND和OR，该特性后续添加
+        set := false
+        //ret.WriteString(" where ")
         for i := range de.If {
-            ret.WriteString(de.If[i].Format(getFunc))
-            ret.WriteString(" ")
+            ifStr := de.If[i].Format(getFunc)
+            if ifStr != "" {
+                if !set {
+                    if strings.ToLower(ifStr[:3]) == "or " {
+                        ifStr = strings.TrimSpace(ifStr[3:])
+                    } else if strings.ToLower(ifStr[:4]) == "and " {
+                        ifStr = strings.TrimSpace(ifStr[4:])
+                    }
+                    set = true
+                }
+                ret.WriteString(ifStr)
+                ret.WriteString(" ")
+            }
         }
     }
-    return ret.String()
+    retStr := ret.String()
+    if retStr != "" {
+        retStr = " where " + retStr
+    }
+    return retStr
 }
 
 func escape(src string) string {
@@ -174,7 +185,7 @@ func escape(src string) string {
 
 type typeProcessor interface {
     EndStr() string
-    Parse(src string) DynamicElement
+    Parse(src string) parsing.DynamicElement
 }
 
 type IfProcessor string
@@ -193,7 +204,7 @@ func (d IfProcessor) EndStr() string {
     return "</" + string(d) + ">"
 }
 
-func (d IfProcessor) Parse(src string) DynamicElement {
+func (d IfProcessor) Parse(src string) parsing.DynamicElement {
     v := If{}
     if xml.Unmarshal([]byte(src), &v) != nil {
         logging.Warn("parse if element failed")
@@ -205,7 +216,7 @@ func (d WhereProcessor) EndStr() string {
     return "</" + string(d) + ">"
 }
 
-func (d WhereProcessor) Parse(src string) DynamicElement {
+func (d WhereProcessor) Parse(src string) parsing.DynamicElement {
     v := Where{}
     if xml.Unmarshal([]byte(src), &v) != nil {
         logging.Warn("parse if element failed")
@@ -217,7 +228,7 @@ func (d SetProcessor) EndStr() string {
     return "</" + string(d) + ">"
 }
 
-func (d SetProcessor) Parse(src string) DynamicElement {
+func (d SetProcessor) Parse(src string) parsing.DynamicElement {
     v := Set{}
     if xml.Unmarshal([]byte(src), &v) != nil {
         logging.Warn("parse if element failed")
@@ -229,7 +240,7 @@ func (d IncludeProcessor) EndStr() string {
     return "</" + string(d) + ">"
 }
 
-func (d IncludeProcessor) Parse(src string) DynamicElement {
+func (d IncludeProcessor) Parse(src string) parsing.DynamicElement {
     v := Include{}
     if xml.Unmarshal([]byte(src), &v) != nil {
         logging.Warn("parse if element failed")
@@ -237,11 +248,11 @@ func (d IncludeProcessor) Parse(src string) DynamicElement {
     return &v
 }
 
-func ParseDynamic(src string, sqls []Sql) (*DynamicData, error) {
+func ParseDynamic(src string, sqls []Sql) (*parsing.DynamicData, error) {
     src = escape(src)
 
     start, end := -1, -1
-    ret := &DynamicData{OriginData: src, dynamicElemMap: map[string]DynamicElement{}}
+    ret := &parsing.DynamicData{OriginData: src, DynamicElemMap: map[string]parsing.DynamicElement{}}
     strData := []rune(src)
     for i := 0; i < len(strData); {
         r := strData[i]
@@ -277,7 +288,7 @@ func ParseDynamic(src string, sqls []Sql) (*DynamicData, error) {
                     if include, ok := de.(*Include); ok {
                         findSql(include, sqls)
                     }
-                    ret.dynamicElemMap[saveStr] = de
+                    ret.DynamicElemMap[saveStr] = de
                     i = start + index + 1 + len(endStr)
                     start, end = -1, -1
                     continue
@@ -288,70 +299,6 @@ func ParseDynamic(src string, sqls []Sql) (*DynamicData, error) {
         i++
     }
     return ret, nil
-}
-
-func (m *DynamicData) Replace(params ...interface{}) string {
-    if len(params) == 0 {
-        return m.OriginData
-    }
-
-    var getFunc func(string) string
-    paramMap := map[string]string{}
-    var paramStr string
-    if len(params) == 1 {
-        t := reflect.TypeOf(params[0])
-        if t.Kind() == reflect.Ptr {
-            t = t.Elem()
-        }
-        if t.Kind() == reflect.Struct {
-            ti, err := reflection.GetTableInfo(params[0])
-            if err != nil {
-                logging.Info("%s", err.Error())
-                return m.OriginData
-            }
-            objParams := ti.MapValue()
-            getFunc = func(s string) string {
-                if o, ok := objParams[s]; ok {
-                    var str string
-                    reflection.SetValue(reflect.ValueOf(str), o)
-                    return str
-                }
-                return ""
-            }
-        } else {
-            if reflection.IsSimpleType(params[0]) {
-                reflection.SetValue(reflect.ValueOf(paramStr), params[0])
-                paramMap["${0}"] = paramStr
-                getFunc = func(s string) string {
-                    return paramMap[s]
-                }
-            }
-        }
-    } else {
-        objParams := map[string]interface{}{}
-        for i, v := range params {
-            if !reflection.IsSimpleType(v) {
-                logging.Warn("Param error: expect simple type, but get other type")
-                return m.OriginData
-            }
-            key := fmt.Sprintf("${%d}", i)
-            objParams[key] = v
-        }
-        getFunc = func(s string) string {
-            if o, ok := objParams[s]; ok {
-                var str string
-                reflection.SetValue(reflect.ValueOf(str), o)
-                return str
-            }
-            return ""
-        }
-    }
-
-    ret := m.OriginData
-    for k, v := range m.dynamicElemMap {
-        ret = strings.Replace(ret, k, v.Format(getFunc), -1)
-    }
-    return ret
 }
 
 func findSql(include *Include, sqls []Sql) {

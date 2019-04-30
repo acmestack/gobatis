@@ -9,7 +9,7 @@
 package test
 
 var test_xml = `
-<mapper namespace="com.baoxian.dao.UserInfoMapper">
+<mapper namespace="test.UserInfoMapper">
     <select
             id="selectPerson"
             parameterType="int"
@@ -43,7 +43,7 @@ var test_xml = `
         SELECT <include refid="select_field"></include> FROM PERSON
         <where>
             <if test="#{id} != nil">
-                id = #{id}
+                and id = #{id}
             </if>
         </where>
         and name = #{name}

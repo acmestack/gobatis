@@ -10,8 +10,10 @@ package reflection
 
 import (
     "encoding/json"
+    "fmt"
     "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/errors"
+    "github.com/xfali/gobatis/logging"
     "reflect"
     "strconv"
     "strings"
@@ -160,6 +162,24 @@ func IsSimpleType(bean interface{}) bool {
     return false
 }
 
+func checkBeanValue(beanValue reflect.Value) bool {
+    if beanValue.Kind() != reflect.Ptr {
+        return false
+    } else if beanValue.Elem().Kind() == reflect.Ptr {
+        return false
+    }
+    return true
+}
+
+func SafeSetValue(f reflect.Value, v interface{}) bool {
+    if !checkBeanValue(f) {
+        logging.Info("value cannot be set")
+        return false
+    }
+    f = f.Elem()
+    return SetValue(f, v)
+}
+
 func SetValue(f reflect.Value, v interface{}) bool {
     if v == nil {
         return false
@@ -198,6 +218,29 @@ func SetValue(f reflect.Value, v interface{}) bool {
                 f.SetString(string(d))
             }
             break
+        case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
+            hasAssigned = true
+            f.SetString(strconv.FormatUint(vv.Uint(), 10))
+            break
+        case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+            hasAssigned = true
+            f.SetString(strconv.FormatInt(vv.Int(), 10))
+            break
+        case reflect.Float64:
+            hasAssigned = true
+            f.SetString(strconv.FormatFloat(vv.Float(), 'g', -1, 64))
+            break
+        case reflect.Float32:
+            hasAssigned = true
+            f.SetString(strconv.FormatFloat(vv.Float(), 'g', -1, 32))
+            break
+        case reflect.Bool:
+            hasAssigned = true
+            f.SetString(strconv.FormatBool(vv.Bool()))
+            break
+        default:
+            hasAssigned = true
+            f.SetString(fmt.Sprintf("%v", v))
         }
         break
     case reflect.Complex64, reflect.Complex128:

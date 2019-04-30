@@ -10,12 +10,14 @@ package xml
 
 import (
     "github.com/xfali/gobatis/logging"
+    "github.com/xfali/gobatis/parsing"
     "strings"
 )
 
 type Mapper struct {
-    Namespace string `xml:"namespace,attr"`
-    Sql       []Sql  `xml:"sql"`
+    Namespace  string      `xml:"namespace,attr"`
+    ResultMaps []ResultMap `xml:"resultMap"`
+    Sql        []Sql       `xml:"sql"`
 
     Insert []Insert `xml:"insert"`
     Update []Update `xml:"update"`
@@ -23,8 +25,8 @@ type Mapper struct {
     Delete []Delete `xml:"delete"`
 }
 
-func (m *Mapper) Format() map[string]*DynamicData {
-    ret := map[string]*DynamicData{}
+func (m *Mapper) Format() map[string]*parsing.DynamicData {
+    ret := map[string]*parsing.DynamicData{}
     for _, v := range m.Insert {
         if d, ok := ret[v.Id]; ok {
             logging.Warn("Insert Sql id is duplicates, id: %s, before: %s, after %s\n", v.Id, d, v.Data)

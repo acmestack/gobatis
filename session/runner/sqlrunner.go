@@ -14,6 +14,7 @@ import (
     "github.com/xfali/gobatis/errors"
     "github.com/xfali/gobatis/factory"
     "github.com/xfali/gobatis/logging"
+    "github.com/xfali/gobatis/parsing"
     "github.com/xfali/gobatis/parsing/sqlparser"
     "github.com/xfali/gobatis/reflection"
     "github.com/xfali/gobatis/session"
@@ -46,12 +47,12 @@ type OneSessRunnerFactory struct {
 }
 
 type BaseRunner struct {
-    session  session.Session
-    sql      string
-    action   string
-    metadata *sqlparser.Metadata
-    log      logging.LogFunc
-    this     Runner
+    session        session.Session
+    sqlDynamicData parsing.DynamicData
+    action         string
+    metadata       *sqlparser.Metadata
+    log            logging.LogFunc
+    this           Runner
 }
 
 type SelectIterRunner struct {
@@ -78,12 +79,18 @@ type DeleteRunner struct {
     BaseRunner
 }
 
-func getSql(sqlId string) string {
-    return config.FindSql(sqlId)
+func getSql(sqlId string) *parsing.DynamicData {
+    ret := config.FindSql(sqlId)
+    //FIXME: 当没有查找到sqlId对应的sql语句，则尝试使用sqlId直接操作数据库
+    //该设计可能需要设计一个更合理的方式
+    if ret == nil {
+        return &parsing.DynamicData{OriginData: sqlId}
+    }
+    return ret
 }
 
 //使用一个session操作数据库
-func (this *SessionManager) One() RunnerFactory {
+func (this *SessionManager) Unique() RunnerFactory {
     fac := &OneSessRunnerFactory{
         log:     this.factory.LogFunc(),
         session: this.factory.CreateSession(),
@@ -125,7 +132,7 @@ func (this *SessionManager) SelectWithIterFunc(sqlId string, iterFunc gobatis.It
     ret.log = this.factory.LogFunc()
     ret.session = this.factory.CreateSession()
     ret.iterFunc = iterFunc
-    ret.sql = getSql(sqlId)
+    ret.sqlDynamicData = *getSql(sqlId)
     ret.this = ret
     return ret
 }
@@ -191,7 +198,9 @@ func (this *BaseRunner) Param(params ...interface{}) Runner {
 
 func (this *BaseRunner) params(params ...interface{}) Runner {
     this.metadata = nil
-    md, err := sqlparser.ParseWithParams(this.sql, params...)
+    //TODO: 使用缓存加速，避免每次都生成动态sql
+    sqlStr := this.sqlDynamicData.ReplaceWithParams(params...)
+    md, err := sqlparser.ParseWithParams(sqlStr, params...)
     if err == nil {
         if this.action == md.Action {
             this.metadata = md
@@ -212,7 +221,9 @@ func (this *BaseRunner) paramType(paramVar interface{}) Runner {
         return this.this
     }
     params := ti.MapValue()
-    md, err := sqlparser.ParseWithParamMap(this.sql, params)
+    //TODO: 使用缓存加速，避免每次都生成动态sql
+    sqlStr := this.sqlDynamicData.ReplaceWithMap(params)
+    md, err := sqlparser.ParseWithParamMap(sqlStr, params)
     if err == nil {
         if this.action == md.Action {
             this.metadata = md
@@ -423,42 +434,42 @@ func (this *BaseRunner) ResultBad(bean interface{}) *BaseRunner {
     return this
 }
 
-func createSelect(log logging.LogFunc, session session.Session, sqlStr string) Runner {
+func createSelect(log logging.LogFunc, session session.Session, sqlDynamic *parsing.DynamicData) Runner {
     ret := &SelectRunner{}
     ret.action = sqlparser.SELECT
     ret.log = log
     ret.session = session
-    ret.sql = sqlStr
+    ret.sqlDynamicData = *sqlDynamic
     ret.this = ret
     return ret
 }
 
-func createUpdate(log logging.LogFunc, session session.Session, sqlStr string) Runner {
+func createUpdate(log logging.LogFunc, session session.Session, sqlDynamic *parsing.DynamicData) Runner {
     ret := &UpdateRunner{}
     ret.action = sqlparser.UPDATE
     ret.log = log
     ret.session = session
-    ret.sql = sqlStr
+    ret.sqlDynamicData = *sqlDynamic
     ret.this = ret
     return ret
 }
 
-func createDelete(log logging.LogFunc, session session.Session, sqlStr string) Runner {
+func createDelete(log logging.LogFunc, session session.Session, sqlDynamic *parsing.DynamicData) Runner {
     ret := &DeleteRunner{}
     ret.action = sqlparser.DELETE
     ret.log = log
     ret.session = session
-    ret.sql = sqlStr
+    ret.sqlDynamicData = *sqlDynamic
     ret.this = ret
     return ret
 }
 
-func createInsert(log logging.LogFunc, session session.Session, sqlStr string) Runner {
+func createInsert(log logging.LogFunc, session session.Session, sqlDynamic *parsing.DynamicData) Runner {
     ret := &InsertRunner{}
     ret.action = sqlparser.INSERT
     ret.log = log
     ret.session = session
-    ret.sql = sqlStr
+    ret.sqlDynamicData = *sqlDynamic
     ret.this = ret
     return ret
 }

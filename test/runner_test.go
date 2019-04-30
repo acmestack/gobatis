@@ -19,6 +19,7 @@ import (
 
 type TestTable struct {
     TestTable gobatis.ModelName "test_table"
+    Id        int64             `xfield:"id"`
     Username  string            `xfield:"username"`
     Password  string            `xfield:"password"`
 }
@@ -173,4 +174,115 @@ func TestDeleteRunner(t *testing.T) {
     i := 0
     mgr.Delete("deleteTest").Param(testV).Result(&i)
     t.Logf("delete %d\n", i)
+}
+
+func TestDynamicSelectRunner(t *testing.T) {
+    var testV TestTable
+    fac := factory.DefaultFactory{
+        Host:     "localhost",
+        Port:     3306,
+        DBName:   "test",
+        Username: "root",
+        Password: "123",
+        Charset:  "utf8",
+
+        MaxConn:     1000,
+        MaxIdleConn: 500,
+
+        Log: logging.DefaultLogf,
+    }
+    fac.Init()
+    mgr := runner.NewSessionManager(&fac)
+    config.RegisterSql("deleteTest", `select id from test_table 
+        <where> 
+            <if test="">
+            username = #{username}, password = #{password}
+        </where>`)
+    config.RegisterModel(&testV)
+    testV.Username = "test_user"
+    testV.Password = "test_pw"
+    i := 0
+    mgr.Delete("deleteTest").Param(testV).Result(&i)
+    t.Logf("delete %d\n", i)
+}
+
+func TestTx1(t *testing.T) {
+    fac := factory.DefaultFactory{
+        Host:     "localhost",
+        Port:     3306,
+        DBName:   "test",
+        Username: "root",
+        Password: "123",
+        Charset:  "utf8",
+
+        MaxConn:     1000,
+        MaxIdleConn: 500,
+
+        Log: logging.DefaultLogf,
+    }
+    fac.Init()
+    mgr := runner.NewSessionManager(&fac)
+    testV := TestTable{
+        Username:"testuser",
+        Password:"testpw",
+    }
+    config.RegisterModel(&testV)
+    config.RegisterSql("insert_id", "insert into test_table (username, password) value (#{username}, #{password})")
+    config.RegisterSql("select_id", "select * from test_table")
+
+    var testList []TestTable
+
+    mgr.Tx(func(factory runner.RunnerFactory) bool {
+        ret := 0
+        factory.Insert("insert_id").Param(testV).Result(&ret)
+        t.Logf("ret %d\n", ret)
+        factory.Select("select_id").Param().Result(&testList)
+        for _, v := range  testList {
+            t.Logf("data: %v", v)
+        }
+        //commit
+        return true
+    })
+}
+
+func TestTx2(t *testing.T) {
+    fac := factory.DefaultFactory{
+        Host:     "localhost",
+        Port:     3306,
+        DBName:   "test",
+        Username: "root",
+        Password: "123",
+        Charset:  "utf8",
+
+        MaxConn:     1000,
+        MaxIdleConn: 500,
+
+        Log: logging.DefaultLogf,
+    }
+    fac.Init()
+    mgr := runner.NewSessionManager(&fac)
+    testV := TestTable{
+        Username:"testuser",
+        Password:"testpw",
+    }
+    config.RegisterModel(&testV)
+    config.RegisterSql("insert_id", "insert into test_table (username, password) value (#{username}, #{password})")
+    config.RegisterSql("select_id", "select * from test_table")
+
+    var testList []TestTable
+
+    mgr.Tx(func(factory runner.RunnerFactory) bool {
+        ret := 0
+        factory.Insert("insert_id").Param(testV).Result(&ret)
+        t.Logf("ret %d\n", ret)
+        factory.Select("select_id").Param().Result(&testList)
+        for _, v := range  testList {
+            t.Logf("data: %v", v)
+        }
+        //rollback
+        panic("ROLLBACK panic!!")
+
+        //rollback
+        return false
+    })
 }
