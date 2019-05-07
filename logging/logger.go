@@ -23,21 +23,30 @@ const (
     FATAL
 )
 
-var LOG_TAG map[int]string = map[int]string{}
+var gLogTag map[int]string = map[int]string{}
+var gLogLevel = INFO
 
 func init() {
-    LOG_TAG[DEBUG] = "[Debug]"
-    LOG_TAG[INFO] = "[Info]"
-    LOG_TAG[WARN] = "[Warn]"
-    LOG_TAG[ERROR] = "[Error]"
-    LOG_TAG[FATAL] = "[Fatal]"
+    gLogTag[DEBUG] = "[Debug]"
+    gLogTag[INFO] = "[Info]"
+    gLogTag[WARN] = "[Warn]"
+    gLogTag[ERROR] = "[Error]"
+    gLogTag[FATAL] = "[Fatal]"
 }
 
 type LogFunc func(level int, format string, args ...interface{})
 
 var Log LogFunc = DefaultLogf
 
+func SetLevel(level int) {
+    gLogLevel = level
+}
+
 func DefaultLogf(level int, format string, args ...interface{}) {
+    if gLogLevel > level {
+        return
+    }
+
     logInfo := fmt.Sprintf(format, args...)
     var file string
     var line int
@@ -47,7 +56,7 @@ func DefaultLogf(level int, format string, args ...interface{}) {
         file = "???"
         line = 0
     }
-    log.Printf("%s %s:%d %s", LOG_TAG[level], shortFile(file), line, logInfo)
+    log.Printf("%s %s:%d %s", gLogTag[level], shortFile(file), line, logInfo)
     if level >= FATAL {
         os.Exit(-1)
     }

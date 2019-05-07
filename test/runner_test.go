@@ -43,7 +43,7 @@ func TestSelectRunner(t *testing.T) {
     mgr := runner.NewSessionManager(&fac)
     config.RegisterSql("queryTest", "select * from test_table where id = #{0}")
     config.RegisterModel(&testV)
-    mgr.Select("queryTest").Param(1, 200, 300).Result(&testV)
+    mgr.NewSession().Select("queryTest").Param(1, 200, 300).Result(&testV)
 
     t.Logf("%v %v", testV.Username, testV.Password)
 }
@@ -68,7 +68,7 @@ func TestSelectRunner2(t *testing.T) {
     config.RegisterSql("queryTest", "select * from test_table limit 10")
     config.RegisterModel(&testV)
     testList := []TestTable{}
-    mgr.Select("queryTest").Param().Result(&testList)
+    mgr.NewSession().Select("queryTest").Param().Result(&testList)
 
     for _, v := range testList {
         t.Logf("%v %v", v.Username, v.Password)
@@ -95,7 +95,7 @@ func TestSelectRunner3(t *testing.T) {
     config.RegisterSql("queryTest", "select count(*) from test_table")
     config.RegisterModel(&testV)
     i := 0
-    mgr.Select("queryTest").Param().Result(&i)
+    mgr.NewSession().Select("queryTest").Param().Result(&i)
 }
 
 func TestInsertRunner(t *testing.T) {
@@ -120,7 +120,7 @@ func TestInsertRunner(t *testing.T) {
     testV.Username = "test_user"
     testV.Password = "test_pw"
     i := 0
-    mgr.Insert("insertTest").Param(testV).Result(&i)
+    mgr.NewSession().Insert("insertTest").Param(testV).Result(&i)
     t.Logf("insert %d\n", i)
 }
 
@@ -146,7 +146,7 @@ func TestUpdateRunner(t *testing.T) {
     testV.Username = "test_user"
     testV.Password = "test_pw"
     i := 0
-    mgr.Update("updateTest").Param(testV).Result(&i)
+    mgr.NewSession().Update("updateTest").Param(testV).Result(&i)
     t.Logf("update %d\n", i)
 }
 
@@ -172,7 +172,7 @@ func TestDeleteRunner(t *testing.T) {
     testV.Username = "test_user"
     testV.Password = "test_pw"
     i := 0
-    mgr.Delete("deleteTest").Param(testV).Result(&i)
+    mgr.NewSession().Delete("deleteTest").Param(testV).Result(&i)
     t.Logf("delete %d\n", i)
 }
 
@@ -202,7 +202,7 @@ func TestDynamicSelectRunner(t *testing.T) {
     testV.Username = "test_user"
     testV.Password = "test_pw"
     i := 0
-    mgr.Delete("deleteTest").Param(testV).Result(&i)
+    mgr.NewSession().Delete("deleteTest").Param(testV).Result(&i)
     t.Logf("delete %d\n", i)
 }
 
@@ -232,11 +232,11 @@ func TestTx1(t *testing.T) {
 
     var testList []TestTable
 
-    mgr.Tx(func(factory runner.RunnerFactory) bool {
+    mgr.NewSession().Tx(func(session *runner.RunnerSession) bool {
         ret := 0
-        factory.Insert("insert_id").Param(testV).Result(&ret)
+        session.Insert("insert_id").Param(testV).Result(&ret)
         t.Logf("ret %d\n", ret)
-        factory.Select("select_id").Param().Result(&testList)
+        session.Select("select_id").Param().Result(&testList)
         for _, v := range  testList {
             t.Logf("data: %v", v)
         }
@@ -271,11 +271,11 @@ func TestTx2(t *testing.T) {
 
     var testList []TestTable
 
-    mgr.Tx(func(factory runner.RunnerFactory) bool {
+    mgr.NewSession().Tx(func(session *runner.RunnerSession) bool {
         ret := 0
-        factory.Insert("insert_id").Param(testV).Result(&ret)
+        session.Insert("insert_id").Param(testV).Result(&ret)
         t.Logf("ret %d\n", ret)
-        factory.Select("select_id").Param().Result(&testList)
+        session.Select("select_id").Param().Result(&testList)
         for _, v := range  testList {
             t.Logf("data: %v", v)
         }

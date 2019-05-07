@@ -39,26 +39,26 @@ func TestSql1(t *testing.T) {
     mgr := runner.NewSessionManager(&fac)
 
     ret := 0
-    mgr.Select("selectCount").Param(testV).Result(&ret)
+    mgr.NewSession().Select("selectCount").Param(testV).Result(&ret)
     t.Logf("ret = %d\n", ret)
 
     dataList := []TestTable{}
-    mgr.Select("selectUser").Param(testV).Result(&dataList)
+    mgr.NewSession().Select("selectUser").Param(testV).Result(&dataList)
     for _, v := range dataList {
         t.Logf("select data: %v\n", v)
     }
 
-    mgr.Insert("insertUser").Param(testV).Result(&ret)
+    mgr.NewSession().Insert("insertUser").Param(testV).Result(&ret)
     t.Logf("insert ret = %d\n", ret)
 
-    mgr.Update("updateUser").Param(testV).Result(&ret)
+    mgr.NewSession().Update("updateUser").Param(testV).Result(&ret)
     t.Logf("update ret = %d\n", ret)
 
-    mgr.Delete("deleteUser").Param(testV).Result(&ret)
+    mgr.NewSession().Delete("deleteUser").Param(testV).Result(&ret)
     t.Logf("deleteUser ret = %d\n", ret)
 
-    mgr.Tx(func(factory runner.RunnerFactory) bool {
-        mgr.Insert("insertUser").Param(testV).Result(&ret)
+    mgr.NewSession().Tx(func(session *runner.RunnerSession) bool {
+        session.Insert("insertUser").Param(testV).Result(&ret)
         //commit
         return true
     })
@@ -86,6 +86,6 @@ func TestMain2(t *testing.T) {
     fac.Init()
     mgr := runner.NewSessionManager(&fac)
 
-    mgr.Select("select * from test_table where id = ${0}").Param(100).Result(&testV)
+    mgr.NewSession().Select("select * from test_table where id = ${0}").Param(100).Result(&testV)
     t.Logf("ret = %v\n", testV)
 }

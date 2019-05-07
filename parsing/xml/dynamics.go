@@ -133,6 +133,8 @@ func (de *Set) Format(getFunc func(key string) string) string {
 
                 if ifStr[len(ifStr)-1:] == "," {
                     ret.WriteString(ifStr[:len(ifStr)-1])
+                } else {
+                    ret.WriteString(ifStr)
                 }
                 add = true
             }
@@ -271,7 +273,7 @@ func ParseDynamic(src string, sqls []Sql) (*parsing.DynamicData, error) {
             if index != -1 {
                 subStr = subStr[:index]
             }
-            logging.Debug("Found element : %s\n", subStr)
+            //logging.Debug("Found element : %s\n", subStr)
             if typeProcessor, ok := gProcessorMap[subStr]; ok {
                 subStr = src[start:]
                 endStr := typeProcessor.EndStr()
@@ -283,7 +285,7 @@ func ParseDynamic(src string, sqls []Sql) (*parsing.DynamicData, error) {
                     continue
                 } else {
                     saveStr := subStr[:index+len(endStr)]
-                    logging.Debug("save element : %s\n", saveStr)
+                    //logging.Debug("save element : %s\n", saveStr)
                     de := typeProcessor.Parse(saveStr)
                     if include, ok := de.(*Include); ok {
                         findSql(include, sqls)

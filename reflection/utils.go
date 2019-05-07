@@ -156,7 +156,7 @@ func IsSimpleType(bean interface{}) bool {
     t := reflect.TypeOf(bean)
     switch t.Kind() {
     case IntKind, Int8Kind, Int16Kind, Int32Kind, Int64Kind, UintKind, Uint8Kind, Uint16Kind, Uint32Kind, Uint64Kind,
-    Float32Kind, Float64Kind, Complex64Kind, Complex128Kind, StringKind, BoolKind, ByteKind, BytesKind, TimeKind:
+        Float32Kind, Float64Kind, Complex64Kind, Complex128Kind, StringKind, BoolKind, ByteKind, BytesKind, TimeKind:
         return true
     }
     return false
@@ -238,6 +238,18 @@ func SetValue(f reflect.Value, v interface{}) bool {
             hasAssigned = true
             f.SetString(strconv.FormatBool(vv.Bool()))
             break
+        //case reflect.Struct:
+        //    if ti, ok := v.(time.Time); ok {
+        //        hasAssigned = true
+        //        if ti.IsZero() {
+        //            f.SetString("")
+        //        } else {
+        //            f.SetString(ti.String())
+        //        }
+        //    } else {
+        //        hasAssigned = true
+        //        f.SetString(fmt.Sprintf("%v", v))
+        //    }
         default:
             hasAssigned = true
             f.SetString(fmt.Sprintf("%v", v))

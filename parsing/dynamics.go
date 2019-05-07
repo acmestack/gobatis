@@ -14,6 +14,7 @@ import (
     "github.com/xfali/gobatis/reflection"
     "reflect"
     "strings"
+    "time"
 )
 
 type GetFunc func(key string) string
@@ -102,6 +103,14 @@ func (m *DynamicData) ReplaceWithMap(objParams map[string]interface{}) string {
 
     getFunc := func(s string) string {
         if o, ok := objParams[s]; ok {
+            //zero time convert to empty string (for <if> </if> element)
+            if ti, ok := o.(time.Time); ok {
+                if ti.IsZero() {
+                    return ""
+                } else {
+                    return ti.String()
+                }
+            }
             var str string
             reflection.SafeSetValue(reflect.ValueOf(&str), o)
             return str
