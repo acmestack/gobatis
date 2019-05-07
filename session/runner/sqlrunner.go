@@ -30,7 +30,12 @@ func NewSessionManager(factory factory.Factory) *SessionManager {
 }
 
 type Runner interface {
+    //参数
+    //注意：如果没有参数也必须调用
+    //如果参数个数为1并且为struct，将解析struct获得参数
+    //如果参数个数大于1并且全部为简单类型，或则个数为1且为简单类型，则使用这些参数
     Param(params ...interface{}) Runner
+    //获得结果
     Result(bean interface{}) error
 }
 
