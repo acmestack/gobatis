@@ -12,6 +12,7 @@ import (
     "github.com/xfali/gobatis/config"
     "github.com/xfali/gobatis/parsing/xml"
     "testing"
+    "time"
 )
 
 func TestXml(t *testing.T) {
@@ -163,6 +164,74 @@ func TestXmlDynamic5(t *testing.T) {
 
     testV.Username = ""
     t.Logf("arg testV error_user: %s\n", m.Replace(testV))
+}
+
+func TestXmlDynamicIf0(t *testing.T) {
+    src := `SELECT * FROM test_table
+            <if test="{0} != nil">
+                where id = #{0}
+            </if> `
+    m, err := xml.ParseDynamic(src, nil)
+    if err != nil {
+        t.Fatal(err)
+    }
+
+    t.Logf("arg nil : %s\n", m.Replace(""))
+
+    t.Logf("arg 0 : %s\n", m.Replace(0))
+
+    t.Logf("arg 1 : %s\n", m.Replace(1))
+}
+
+func TestXmlDynamicIf1(t *testing.T) {
+    src := `SELECT * FROM test_table
+            <if test="{0} != nil and {0} != 0">
+                where id = #{0}
+            </if> `
+    m, err := xml.ParseDynamic(src, nil)
+    if err != nil {
+        t.Fatal(err)
+    }
+
+    t.Logf("arg nil : %s\n", m.Replace(""))
+
+    t.Logf("arg 0 : %s\n", m.Replace(0))
+
+    t.Logf("arg 1 : %s\n", m.Replace(1))
+}
+
+func TestXmlDynamicIf2(t *testing.T) {
+    src := `SELECT * FROM test_table
+            <if test="{0} != nil or {0} != 0">
+                where id = #{0}
+            </if> `
+    m, err := xml.ParseDynamic(src, nil)
+    if err != nil {
+        t.Fatal(err)
+    }
+
+    t.Logf("arg nil : %s\n", m.Replace(""))
+
+    t.Logf("arg 0 : %s\n", m.Replace(0))
+
+    t.Logf("arg 1 : %s\n", m.Replace(1))
+}
+
+func TestXmlDynamicIf3(t *testing.T) {
+    src := `SELECT * FROM test_table
+            <if test="{0} != nil">
+                where id = #{0}
+            </if> `
+    m, err := xml.ParseDynamic(src, nil)
+    if err != nil {
+        t.Fatal(err)
+    }
+
+    t.Logf("arg nil : %s\n", m.Replace(""))
+
+    t.Logf("arg zero time : %s\n", m.Replace(time.Time{}))
+
+    t.Logf("arg now : %s\n", m.Replace(time.Now()))
 }
 
 func TestXml0(t *testing.T) {

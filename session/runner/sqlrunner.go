@@ -149,12 +149,11 @@ func (this *BaseRunner) Param(params ...interface{}) Runner {
         if t.Kind() == reflect.Ptr {
             t = t.Elem()
         }
+        if reflection.IsSimpleType(params[0]) {
+            return this.params(params...)
+        }
         if t.Kind() == reflect.Struct {
             return this.paramType(params[0])
-        } else {
-            if reflection.IsSimpleType(params[0]) {
-                return this.params(params...)
-            }
         }
     } else {
         for _, v := range params {

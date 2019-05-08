@@ -38,12 +38,11 @@ func (m *DynamicData) Replace(params ...interface{}) string {
         if t.Kind() == reflect.Ptr {
             t = t.Elem()
         }
+        if reflection.IsSimpleType(params[0]) {
+            return m.ReplaceWithParams(params...)
+        }
         if t.Kind() == reflect.Struct {
             return m.ReplaceWithBean(params[0])
-        } else {
-            if reflection.IsSimpleType(params[0]) {
-                return m.ReplaceWithParams(params...)
-            }
         }
     } else {
         objParams := map[string]interface{}{}

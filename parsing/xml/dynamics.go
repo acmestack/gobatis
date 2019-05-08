@@ -63,7 +63,14 @@ func (de *Sql) Format(getFunc func(key string) string) string {
 //传入方法必须是通过参数名获得参数值
 func (de *If) Format(getFunc func(key string) string) string {
     andStrs := strings.Split(de.Test, " and ")
-    if len(andStrs) != 0 {
+    orStrs := strings.Split(de.Test, " or ")
+
+    if len(andStrs) > 1 && len(orStrs) > 1 {
+        logging.Warn(`error format. <if> element cannot both include " and " and " or "`)
+        return ""
+    }
+
+    if len(andStrs) != 0 && len(orStrs) < 2{
         for _, v := range andStrs {
             ret := Compare(v, getFunc)
             if ret != true {
@@ -73,7 +80,6 @@ func (de *If) Format(getFunc func(key string) string) string {
         return strings.TrimSpace(de.Date)
     }
 
-    orStrs := strings.Split(de.Test, " or ")
     ret := false
     if len(orStrs) != 0 {
         for _, v := range orStrs {

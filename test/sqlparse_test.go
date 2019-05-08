@@ -13,6 +13,7 @@ import (
     "github.com/xfali/gobatis/parsing/sqlparser"
     "github.com/xfali/gobatis/reflection"
     "testing"
+    "time"
 )
 
 func TestSqlParser1(t *testing.T) {
@@ -184,6 +185,24 @@ func TestSqlParserWithParamMap4(t *testing.T) {
     params["tablename"] = ti.Name
 
     ret, _ := sqlparser.ParseWithParamMap(sqlStr, params)
+    t.Log(ret.String())
+    if ret.Action != sqlparser.SELECT {
+        t.Fail()
+    }
+}
+
+func TestSqlParserWithTime1(t *testing.T) {
+    sqlStr := "SELECT * from test_table WHERE time = ${0}"
+    ret, _ := sqlparser.ParseWithParams(sqlStr, time.Time{})
+    t.Log(ret.String())
+    if ret.Action != sqlparser.SELECT {
+        t.Fail()
+    }
+}
+
+func TestSqlParserWithTime2(t *testing.T) {
+    sqlStr := "SELECT * from test_table WHERE time > #{0}"
+    ret, _ := sqlparser.ParseWithParams(sqlStr, time.Time{})
     t.Log(ret.String())
     if ret.Action != sqlparser.SELECT {
         t.Fail()
