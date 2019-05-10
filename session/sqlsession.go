@@ -9,24 +9,25 @@
 package session
 
 import (
+    "context"
     "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/handler"
 )
 
-type Session interface {
+type SqlSession interface {
     Close(rollback bool)
 
-    SelectOne(handler handler.ResultHandler, sql string, params ...interface{}) (interface{}, error)
+    SelectOne(ctx context.Context, handler handler.ResultHandler, sql string, params ...interface{}) (interface{}, error)
 
-    Select(handler handler.ResultHandler, sql string, params ...interface{}) ([]interface{}, error)
+    Select(ctx context.Context, handler handler.ResultHandler, sql string, params ...interface{}) ([]interface{}, error)
 
-    Query(handler handler.ResultHandler, iterFunc gobatis.IterFunc, sql string, params ...interface{}) error
+    Query(ctx context.Context, handler handler.ResultHandler, iterFunc gobatis.IterFunc, sql string, params ...interface{}) error
 
-    Insert(sql string, params ...interface{}) int64
+    Insert(ctx context.Context, sql string, params ...interface{}) (int64, int64, error)
 
-    Update(sql string, params ...interface{}) int64
+    Update(ctx context.Context, sql string, params ...interface{}) (int64, error)
 
-    Delete(sql string, params ...interface{}) int64
+    Delete(ctx context.Context, sql string, params ...interface{}) (int64, error)
 
     Begin()
 

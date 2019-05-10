@@ -15,6 +15,6 @@ import (
 
 type Factory interface {
     Init() error
-    CreateSession() session.Session
+    CreateSession() session.SqlSession
     LogFunc() logging.LogFunc
 }

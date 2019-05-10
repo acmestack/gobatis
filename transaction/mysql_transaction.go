@@ -9,9 +9,11 @@
 package transaction
 
 import (
+    "context"
     "database/sql"
     _ "github.com/go-sql-driver/mysql"
     "github.com/xfali/gobatis"
+    "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/connection"
     "github.com/xfali/gobatis/datasource"
     "github.com/xfali/gobatis/errors"
@@ -93,9 +95,9 @@ func (c *TansactionConnection) Prepare(sqlStr string) (statement.Statement, erro
     return ret, nil
 }
 
-func (c *TansactionConnection)Query(handler handler.ResultHandler, iterFunc gobatis.IterFunc, sqlStr string, params ...interface{}) error {
+func (c *TansactionConnection) Query(ctx context.Context, handler handler.ResultHandler, iterFunc gobatis.IterFunc, sqlStr string, params ...interface{}) error {
     db := c.tx
-    rows, err := db.Query(sqlStr, params...)
+    rows, err := db.QueryContext(ctx, sqlStr, params...)
     if err != nil {
         return errors.STATEMENT_QUERY_ERROR
     }
@@ -105,21 +107,13 @@ func (c *TansactionConnection)Query(handler handler.ResultHandler, iterFunc goba
     return nil
 }
 
-func (c *TansactionConnection)Exec(sqlStr string, params ...interface{}) (int64, error) {
+func (c *TansactionConnection) Exec(ctx context.Context, sqlStr string, params ...interface{}) (common.Result, error) {
     db := c.tx
-    result, err := db.Exec(sqlStr, params...)
-    if err != nil {
-        return 0, errors.STATEMENT_QUERY_ERROR
-    }
-    ret, err := result.RowsAffected()
-    if err != nil {
-        return 0, errors.STATEMENT_QUERY_ERROR
-    }
-    return ret, nil
+    return db.ExecContext(ctx, sqlStr, params...)
 }
 
-func (s *TransactionStatement) Query(handler handler.ResultHandler, iterFunc gobatis.IterFunc, params ...interface{}) error {
-    rows, err := s.tx.Query(s.sql, params...)
+func (s *TransactionStatement) Query(ctx context.Context, handler handler.ResultHandler, iterFunc gobatis.IterFunc, params ...interface{}) error {
+    rows, err := s.tx.QueryContext(ctx, s.sql, params...)
     if err != nil {
         return errors.STATEMENT_QUERY_ERROR
     }
@@ -129,18 +123,10 @@ func (s *TransactionStatement) Query(handler handler.ResultHandler, iterFunc gob
     return nil
 }
 
-func (s *TransactionStatement) Exec(params ...interface{}) (int64, error) {
-    result, err := s.tx.Exec(s.sql, params...)
-    if err != nil {
-        return 0, errors.STATEMENT_QUERY_ERROR
-    }
-    ret, err := result.RowsAffected()
-    if err != nil {
-        return 0, errors.STATEMENT_QUERY_ERROR
-    }
-    return ret, nil
+func (s *TransactionStatement) Exec(ctx context.Context, params ...interface{}) (common.Result, error) {
+    return s.tx.ExecContext(ctx, s.sql, params...)
 }
 
 func (s *TransactionStatement) Close() {
-
+    //Will be closed when commit or rollback
 }

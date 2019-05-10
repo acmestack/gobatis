@@ -9,13 +9,15 @@
 package connection
 
 import (
+    "context"
     "github.com/xfali/gobatis"
+    "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/handler"
     "github.com/xfali/gobatis/statement"
 )
 
 type Connection interface {
     Prepare(sql string) (statement.Statement, error)
-    Query(handler handler.ResultHandler, iterFunc gobatis.IterFunc, sql string, params ...interface{}) error
-    Exec(sql string, params ...interface{}) (int64, error)
+    Query(ctx context.Context, handler handler.ResultHandler, iterFunc gobatis.IterFunc, sql string, params ...interface{}) error
+    Exec(ctx context.Context, sql string, params ...interface{}) (common.Result, error)
 }

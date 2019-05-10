@@ -9,7 +9,11 @@
 package executor
 
 import (
+    "context"
+    "github.com/xfali/gobatis"
+    "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/errors"
+    "github.com/xfali/gobatis/handler"
     "github.com/xfali/gobatis/transaction"
 )
 
@@ -36,7 +40,7 @@ func (exec *PrepareExecutor) Close(rollback bool) {
     }
 }
 
-func (exec *PrepareExecutor) Query(execParam *ExecParam, params ...interface{}) error {
+func (exec *PrepareExecutor) Query(ctx context.Context, handler handler.ResultHandler, iterFunc gobatis.IterFunc, sql string, params ...interface{}) error {
     if exec.closed {
         return  errors.EXECUTOR_QUERY_ERROR
     }
@@ -47,32 +51,32 @@ func (exec *PrepareExecutor) Query(execParam *ExecParam, params ...interface{}) 
     }
 
     //FIXME: stmt must be close, use stmtCache instead
-    stmt, err := conn.Prepare(execParam.Sql)
+    stmt, err := conn.Prepare(sql)
     defer stmt.Close()
     if err != nil {
         return err
     }
-    return stmt.Query(execParam.ResultHandler, execParam.IterFunc, params...)
+    return stmt.Query(ctx, handler, iterFunc, params...)
 }
 
-func (exec *PrepareExecutor) Exec(execParam *ExecParam, params ...interface{}) (int64, error) {
+func (exec *PrepareExecutor) Exec(ctx context.Context, sql string, params ...interface{}) (common.Result, error) {
     if exec.closed {
-        return 0, errors.EXECUTOR_QUERY_ERROR
+        return nil, errors.EXECUTOR_QUERY_ERROR
     }
 
     conn := exec.transaction.GetConnection()
     if conn == nil {
-        return 0, errors.EXECUTOR_GET_CONNECTION_ERROR
+        return nil, errors.EXECUTOR_GET_CONNECTION_ERROR
     }
 
     //FIXME: stmt must be close, use stmtCache instead
-    stmt, err := conn.Prepare(execParam.Sql)
+    stmt, err := conn.Prepare(sql)
     defer stmt.Close()
 
     if err != nil {
-        return 0, err
+        return nil, err
     }
-    return stmt.Exec(params...)
+    return stmt.Exec(ctx, params...)
 }
 
 func (exec *PrepareExecutor) Begin() error {

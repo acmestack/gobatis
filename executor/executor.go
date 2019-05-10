@@ -8,12 +8,19 @@
 
 package executor
 
+import (
+    "context"
+    "github.com/xfali/gobatis"
+    "github.com/xfali/gobatis/common"
+    "github.com/xfali/gobatis/handler"
+)
+
 type Executor interface {
     Close(rollback bool)
 
-    Query(statement *ExecParam, params ... interface{}) error
+    Query(ctx context.Context, handler handler.ResultHandler, iterFunc gobatis.IterFunc, sql string, params ... interface{}) error
 
-    Exec(statement *ExecParam, params ... interface{}) (int64, error)
+    Exec(ctx context.Context, sql string, params ... interface{}) (common.Result, error)
 
     Begin() error
 

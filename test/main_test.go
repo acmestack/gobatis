@@ -57,7 +57,7 @@ func TestSql1(t *testing.T) {
     mgr.NewSession().Delete("deleteUser").Param(testV).Result(&ret)
     t.Logf("deleteUser ret = %d\n", ret)
 
-    mgr.NewSession().Tx(func(session *runner.RunnerSession) bool {
+    mgr.NewSession().Tx(func(session *runner.Session) bool {
         session.Insert("insertUser").Param(testV).Result(&ret)
         //commit
         return true

@@ -54,7 +54,7 @@ func (f *DefaultFactory) Init() error {
     return nil
 }
 
-func (f *DefaultFactory) CreateSession() session.Session {
+func (f *DefaultFactory) CreateSession() session.SqlSession {
     tx := transaction.NewMysqlTransaction(f.ds, f.db)
     return session.NewDefaultSqlSession(f.Log, tx, executor.NewSimpleExecutor(tx), false)
 }

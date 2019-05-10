@@ -9,6 +9,7 @@
 package runner
 
 import (
+    "context"
     "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/config"
     "github.com/xfali/gobatis/errors"
@@ -37,19 +38,22 @@ type Runner interface {
     Param(params ...interface{}) Runner
     //获得结果
     Result(bean interface{}) error
+    //最后插入的自增id
+    LastInsertId() int64
 }
 
-type RunnerSession struct {
+type Session struct {
     log     logging.LogFunc
-    session session.Session
+    session session.SqlSession
 }
 
 type BaseRunner struct {
-    session        session.Session
+    session        session.SqlSession
     sqlDynamicData parsing.DynamicData
     action         string
     metadata       *sqlparser.Metadata
     log            logging.LogFunc
+    ctx            context.Context
     this           Runner
 }
 
@@ -66,6 +70,7 @@ type SelectRunner struct {
 }
 
 type InsertRunner struct {
+    lastId int64
     BaseRunner
 }
 
@@ -88,8 +93,8 @@ func getSql(sqlId string) *parsing.DynamicData {
 }
 
 //使用一个session操作数据库
-func (this *SessionManager) NewSession() *RunnerSession {
-    return &RunnerSession{
+func (this *SessionManager) NewSession() *Session {
+    return &Session{
         log:     this.factory.LogFunc(),
         session: this.factory.CreateSession(),
     }
@@ -98,7 +103,7 @@ func (this *SessionManager) NewSession() *RunnerSession {
 //开启事务执行语句
 //返回true则提交，返回false回滚
 //抛出异常错误触发回滚
-func (this *RunnerSession) Tx(txFunc func(session *RunnerSession) bool) {
+func (this *Session) Tx(txFunc func(session *Session) bool) {
     this.session.Begin()
     defer func() {
         if r := recover(); r != nil {
@@ -114,7 +119,7 @@ func (this *RunnerSession) Tx(txFunc func(session *RunnerSession) bool) {
     }
 }
 
-func (this *RunnerSession) SelectWithIterFunc(sqlId string, iterFunc gobatis.IterFunc) Runner {
+func (this *Session) SelectWithIterFunc(sqlId string, iterFunc gobatis.IterFunc) Runner {
     ret := &SelectIterRunner{}
     ret.action = sqlparser.SELECT
     ret.log = this.log
@@ -125,20 +130,20 @@ func (this *RunnerSession) SelectWithIterFunc(sqlId string, iterFunc gobatis.Ite
     return ret
 }
 
-func (this *RunnerSession) Select(sqlId string) Runner {
-    return createSelect(this.log, this.session, getSql(sqlId))
+func (this *Session) Select(sql string) Runner {
+    return createSelect(this.log, this.session, getSql(sql))
 }
 
-func (this *RunnerSession) Update(sqlId string) Runner {
-    return createUpdate(this.log, this.session, getSql(sqlId))
+func (this *Session) Update(sql string) Runner {
+    return createUpdate(this.log, this.session, getSql(sql))
 }
 
-func (this *RunnerSession) Delete(sqlId string) Runner {
-    return createDelete(this.log, this.session, getSql(sqlId))
+func (this *Session) Delete(sql string) Runner {
+    return createDelete(this.log, this.session, getSql(sql))
 }
 
-func (this *RunnerSession) Insert(sqlId string) Runner {
-    return createInsert(this.log, this.session, getSql(sqlId))
+func (this *Session) Insert(sql string) Runner {
+    return createInsert(this.log, this.session, getSql(sql))
 }
 
 func (this *BaseRunner) Param(params ...interface{}) Runner {
@@ -164,6 +169,12 @@ func (this *BaseRunner) Param(params ...interface{}) Runner {
         }
         return this.params(params...)
     }
+    return this.this
+}
+
+//Context 设置执行的context
+func (this *BaseRunner) Context(ctx context.Context) Runner {
+    this.ctx = ctx
     return this.this
 }
 
@@ -227,7 +238,7 @@ func (this *SelectIterRunner) Result(bean interface{}) error {
         this.log(logging.WARN, errors.MODEL_NOT_REGISTER.Error())
         return errors.RESULT_NAME_NOT_FOUND
     }
-    return this.session.Query(mi, this.myIterFunc, this.metadata.PrepareSql, this.metadata.Params...)
+    return this.session.Query(this.ctx, mi, this.myIterFunc, this.metadata.PrepareSql, this.metadata.Params...)
 }
 
 func (this *SelectRunner) Result(bean interface{}) error {
@@ -258,7 +269,7 @@ func (this *SelectRunner) Result(bean interface{}) error {
             retV = reflect.Append(retV, reflect.ValueOf(bean))
             return false
         }
-        err := this.session.Query(mi, iterFunc, this.metadata.PrepareSql, this.metadata.Params...)
+        err := this.session.Query(this.ctx, mi, iterFunc, this.metadata.PrepareSql, this.metadata.Params...)
         if err == nil {
             rv.Set(retV)
         } else {
@@ -266,7 +277,7 @@ func (this *SelectRunner) Result(bean interface{}) error {
         }
         break
     default:
-        v, err := this.session.SelectOne(mi, this.metadata.PrepareSql, this.metadata.Params...)
+        v, err := this.session.SelectOne(this.ctx, mi, this.metadata.PrepareSql, this.metadata.Params...)
         if err == nil {
             retV := reflect.ValueOf(v)
             if retV.IsValid() {
@@ -296,11 +307,16 @@ func (this *InsertRunner) Result(bean interface{}) error {
             return err
         }
     }
-    i := this.session.Insert(this.metadata.PrepareSql, this.metadata.Params...)
+    i, id, err := this.session.Insert(this.ctx, this.metadata.PrepareSql, this.metadata.Params...)
+    this.lastId = id
     if bean != nil {
         reflection.SetValue(rv, i)
     }
-    return nil
+    return err
+}
+
+func (this *InsertRunner) LastInsertId() int64 {
+    return this.lastId
 }
 
 func (this *UpdateRunner) Result(bean interface{}) error {
@@ -317,11 +333,11 @@ func (this *UpdateRunner) Result(bean interface{}) error {
             return err
         }
     }
-    i := this.session.Update(this.metadata.PrepareSql, this.metadata.Params...)
+    i, err := this.session.Update(this.ctx, this.metadata.PrepareSql, this.metadata.Params...)
     if bean != nil {
         reflection.SetValue(rv, i)
     }
-    return nil
+    return err
 }
 
 func (this *DeleteRunner) Result(bean interface{}) error {
@@ -338,17 +354,21 @@ func (this *DeleteRunner) Result(bean interface{}) error {
             return err
         }
     }
-    i := this.session.Delete(this.metadata.PrepareSql, this.metadata.Params...)
+    i, err := this.session.Delete(this.ctx, this.metadata.PrepareSql, this.metadata.Params...)
     if bean != nil {
         reflection.SetValue(rv, i)
     }
-    return nil
+    return err
 }
 
 func (this *BaseRunner) Result(bean interface{}) error {
     //FAKE RETURN
     panic("Cannot be here")
     //return nil, nil
+}
+
+func (this *BaseRunner) LastInsertId() int64 {
+    return -1
 }
 
 func checkBeanValue(beanValue reflect.Value) error {
@@ -385,13 +405,13 @@ func (this *BaseRunner) ResultBad(bean interface{}) *BaseRunner {
     switch rt.Kind() {
     case reflect.Slice:
         //FIXME: bean append in loop
-        v, err := this.session.Select(mi, this.metadata.PrepareSql, this.metadata.Params...)
+        v, err := this.session.Select(this.ctx, mi, this.metadata.PrepareSql, this.metadata.Params...)
         if err == nil {
             rv.Set(reflect.ValueOf(v))
         }
         break
     case reflect.Struct:
-        v, err := this.session.SelectOne(mi, this.metadata.PrepareSql, this.metadata.Params...)
+        v, err := this.session.SelectOne(this.ctx, mi, this.metadata.PrepareSql, this.metadata.Params...)
         if err == nil {
             retV := reflect.ValueOf(v)
             if retV.IsValid() {
@@ -405,42 +425,46 @@ func (this *BaseRunner) ResultBad(bean interface{}) *BaseRunner {
     return this
 }
 
-func createSelect(log logging.LogFunc, session session.Session, sqlDynamic *parsing.DynamicData) Runner {
+func createSelect(log logging.LogFunc, session session.SqlSession, sqlDynamic *parsing.DynamicData) Runner {
     ret := &SelectRunner{}
     ret.action = sqlparser.SELECT
     ret.log = log
     ret.session = session
     ret.sqlDynamicData = *sqlDynamic
+    ret.ctx = context.Background()
     ret.this = ret
     return ret
 }
 
-func createUpdate(log logging.LogFunc, session session.Session, sqlDynamic *parsing.DynamicData) Runner {
+func createUpdate(log logging.LogFunc, session session.SqlSession, sqlDynamic *parsing.DynamicData) Runner {
     ret := &UpdateRunner{}
     ret.action = sqlparser.UPDATE
     ret.log = log
     ret.session = session
     ret.sqlDynamicData = *sqlDynamic
+    ret.ctx = context.Background()
     ret.this = ret
     return ret
 }
 
-func createDelete(log logging.LogFunc, session session.Session, sqlDynamic *parsing.DynamicData) Runner {
+func createDelete(log logging.LogFunc, session session.SqlSession, sqlDynamic *parsing.DynamicData) Runner {
     ret := &DeleteRunner{}
     ret.action = sqlparser.DELETE
     ret.log = log
     ret.session = session
     ret.sqlDynamicData = *sqlDynamic
+    ret.ctx = context.Background()
     ret.this = ret
     return ret
 }
 
-func createInsert(log logging.LogFunc, session session.Session, sqlDynamic *parsing.DynamicData) Runner {
+func createInsert(log logging.LogFunc, session session.SqlSession, sqlDynamic *parsing.DynamicData) Runner {
     ret := &InsertRunner{}
     ret.action = sqlparser.INSERT
     ret.log = log
     ret.session = session
     ret.sqlDynamicData = *sqlDynamic
+    ret.ctx = context.Background()
     ret.this = ret
     return ret
 }

@@ -9,7 +9,11 @@
 package executor
 
 import (
+    "context"
+    "github.com/xfali/gobatis"
+    "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/errors"
+    "github.com/xfali/gobatis/handler"
     "github.com/xfali/gobatis/transaction"
 )
 
@@ -36,7 +40,7 @@ func (exec *SimpleExecutor) Close(rollback bool) {
     }
 }
 
-func (exec *SimpleExecutor) Query(execParam *ExecParam, params ...interface{}) error {
+func (exec *SimpleExecutor) Query(ctx context.Context, handler handler.ResultHandler, iterFunc gobatis.IterFunc, sql string, params ...interface{}) error {
     if exec.closed {
         return  errors.EXECUTOR_QUERY_ERROR
     }
@@ -46,20 +50,20 @@ func (exec *SimpleExecutor) Query(execParam *ExecParam, params ...interface{}) e
         return errors.EXECUTOR_GET_CONNECTION_ERROR
     }
 
-    return conn.Query(execParam.ResultHandler, execParam.IterFunc, execParam.Sql, params...)
+    return conn.Query(ctx, handler, iterFunc, sql, params...)
 }
 
-func (exec *SimpleExecutor) Exec(execParam *ExecParam, params ...interface{}) (int64, error) {
+func (exec *SimpleExecutor) Exec(ctx context.Context, sql string, params ...interface{}) (common.Result, error) {
     if exec.closed {
-        return 0, errors.EXECUTOR_QUERY_ERROR
+        return nil, errors.EXECUTOR_QUERY_ERROR
     }
 
     conn := exec.transaction.GetConnection()
     if conn == nil {
-        return 0, errors.EXECUTOR_GET_CONNECTION_ERROR
+        return nil, errors.EXECUTOR_GET_CONNECTION_ERROR
     }
 
-    return conn.Exec(execParam.Sql, params...)
+    return conn.Exec(ctx, sql, params...)
 }
 
 func (exec *SimpleExecutor) Begin() error {

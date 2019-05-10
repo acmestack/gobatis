@@ -24,7 +24,7 @@ type TestTable struct {
     Password  string            `xfield:"password"`
 }
 
-func TestSelectRunner(t *testing.T) {
+func TestSelectgobatis(t *testing.T) {
     var testV TestTable
     fac := factory.DefaultFactory{
         Host:     "localhost",
@@ -48,7 +48,7 @@ func TestSelectRunner(t *testing.T) {
     t.Logf("%v %v", testV.Username, testV.Password)
 }
 
-func TestSelectRunner2(t *testing.T) {
+func TestSelectgobatis2(t *testing.T) {
     var testV TestTable
     fac := factory.DefaultFactory{
         Host:     "localhost",
@@ -75,7 +75,7 @@ func TestSelectRunner2(t *testing.T) {
     }
 }
 
-func TestSelectRunner3(t *testing.T) {
+func TestSelectgobatis3(t *testing.T) {
     var testV TestTable
     fac := factory.DefaultFactory{
         Host:     "localhost",
@@ -98,7 +98,7 @@ func TestSelectRunner3(t *testing.T) {
     mgr.NewSession().Select("queryTest").Param().Result(&i)
 }
 
-func TestInsertRunner(t *testing.T) {
+func TestInsertgobatis(t *testing.T) {
     var testV TestTable
     fac := factory.DefaultFactory{
         Host:     "localhost",
@@ -124,7 +124,7 @@ func TestInsertRunner(t *testing.T) {
     t.Logf("insert %d\n", i)
 }
 
-func TestUpdateRunner(t *testing.T) {
+func TestUpdategobatis(t *testing.T) {
     var testV TestTable
     fac := factory.DefaultFactory{
         Host:     "localhost",
@@ -150,7 +150,7 @@ func TestUpdateRunner(t *testing.T) {
     t.Logf("update %d\n", i)
 }
 
-func TestDeleteRunner(t *testing.T) {
+func TestDeletegobatis(t *testing.T) {
     var testV TestTable
     fac := factory.DefaultFactory{
         Host:     "localhost",
@@ -176,7 +176,7 @@ func TestDeleteRunner(t *testing.T) {
     t.Logf("delete %d\n", i)
 }
 
-func TestDynamicSelectRunner(t *testing.T) {
+func TestDynamicSelectgobatis(t *testing.T) {
     var testV TestTable
     fac := factory.DefaultFactory{
         Host:     "localhost",
@@ -232,7 +232,7 @@ func TestTx1(t *testing.T) {
 
     var testList []TestTable
 
-    mgr.NewSession().Tx(func(session *runner.RunnerSession) bool {
+    mgr.NewSession().Tx(func(session *runner.Session) bool {
         ret := 0
         session.Insert("insert_id").Param(testV).Result(&ret)
         t.Logf("ret %d\n", ret)
@@ -271,7 +271,7 @@ func TestTx2(t *testing.T) {
 
     var testList []TestTable
 
-    mgr.NewSession().Tx(func(session *runner.RunnerSession) bool {
+    mgr.NewSession().Tx(func(session *runner.Session) bool {
         ret := 0
         session.Insert("insert_id").Param(testV).Result(&ret)
         t.Logf("ret %d\n", ret)

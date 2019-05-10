@@ -9,8 +9,10 @@
 package connection
 
 import (
+    "context"
     "database/sql"
     "github.com/xfali/gobatis"
+    "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/errors"
     "github.com/xfali/gobatis/handler"
     "github.com/xfali/gobatis/statement"
@@ -29,9 +31,9 @@ func (c *MysqlConnection) Prepare(sqlStr string) (statement.Statement, error) {
     return (*MysqlStatement)(s), nil
 }
 
-func (c *MysqlConnection)Query(handler handler.ResultHandler, iterFunc gobatis.IterFunc, sqlStr string, params ...interface{}) error {
+func (c *MysqlConnection) Query(ctx context.Context, handler handler.ResultHandler, iterFunc gobatis.IterFunc, sqlStr string, params ...interface{}) error {
     db := (*sql.DB)(c)
-    rows, err := db.Query(sqlStr, params...)
+    rows, err := db.QueryContext(ctx, sqlStr, params...)
     if err != nil {
         return errors.STATEMENT_QUERY_ERROR
     }
@@ -41,22 +43,14 @@ func (c *MysqlConnection)Query(handler handler.ResultHandler, iterFunc gobatis.I
     return nil
 }
 
-func (c *MysqlConnection)Exec(sqlStr string, params ...interface{}) (int64, error) {
+func (c *MysqlConnection) Exec(ctx context.Context, sqlStr string, params ...interface{}) (common.Result, error) {
     db := (*sql.DB)(c)
-    result, err := db.Exec(sqlStr, params...)
-    if err != nil {
-        return 0, errors.STATEMENT_QUERY_ERROR
-    }
-    ret, err := result.RowsAffected()
-    if err != nil {
-        return 0, errors.STATEMENT_QUERY_ERROR
-    }
-    return ret, nil
+    return db.ExecContext(ctx, sqlStr, params...)
 }
 
-func (s *MysqlStatement) Query(handler handler.ResultHandler, iterFunc gobatis.IterFunc, params ...interface{}) error {
+func (s *MysqlStatement) Query(ctx context.Context, handler handler.ResultHandler, iterFunc gobatis.IterFunc, params ...interface{}) error {
     stmt := (*sql.Stmt)(s)
-    rows, err := stmt.Query(params...)
+    rows, err := stmt.QueryContext(ctx, params...)
     if err != nil {
         return errors.STATEMENT_QUERY_ERROR
     }
@@ -66,17 +60,9 @@ func (s *MysqlStatement) Query(handler handler.ResultHandler, iterFunc gobatis.I
     return nil
 }
 
-func (s *MysqlStatement) Exec(params ...interface{}) (int64, error) {
+func (s *MysqlStatement) Exec(ctx context.Context, params ...interface{}) (common.Result, error) {
     stmt := (*sql.Stmt)(s)
-    result, err := stmt.Exec(params...)
-    if err != nil {
-        return 0, errors.STATEMENT_QUERY_ERROR
-    }
-    ret, err := result.RowsAffected()
-    if err != nil {
-        return 0, errors.STATEMENT_QUERY_ERROR
-    }
-    return ret, nil
+    return stmt.ExecContext(ctx, params...)
 }
 
 func (s *MysqlStatement) Close() {
