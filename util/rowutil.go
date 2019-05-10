@@ -10,11 +10,11 @@ package util
 
 import (
     "database/sql"
-    "github.com/xfali/gobatis"
+    "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/handler"
 )
 
-func ScanRows(rows *sql.Rows, handler handler.ResultHandler, iterFunc gobatis.IterFunc) int64 {
+func ScanRows(rows *sql.Rows, handler handler.ResultHandler, iterFunc common.IterFunc) int64 {
     columns, _ := rows.Columns()
     scanArgs := make([]interface{}, len(columns))
     values := make([]interface{}, len(columns))

@@ -11,7 +11,7 @@ package reflection
 import (
     "encoding/json"
     "fmt"
-    "github.com/xfali/gobatis"
+    "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/errors"
     "github.com/xfali/gobatis/logging"
     "reflect"
@@ -20,8 +20,10 @@ import (
     "time"
 )
 
-var typeModelName gobatis.ModelName
-var modelNameType = reflect.TypeOf(typeModelName)
+var modelNameType reflect.Type
+func SetModelNameType(mtype reflect.Type) {
+    modelNameType = mtype
+}
 
 type FieldInfo struct {
     //字段名
@@ -121,7 +123,7 @@ func GetTableInfo(model interface{}) (*TableInfo, error) {
         }
 
         fieldName := rtf.Name
-        tagName := rtf.Tag.Get(gobatis.FIELD_NAME)
+        tagName := rtf.Tag.Get(common.FIELD_NAME)
         if tagName == "-" {
             continue
         } else if tagName != "" {
@@ -156,7 +158,10 @@ func IsSimpleType(bean interface{}) bool {
     t := reflect.TypeOf(bean)
     switch t.Kind() {
     case IntKind, Int8Kind, Int16Kind, Int32Kind, Int64Kind, UintKind, Uint8Kind, Uint16Kind, Uint32Kind, Uint64Kind,
-        Float32Kind, Float64Kind, Complex64Kind, Complex128Kind, StringKind, BoolKind, ByteKind, BytesKind, TimeKind:
+        Float32Kind, Float64Kind, Complex64Kind, Complex128Kind, StringKind, BoolKind, ByteKind, BytesKind/*, TimeKind*/:
+        return true
+    }
+    if _, ok := bean.(time.Time); ok {
         return true
     }
     return false

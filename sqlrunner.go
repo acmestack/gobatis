@@ -6,12 +6,11 @@
  * Description: 
  */
 
-package runner
+package gobatis
 
 import (
     "context"
-    "github.com/xfali/gobatis"
-    "github.com/xfali/gobatis/config"
+    "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/errors"
     "github.com/xfali/gobatis/factory"
     "github.com/xfali/gobatis/logging"
@@ -40,6 +39,8 @@ type Runner interface {
     Result(bean interface{}) error
     //最后插入的自增id
     LastInsertId() int64
+    //设置Context
+    Context(ctx context.Context) Runner
 }
 
 type Session struct {
@@ -58,13 +59,13 @@ type BaseRunner struct {
 }
 
 type SelectIterRunner struct {
-    iterFunc gobatis.IterFunc
+    iterFunc common.IterFunc
     count    int64
     BaseRunner
 }
 
 type SelectRunner struct {
-    iterFunc gobatis.IterFunc
+    iterFunc common.IterFunc
     count    int64
     BaseRunner
 }
@@ -83,7 +84,7 @@ type DeleteRunner struct {
 }
 
 func getSql(sqlId string) *parsing.DynamicData {
-    ret := config.FindSql(sqlId)
+    ret := FindSql(sqlId)
     //FIXME: 当没有查找到sqlId对应的sql语句，则尝试使用sqlId直接操作数据库
     //该设计可能需要设计一个更合理的方式
     if ret == nil {
@@ -119,7 +120,7 @@ func (this *Session) Tx(txFunc func(session *Session) bool) {
     }
 }
 
-func (this *Session) SelectWithIterFunc(sqlId string, iterFunc gobatis.IterFunc) Runner {
+func (this *Session) SelectWithIterFunc(sqlId string, iterFunc common.IterFunc) Runner {
     ret := &SelectIterRunner{}
     ret.action = sqlparser.SELECT
     ret.log = this.log
@@ -233,7 +234,7 @@ func (this *SelectIterRunner) Result(bean interface{}) error {
         return errors.RUNNER_NOT_READY
     }
 
-    mi := config.FindModelInfoOfBean(bean)
+    mi := FindModelInfoOfBean(bean)
     if mi == nil {
         this.log(logging.WARN, errors.MODEL_NOT_REGISTER.Error())
         return errors.RESULT_NAME_NOT_FOUND
@@ -247,7 +248,7 @@ func (this *SelectRunner) Result(bean interface{}) error {
         return errors.RUNNER_NOT_READY
     }
 
-    mi := config.FindModelInfoOfBean(bean)
+    mi := FindModelInfoOfBean(bean)
     if mi == nil {
         this.log(logging.WARN, errors.MODEL_NOT_REGISTER.Error())
         return errors.RESULT_NAME_NOT_FOUND
@@ -387,7 +388,7 @@ func (this *BaseRunner) ResultBad(bean interface{}) *BaseRunner {
         return nil
     }
 
-    mi := config.FindModelInfoOfBean(bean)
+    mi := FindModelInfoOfBean(bean)
     if mi == nil {
         this.log(logging.WARN, errors.MODEL_NOT_REGISTER.Error())
         return nil

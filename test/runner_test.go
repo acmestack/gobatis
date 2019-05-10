@@ -10,10 +10,8 @@ package test
 
 import (
     "github.com/xfali/gobatis"
-    "github.com/xfali/gobatis/config"
     "github.com/xfali/gobatis/factory"
     "github.com/xfali/gobatis/logging"
-    "github.com/xfali/gobatis/session/runner"
     "testing"
 )
 
@@ -39,10 +37,10 @@ func TestSelectgobatis(t *testing.T) {
 
         Log: logging.DefaultLogf,
     }
-    fac.Init()
-    mgr := runner.NewSessionManager(&fac)
-    config.RegisterSql("queryTest", "select * from test_table where id = #{0}")
-    config.RegisterModel(&testV)
+    fac.InitDB()
+    mgr := gobatis.NewSessionManager(&fac)
+    gobatis.RegisterSql("queryTest", "select * from test_table where id = #{0}")
+    gobatis.RegisterModel(&testV)
     mgr.NewSession().Select("queryTest").Param(1, 200, 300).Result(&testV)
 
     t.Logf("%v %v", testV.Username, testV.Password)
@@ -63,10 +61,10 @@ func TestSelectgobatis2(t *testing.T) {
 
         Log: logging.DefaultLogf,
     }
-    fac.Init()
-    mgr := runner.NewSessionManager(&fac)
-    config.RegisterSql("queryTest", "select * from test_table limit 10")
-    config.RegisterModel(&testV)
+    fac.InitDB()
+    mgr := gobatis.NewSessionManager(&fac)
+    gobatis.RegisterSql("queryTest", "select * from test_table limit 10")
+    gobatis.RegisterModel(&testV)
     testList := []TestTable{}
     mgr.NewSession().Select("queryTest").Param().Result(&testList)
 
@@ -90,10 +88,10 @@ func TestSelectgobatis3(t *testing.T) {
 
         Log: logging.DefaultLogf,
     }
-    fac.Init()
-    mgr := runner.NewSessionManager(&fac)
-    config.RegisterSql("queryTest", "select count(*) from test_table")
-    config.RegisterModel(&testV)
+    fac.InitDB()
+    mgr := gobatis.NewSessionManager(&fac)
+    gobatis.RegisterSql("queryTest", "select count(*) from test_table")
+    gobatis.RegisterModel(&testV)
     i := 0
     mgr.NewSession().Select("queryTest").Param().Result(&i)
 }
@@ -113,10 +111,10 @@ func TestInsertgobatis(t *testing.T) {
 
         Log: logging.DefaultLogf,
     }
-    fac.Init()
-    mgr := runner.NewSessionManager(&fac)
-    config.RegisterSql("insertTest", "insert into test_table (username, password) value(#{username}, #{password})")
-    config.RegisterModel(&testV)
+    fac.InitDB()
+    mgr := gobatis.NewSessionManager(&fac)
+    gobatis.RegisterSql("insertTest", "insert into test_table (username, password) value(#{username}, #{password})")
+    gobatis.RegisterModel(&testV)
     testV.Username = "test_user"
     testV.Password = "test_pw"
     i := 0
@@ -139,10 +137,10 @@ func TestUpdategobatis(t *testing.T) {
 
         Log: logging.DefaultLogf,
     }
-    fac.Init()
-    mgr := runner.NewSessionManager(&fac)
-    config.RegisterSql("updateTest", "update test_table set username = #{username}, password = #{password} where id = 1")
-    config.RegisterModel(&testV)
+    fac.InitDB()
+    mgr := gobatis.NewSessionManager(&fac)
+    gobatis.RegisterSql("updateTest", "update test_table set username = #{username}, password = #{password} where id = 1")
+    gobatis.RegisterModel(&testV)
     testV.Username = "test_user"
     testV.Password = "test_pw"
     i := 0
@@ -165,10 +163,10 @@ func TestDeletegobatis(t *testing.T) {
 
         Log: logging.DefaultLogf,
     }
-    fac.Init()
-    mgr := runner.NewSessionManager(&fac)
-    config.RegisterSql("deleteTest", "delete from test_table where username = #{username}, password = #{password}")
-    config.RegisterModel(&testV)
+    fac.InitDB()
+    mgr := gobatis.NewSessionManager(&fac)
+    gobatis.RegisterSql("deleteTest", "delete from test_table where username = #{username}, password = #{password}")
+    gobatis.RegisterModel(&testV)
     testV.Username = "test_user"
     testV.Password = "test_pw"
     i := 0
@@ -191,14 +189,14 @@ func TestDynamicSelectgobatis(t *testing.T) {
 
         Log: logging.DefaultLogf,
     }
-    fac.Init()
-    mgr := runner.NewSessionManager(&fac)
-    config.RegisterSql("deleteTest", `select id from test_table 
+    fac.InitDB()
+    mgr := gobatis.NewSessionManager(&fac)
+    gobatis.RegisterSql("deleteTest", `select id from test_table 
         <where> 
             <if test="">
             username = #{username}, password = #{password}
         </where>`)
-    config.RegisterModel(&testV)
+    gobatis.RegisterModel(&testV)
     testV.Username = "test_user"
     testV.Password = "test_pw"
     i := 0
@@ -220,19 +218,19 @@ func TestTx1(t *testing.T) {
 
         Log: logging.DefaultLogf,
     }
-    fac.Init()
-    mgr := runner.NewSessionManager(&fac)
+    fac.InitDB()
+    mgr := gobatis.NewSessionManager(&fac)
     testV := TestTable{
         Username:"testuser",
         Password:"testpw",
     }
-    config.RegisterModel(&testV)
-    config.RegisterSql("insert_id", "insert into test_table (username, password) value (#{username}, #{password})")
-    config.RegisterSql("select_id", "select * from test_table")
+    gobatis.RegisterModel(&testV)
+    gobatis.RegisterSql("insert_id", "insert into test_table (username, password) value (#{username}, #{password})")
+    gobatis.RegisterSql("select_id", "select * from test_table")
 
     var testList []TestTable
 
-    mgr.NewSession().Tx(func(session *runner.Session) bool {
+    mgr.NewSession().Tx(func(session *gobatis.Session) bool {
         ret := 0
         session.Insert("insert_id").Param(testV).Result(&ret)
         t.Logf("ret %d\n", ret)
@@ -259,19 +257,19 @@ func TestTx2(t *testing.T) {
 
         Log: logging.DefaultLogf,
     }
-    fac.Init()
-    mgr := runner.NewSessionManager(&fac)
+    fac.InitDB()
+    mgr := gobatis.NewSessionManager(&fac)
     testV := TestTable{
         Username:"testuser",
         Password:"testpw",
     }
-    config.RegisterModel(&testV)
-    config.RegisterSql("insert_id", "insert into test_table (username, password) value (#{username}, #{password})")
-    config.RegisterSql("select_id", "select * from test_table")
+    gobatis.RegisterModel(&testV)
+    gobatis.RegisterSql("insert_id", "insert into test_table (username, password) value (#{username}, #{password})")
+    gobatis.RegisterSql("select_id", "select * from test_table")
 
     var testList []TestTable
 
-    mgr.NewSession().Tx(func(session *runner.Session) bool {
+    mgr.NewSession().Tx(func(session *gobatis.Session) bool {
         ret := 0
         session.Insert("insert_id").Param(testV).Result(&ret)
         t.Logf("ret %d\n", ret)

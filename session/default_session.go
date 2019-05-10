@@ -11,7 +11,6 @@ package session
 import (
     "context"
     "fmt"
-    "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/executor"
     "github.com/xfali/gobatis/handler"
@@ -68,7 +67,7 @@ func (sess *DefaultSqlSession) Select(ctx context.Context, handler handler.Resul
     return ret, nil
 }
 
-func (sess *DefaultSqlSession) Query(ctx context.Context, handler handler.ResultHandler, iterFunc gobatis.IterFunc, sql string, params ...interface{}) error {
+func (sess *DefaultSqlSession) Query(ctx context.Context, handler handler.ResultHandler, iterFunc common.IterFunc, sql string, params ...interface{}) error {
     sess.logLastSql(sql, params...)
     return sess.executor.Query(ctx, handler, iterFunc, sql, params...)
 }
@@ -139,7 +138,7 @@ func (sess *DefaultSqlSession) logLastSql(sql string, params ...interface{}) {
     sess.Log(logging.INFO, "sql: [%s], param: %s", sql, fmt.Sprint(params))
 }
 
-func (sess *DefaultSqlSession) getSqlContext(ctx context.Context, sql string, handler handler.ResultHandler, iterFunc gobatis.IterFunc) *common.SqlContext {
+func (sess *DefaultSqlSession) getSqlContext(ctx context.Context, sql string, handler handler.ResultHandler, iterFunc common.IterFunc) *common.SqlContext {
     return &common.SqlContext{Ctx: ctx, Sql: sql, ResultHandler: handler, IterFunc: iterFunc}
 }
 

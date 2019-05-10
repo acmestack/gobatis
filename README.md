@@ -12,7 +12,7 @@ Gobatis是一个golang的ORM框架，类似Java的Mybatis。支持直接执行sq
 ### 1、配置数据库，获得SessionManager
 
 ```
-func InitDB() *runner.SessionManager {
+func InitDB() *gobatis.SessionManager {
     fac := factory.DefaultFactory{
         Host:     "localhost",
         Port:     3306,
@@ -27,7 +27,7 @@ func InitDB() *runner.SessionManager {
         Log: logging.DefaultLogf,
     }
     fac.Init()
-    return runner.NewSessionManager(&fac)
+    return gobatis.NewSessionManager(&fac)
 }
 ```
 
@@ -56,7 +56,7 @@ Model注册后，Model的切片也能正确序列化和反序列化。
 ```
 func init() {
     var model TestTable
-    config.RegisterModel(&model)
+    gobatis.RegisterModel(&model)
 }
 ```
 
@@ -95,7 +95,7 @@ session.Select("select * from test_table where username = #{username}").Param(pa
 
 使用
 ```
-    mgr.NewSession().Tx(func(session *runner.RunnerSession) bool {
+    mgr.NewSession().Tx(func(session *gobatis.Session) bool {
         ret := 0
         session.Insert("insert_id").Param(testV).Result(&ret)
         
@@ -121,13 +121,13 @@ gobatis支持xml的sql解析及动态sql
 1. 注册xml
 
 ```
-config.RegisterMapperData([]byte(main_xml))
+gobatis.RegisterMapperData([]byte(main_xml))
 ```
 
 或
     
 ```
-config.RegisterMapperFile(filePath)
+gobatis.RegisterMapperFile(filePath)
 ```
 
 2. xml示例
@@ -139,7 +139,17 @@ config.RegisterMapperFile(filePath)
     <select id="selectTestTable">
         SELECT <include refid="columns_id"> </include> FROM test_table
         <where>
-            <if test="id != -1">AND id = #{id} </if>
+            <if test="id != nil and id != 0">AND id = #{id} </if>
+            <if test="username != nil">AND username = #{username} </if>
+            <if test="password != nil">AND password = #{password} </if>
+            <if test="update_time != nil">AND update_time = #{update_time} </if>
+        </where>
+    </select>
+
+    <select id="selectTestTableCount">
+        SELECT COUNT(*) FROM test_table
+        <where>
+            <if test="id != nil and id != 0">AND id = #{id} </if>
             <if test="username != nil">AND username = #{username} </if>
             <if test="password != nil">AND password = #{password} </if>
             <if test="update_time != nil">AND update_time = #{update_time} </if>
@@ -159,7 +169,7 @@ config.RegisterMapperFile(filePath)
     <update id="updateTestTable">
         UPDATE test_table
         <set>
-            <if test="id != -1"> id = #{id} </if>
+            <if test="id != nil and id != 0"> id = #{id} </if>
             <if test="username != nil"> username = #{username} </if>
             <if test="password != nil"> password = #{password} </if>
             <if test="update_time != nil"> update_time = #{update_time} </if>
@@ -170,7 +180,7 @@ config.RegisterMapperFile(filePath)
     <delete id="deleteTestTable">
         DELETE FROM test_table
         <where>
-            <if test="id != -1">AND id = #{id} </if>
+            <if test="id != nil and id != 0">AND id = #{id} </if>
             <if test="username != nil">AND username = #{username} </if>
             <if test="password != nil">AND password = #{password} </if>
             <if test="update_time != nil">AND update_time = #{update_time} </if>

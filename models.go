@@ -6,7 +6,7 @@
  * Description: 
  */
 
-package config
+package gobatis
 
 import (
     "github.com/xfali/gobatis/errors"

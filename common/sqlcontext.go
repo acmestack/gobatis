@@ -10,7 +10,6 @@ package common
 
 import (
     "context"
-    "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/handler"
 )
 
@@ -18,6 +17,6 @@ type SqlContext struct {
     Type          int
     Sql           string
     ResultHandler handler.ResultHandler
-    IterFunc      gobatis.IterFunc
+    IterFunc      IterFunc
     Ctx           context.Context
 }

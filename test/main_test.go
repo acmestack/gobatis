@@ -9,18 +9,17 @@
 package test
 
 import (
-    "github.com/xfali/gobatis/config"
+    "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/factory"
     "github.com/xfali/gobatis/logging"
-    "github.com/xfali/gobatis/session/runner"
     "testing"
 )
 
 func TestSql1(t *testing.T) {
     testV := TestTable{
     }
-    config.RegisterModel(&testV)
-    config.RegisterMapperData([]byte(main_xml))
+    gobatis.RegisterModel(&testV)
+    gobatis.RegisterMapperData([]byte(main_xml))
 
     fac := factory.DefaultFactory{
         Host:     "localhost",
@@ -35,8 +34,8 @@ func TestSql1(t *testing.T) {
 
         Log: logging.DefaultLogf,
     }
-    fac.Init()
-    mgr := runner.NewSessionManager(&fac)
+    fac.InitDB()
+    mgr := gobatis.NewSessionManager(&fac)
 
     ret := 0
     mgr.NewSession().Select("selectCount").Param(testV).Result(&ret)
@@ -57,7 +56,7 @@ func TestSql1(t *testing.T) {
     mgr.NewSession().Delete("deleteUser").Param(testV).Result(&ret)
     t.Logf("deleteUser ret = %d\n", ret)
 
-    mgr.NewSession().Tx(func(session *runner.Session) bool {
+    mgr.NewSession().Tx(func(session *gobatis.Session) bool {
         session.Insert("insertUser").Param(testV).Result(&ret)
         //commit
         return true
@@ -67,8 +66,8 @@ func TestSql1(t *testing.T) {
 func TestMain2(t *testing.T) {
     testV := TestTable{
     }
-    config.RegisterModel(&testV)
-    config.RegisterMapperData([]byte(main_xml))
+    gobatis.RegisterModel(&testV)
+    gobatis.RegisterMapperData([]byte(main_xml))
 
     fac := factory.DefaultFactory{
         Host:     "localhost",
@@ -83,8 +82,8 @@ func TestMain2(t *testing.T) {
 
         Log: logging.DefaultLogf,
     }
-    fac.Init()
-    mgr := runner.NewSessionManager(&fac)
+    fac.InitDB()
+    mgr := gobatis.NewSessionManager(&fac)
 
     mgr.NewSession().Select("select * from test_table where id = ${0}").Param(100).Result(&testV)
     t.Logf("ret = %v\n", testV)

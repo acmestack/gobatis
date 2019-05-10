@@ -10,13 +10,12 @@ package statement
 
 import (
     "context"
-    "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/handler"
 )
 
 type Statement interface {
-    Query(ctx context.Context, handler handler.ResultHandler, iterFunc gobatis.IterFunc, params ...interface{}) error
+    Query(ctx context.Context, handler handler.ResultHandler, iterFunc common.IterFunc, params ...interface{}) error
     Exec(ctx context.Context, params ...interface{}) (common.Result, error)
     Close()
 }

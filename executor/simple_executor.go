@@ -10,7 +10,6 @@ package executor
 
 import (
     "context"
-    "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/errors"
     "github.com/xfali/gobatis/handler"
@@ -40,7 +39,7 @@ func (exec *SimpleExecutor) Close(rollback bool) {
     }
 }
 
-func (exec *SimpleExecutor) Query(ctx context.Context, handler handler.ResultHandler, iterFunc gobatis.IterFunc, sql string, params ...interface{}) error {
+func (exec *SimpleExecutor) Query(ctx context.Context, handler handler.ResultHandler, iterFunc common.IterFunc, sql string, params ...interface{}) error {
     if exec.closed {
         return  errors.EXECUTOR_QUERY_ERROR
     }

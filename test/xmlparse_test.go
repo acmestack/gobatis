@@ -9,7 +9,7 @@
 package test
 
 import (
-    "github.com/xfali/gobatis/config"
+    "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/parsing/xml"
     "testing"
     "time"
@@ -122,7 +122,7 @@ func TestXmlDynamic4(t *testing.T) {
         Username:"testuser",
         Password:"testpw",
     }
-    config.RegisterModel(&testV)
+    gobatis.RegisterModel(&testV)
     src := `SELECT <include refid="select_field"></include> FROM PERSON
         <where>
             <if test="username == testuser">
@@ -145,7 +145,7 @@ func TestXmlDynamic5(t *testing.T) {
         Username:"testuser",
         Password:"testpw",
     }
-    config.RegisterModel(&testV)
+    gobatis.RegisterModel(&testV)
     src := `UPDATE PERSON
         <set>
             <if test="username != nil">
@@ -235,12 +235,12 @@ func TestXmlDynamicIf3(t *testing.T) {
 }
 
 func TestXml0(t *testing.T) {
-    config.RegisterMapperData([]byte(main_xml))
+    gobatis.RegisterMapperData([]byte(main_xml))
     testV := TestTable{}
-    t.Logf("selectUser %s\n", config.FindSql("selectUser").Replace(100))
-    t.Logf("insertUser %s\n", config.FindSql("insertUser").Replace(testV))
+    t.Logf("selectUser %s\n", gobatis.FindSql("selectUser").Replace(100))
+    t.Logf("insertUser %s\n", gobatis.FindSql("insertUser").Replace(testV))
     testV.Password = "pw"
-    t.Logf("updateUser %s\n", config.FindSql("updateUser").Replace(testV))
+    t.Logf("updateUser %s\n", gobatis.FindSql("updateUser").Replace(testV))
     testV.Id = -1
-    t.Logf("deleteUser %s\n", config.FindSql("deleteUser").Replace(testV))
+    t.Logf("deleteUser %s\n", gobatis.FindSql("deleteUser").Replace(testV))
 }

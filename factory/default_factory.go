@@ -33,7 +33,7 @@ type DefaultFactory struct {
     db          *sql.DB
 }
 
-func (f *DefaultFactory) Init() error {
+func (f *DefaultFactory) InitDB() error {
     f.ds = &datasource.MysqlDataSource{
         Host:     f.Host,
         Port:     f.Port,

@@ -11,7 +11,6 @@ package connection
 import (
     "context"
     "database/sql"
-    "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/errors"
     "github.com/xfali/gobatis/handler"
@@ -31,7 +30,7 @@ func (c *MysqlConnection) Prepare(sqlStr string) (statement.Statement, error) {
     return (*MysqlStatement)(s), nil
 }
 
-func (c *MysqlConnection) Query(ctx context.Context, handler handler.ResultHandler, iterFunc gobatis.IterFunc, sqlStr string, params ...interface{}) error {
+func (c *MysqlConnection) Query(ctx context.Context, handler handler.ResultHandler, iterFunc common.IterFunc, sqlStr string, params ...interface{}) error {
     db := (*sql.DB)(c)
     rows, err := db.QueryContext(ctx, sqlStr, params...)
     if err != nil {
@@ -48,7 +47,7 @@ func (c *MysqlConnection) Exec(ctx context.Context, sqlStr string, params ...int
     return db.ExecContext(ctx, sqlStr, params...)
 }
 
-func (s *MysqlStatement) Query(ctx context.Context, handler handler.ResultHandler, iterFunc gobatis.IterFunc, params ...interface{}) error {
+func (s *MysqlStatement) Query(ctx context.Context, handler handler.ResultHandler, iterFunc common.IterFunc, params ...interface{}) error {
     stmt := (*sql.Stmt)(s)
     rows, err := stmt.QueryContext(ctx, params...)
     if err != nil {

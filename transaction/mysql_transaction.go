@@ -12,7 +12,6 @@ import (
     "context"
     "database/sql"
     _ "github.com/go-sql-driver/mysql"
-    "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/connection"
     "github.com/xfali/gobatis/datasource"
@@ -95,7 +94,7 @@ func (c *TansactionConnection) Prepare(sqlStr string) (statement.Statement, erro
     return ret, nil
 }
 
-func (c *TansactionConnection) Query(ctx context.Context, handler handler.ResultHandler, iterFunc gobatis.IterFunc, sqlStr string, params ...interface{}) error {
+func (c *TansactionConnection) Query(ctx context.Context, handler handler.ResultHandler, iterFunc common.IterFunc, sqlStr string, params ...interface{}) error {
     db := c.tx
     rows, err := db.QueryContext(ctx, sqlStr, params...)
     if err != nil {
@@ -112,7 +111,7 @@ func (c *TansactionConnection) Exec(ctx context.Context, sqlStr string, params .
     return db.ExecContext(ctx, sqlStr, params...)
 }
 
-func (s *TransactionStatement) Query(ctx context.Context, handler handler.ResultHandler, iterFunc gobatis.IterFunc, params ...interface{}) error {
+func (s *TransactionStatement) Query(ctx context.Context, handler handler.ResultHandler, iterFunc common.IterFunc, params ...interface{}) error {
     rows, err := s.tx.QueryContext(ctx, s.sql, params...)
     if err != nil {
         return errors.STATEMENT_QUERY_ERROR

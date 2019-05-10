@@ -11,7 +11,6 @@ package test
 import (
     "fmt"
     "github.com/xfali/gobatis"
-    "github.com/xfali/gobatis/config"
     "github.com/xfali/gobatis/reflection"
     "reflect"
     "testing"
@@ -69,13 +68,13 @@ func TestReflection4_2(t *testing.T) {
 
 func TestReflection5(t *testing.T) {
     setV := []byte("10000")
-    v, err := config.FindModelInfo(reflect.TypeOf(reflection.INT_DEFAULT).Name()).Deserialize(nil, []interface{}{setV})
+    v, err := gobatis.FindModelInfo(reflect.TypeOf(reflection.INT_DEFAULT).Name()).Deserialize(nil, []interface{}{setV})
     if err != nil {
         t.Fail()
     }
     t.Log(v)
 
-    _, err2 := config.FindModelInfo(reflect.TypeOf(reflection.INT_DEFAULT).Name()).Deserialize(nil, []interface{}{setV, nil})
+    _, err2 := gobatis.FindModelInfo(reflect.TypeOf(reflection.INT_DEFAULT).Name()).Deserialize(nil, []interface{}{setV, nil})
     if err2 == nil {
         t.Fail()
     } else {

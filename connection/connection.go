@@ -10,7 +10,6 @@ package connection
 
 import (
     "context"
-    "github.com/xfali/gobatis"
     "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/handler"
     "github.com/xfali/gobatis/statement"
@@ -18,6 +17,6 @@ import (
 
 type Connection interface {
     Prepare(sql string) (statement.Statement, error)
-    Query(ctx context.Context, handler handler.ResultHandler, iterFunc gobatis.IterFunc, sql string, params ...interface{}) error
+    Query(ctx context.Context, handler handler.ResultHandler, iterFunc common.IterFunc, sql string, params ...interface{}) error
     Exec(ctx context.Context, sql string, params ...interface{}) (common.Result, error)
 }
