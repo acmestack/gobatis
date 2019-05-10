@@ -188,3 +188,7 @@ gobatis.RegisterMapperFile(filePath)
     </delete>
 </mapper>
 ```
+
+### 8、gobatis-cmd生成文件使用示例
+
+参考[cmd_test](https://github.com/xfali/gobatis/tree/master/test/cmd)
