@@ -49,7 +49,7 @@ func TestSelectCount(t *testing.T) {
     proxy := New(sessionMgr)
 
     //all count
-    ret := proxy.SelectTestTable(TestTable{})
+    ret := proxy.SelectTestTableCount(TestTable{})
 
     t.Logf("count is %d", ret)
 }

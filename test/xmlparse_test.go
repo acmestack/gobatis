@@ -234,13 +234,3 @@ func TestXmlDynamicIf3(t *testing.T) {
     t.Logf("arg now : %s\n", m.Replace(time.Now()))
 }
 
-func TestXml0(t *testing.T) {
-    gobatis.RegisterMapperData([]byte(main_xml))
-    testV := TestTable{}
-    t.Logf("selectUser %s\n", gobatis.FindSql("selectUser").Replace(100))
-    t.Logf("insertUser %s\n", gobatis.FindSql("insertUser").Replace(testV))
-    testV.Password = "pw"
-    t.Logf("updateUser %s\n", gobatis.FindSql("updateUser").Replace(testV))
-    testV.Id = -1
-    t.Logf("deleteUser %s\n", gobatis.FindSql("deleteUser").Replace(testV))
-}
