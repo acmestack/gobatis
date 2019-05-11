@@ -81,6 +81,16 @@ func GetBeanName(model interface{}) string {
     return name
 }
 
+//GetTableInfo 解析结构体，使用：
+//1、如果结构体中含有gobatis.ModelName类型的字段，则：
+// a)、如果含有tag，则使用tag作为tablename；
+// b)、如果不含有tag，则使用fieldName作为tablename。
+//2、如果结构体中不含有gobatis.ModelName类型的字段，则使用结构体名称作为tablename
+//3、如果结构体中含有xfield的tag，则：
+// a）、如果tag为‘-’，则不进行columne与field的映射；
+// b）、如果tag不为‘-’使用tag name作为column名称与field映射。
+//4、如果结构体中不含有xfield的tag，则使用field name作为column名称与field映射
+//5、如果字段的tag为‘-’，则不进行columne与field的映射；
 func GetTableInfo(model interface{}) (*TableInfo, error) {
     tableInfo := newTableInfo()
 
@@ -105,6 +115,8 @@ func GetTableInfo(model interface{}) (*TableInfo, error) {
         if rtf.Type == modelNameType {
             if rtf.Tag != "" {
                 tableInfo.Name = string(rtf.Tag)
+            } else {
+                tableInfo.Name = rtf.Name
             }
             continue
         }

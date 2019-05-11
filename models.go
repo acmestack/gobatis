@@ -55,6 +55,8 @@ func registerBuildin() {
     g_model_mgr.modelMap[reflection.TimeType.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.TIME_DEFAULT}
 }
 
+// 注册模型，模型描述了column和field之间的关联关系；
+// 用于获得数据库数据反序列化。未注册的模型将无法正确反序列化。
 func RegisterModel(model interface{}) *errors.ErrCode {
     tableInfo, err := reflection.GetTableInfo(model)
     if err != nil {
