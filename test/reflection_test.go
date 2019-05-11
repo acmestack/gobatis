@@ -14,6 +14,7 @@ import (
     "github.com/xfali/gobatis/reflection"
     "reflect"
     "testing"
+    "time"
 )
 
 type TestStruct1 struct {
@@ -23,26 +24,26 @@ type TestStruct1 struct {
 }
 
 func TestReflection1(t *testing.T) {
-    test := TestStruct1{ "table", "abc", "123"}
-    table, _ := reflection.GetTableInfo(&test)
+    test := TestStruct1{"table", "abc", "123"}
+    table, _ := reflection.GetObjectInfo(&test)
     printTableInfo(table)
 }
 
 type TestStruct2 struct {
     TestTable gobatis.ModelName
-    Username  string            `xfield:"-"`
-    Password  string            `-`
+    Username  string `xfield:"-"`
+    Password  string `-`
 }
 
 func TestReflection2(t *testing.T) {
-    test := TestStruct2{ "table", "abc", "123"}
-    table, _ := reflection.GetTableInfo(&test)
+    test := TestStruct2{"table", "abc", "123"}
+    table, _ := reflection.GetObjectInfo(&test)
     printTableInfo(table)
 }
 
 func TestReflection3(t *testing.T) {
     var test int
-    _, err := reflection.GetTableInfo(&test)
+    _, err := reflection.GetObjectInfo(&test)
     if err != nil {
         t.Log(err)
     } else {
@@ -99,9 +100,9 @@ func TestReflection7(t *testing.T) {
     rv := reflect.ValueOf(&o)
     rv = rv.Elem()
     rvv := rv
-    i := TestStruct1{Username:"1", Password:"1"}
+    i := TestStruct1{Username: "1", Password: "1"}
     rvv = reflect.Append(rvv, reflect.ValueOf(i))
-    i = TestStruct1{Username:"2", Password:"2"}
+    i = TestStruct1{Username: "2", Password: "2"}
     rvv = reflect.Append(rvv, reflect.ValueOf(i))
     rv.Set(rvv)
 
@@ -110,13 +111,67 @@ func TestReflection7(t *testing.T) {
     }
 }
 
-func printTableInfo(table *reflection.TableInfo) {
+func TestReflectionParseEmpty(t *testing.T) {
+    ret := reflection.ParseParams()
+    for k, v := range ret {
+        t.Logf("empty key : %s value : %v", k, v)
+    }
+}
+
+func TestReflectionParseSimple(t *testing.T) {
+    ret := reflection.ParseParams(1, "2", 1.3, time.Now())
+    for k, v := range ret {
+        t.Logf("simple key : %s value : %v", k, v)
+    }
+}
+
+func TestReflectionParseMap(t *testing.T) {
+    ret := reflection.ParseParams(map[string]interface{}{
+        "testInt":   123,
+        "testStr":   "test",
+        "testFloat": 1.1,
+        "testTIME":  time.Now(),
+    })
+    if len(ret) == 0 {
+        t.Fail()
+    }
+    for k, v := range ret {
+        t.Logf("map key : %s value : %v", k, v)
+    }
+}
+
+type testParseStruct struct {
+    Username string
+    Password string
+}
+
+func TestReflectionParseStruct(t *testing.T) {
+    ret := reflection.ParseParams(testParseStruct{
+        "user",
+        "pw",
+    })
+    if len(ret) == 0 {
+        t.Fail()
+    }
+    for k, v := range ret {
+        t.Logf("struct key : %s value : %v", k, v)
+    }
+}
+
+func TestSimpleType(t *testing.T) {
+    ret := reflection.IsSimpleObject(time.Time{})
+    if !ret {
+        t.Fail()
+    }
+}
+
+func printTableInfo(table *reflection.ObjectInfo) {
     fmt.Printf("table name is %s\n", table.Name)
-    for k, v := range  table.FieldMap {
+    for k, v := range table.FieldMap {
         fmt.Printf("field : %s, value %s\n", k, v)
     }
 
-    for k, v := range  table.FieldNameMap {
+    for k, v := range table.FieldNameMap {
         fmt.Printf("origin : %s, map %s\n", k, v)
     }
 }

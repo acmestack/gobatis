@@ -21,6 +21,7 @@ import (
 )
 
 var modelNameType reflect.Type
+
 func SetModelNameType(mtype reflect.Type) {
     modelNameType = mtype
 }
@@ -32,7 +33,7 @@ type FieldInfo struct {
     Value reflect.Value
 }
 
-type TableInfo struct {
+type ObjectInfo struct {
     //表名
     Name string
     //字段信息
@@ -42,8 +43,8 @@ type TableInfo struct {
     FieldNameMap map[string]string
 }
 
-func newTableInfo() *TableInfo {
-    return &TableInfo{
+func newObjectInfo() *ObjectInfo {
+    return &ObjectInfo{
         FieldMap:     map[string]reflect.Value{},
         FieldNameMap: map[string]string{},
     }
@@ -81,7 +82,7 @@ func GetBeanName(model interface{}) string {
     return name
 }
 
-//GetTableInfo 解析结构体，使用：
+//GetObjectInfo 解析结构体，使用：
 //1、如果结构体中含有gobatis.ModelName类型的字段，则：
 // a)、如果含有tag，则使用tag作为tablename；
 // b)、如果不含有tag，则使用fieldName作为tablename。
@@ -91,8 +92,8 @@ func GetBeanName(model interface{}) string {
 // b）、如果tag不为‘-’使用tag name作为column名称与field映射。
 //4、如果结构体中不含有xfield的tag，则使用field name作为column名称与field映射
 //5、如果字段的tag为‘-’，则不进行columne与field的映射；
-func GetTableInfo(model interface{}) (*TableInfo, error) {
-    tableInfo := newTableInfo()
+func GetObjectInfo(model interface{}) (*ObjectInfo, error) {
+    tableInfo := newObjectInfo()
 
     rt := reflect.TypeOf(model)
     rv := reflect.ValueOf(model)
@@ -150,30 +151,42 @@ func GetTableInfo(model interface{}) (*TableInfo, error) {
     return tableInfo, nil
 }
 
-func (ti *TableInfo) MapValue() map[string]interface{} {
-    params := map[string]interface{}{}
+func (ti *ObjectInfo) MapValue() map[string]interface{} {
+    paramMap := map[string]interface{}{}
+    ti.FillMapValue(&paramMap)
+    return paramMap
+}
+
+func (ti *ObjectInfo) FillMapValue(paramMap *map[string]interface{}) {
     for k, v := range ti.FieldMap {
         if !v.CanInterface() {
             v = reflect.Indirect(v)
         }
-        params[k] = v.Interface()
+        (*paramMap)[k] = v.Interface()
     }
-    params["tablename"] = ti.Name
-    return params
+    //(*paramMap)["tablename"] = ti.Name
 }
 
 func ReflectValue(bean interface{}) reflect.Value {
     return reflect.Indirect(reflect.ValueOf(bean))
 }
 
-func IsSimpleType(bean interface{}) bool {
-    t := reflect.TypeOf(bean)
+func IsSimpleObject(bean interface{}) bool {
+    rt := reflect.TypeOf(bean)
+    if rt.Kind() == reflect.Ptr {
+        rt = rt.Elem()
+    }
+    return IsSimpleType(rt)
+}
+
+//是否是数据库使用的简单类型，注意不能是PTR
+func IsSimpleType(t reflect.Type) bool {
     switch t.Kind() {
     case IntKind, Int8Kind, Int16Kind, Int32Kind, Int64Kind, UintKind, Uint8Kind, Uint16Kind, Uint32Kind, Uint64Kind,
-        Float32Kind, Float64Kind, Complex64Kind, Complex128Kind, StringKind, BoolKind, ByteKind, BytesKind/*, TimeKind*/:
+        Float32Kind, Float64Kind, Complex64Kind, Complex128Kind, StringKind, BoolKind, ByteKind, BytesKind /*, TimeKind*/ :
         return true
     }
-    if _, ok := bean.(time.Time); ok {
+    if t.ConvertibleTo(TimeType) {
         return true
     }
     return false
@@ -417,4 +430,17 @@ func convert2Time(data []byte, location *time.Location) (time.Time, error) {
         timeRet, err = time.ParseInLocation("2006-01-02", timeStr, location)
     }
     return timeRet, nil
+}
+
+func ToSlice(arr interface{}) []interface{} {
+    v := reflect.ValueOf(arr)
+    if v.Kind() != reflect.Slice {
+        panic("toslice arr not slice")
+    }
+    l := v.Len()
+    ret := make([]interface{}, l)
+    for i := 0; i < l; i++ {
+        ret[i] = v.Index(i).Interface()
+    }
+    return ret
 }

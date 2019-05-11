@@ -180,7 +180,7 @@ func TestSqlParserWithParamMap4(t *testing.T) {
         Id:   123,
         Name: "test_name",
     }
-    ti, _ := reflection.GetTableInfo(&paramVar)
+    ti, _ := reflection.GetObjectInfo(&paramVar)
     params := ti.MapValue()
     params["tablename"] = ti.Name
 

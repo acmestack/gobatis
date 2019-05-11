@@ -155,7 +155,7 @@ func (this *BaseRunner) Param(params ...interface{}) Runner {
         if t.Kind() == reflect.Ptr {
             t = t.Elem()
         }
-        if reflection.IsSimpleType(params[0]) {
+        if reflection.IsSimpleType(t) {
             return this.params(params...)
         }
         if t.Kind() == reflect.Struct {
@@ -163,7 +163,7 @@ func (this *BaseRunner) Param(params ...interface{}) Runner {
         }
     } else {
         for _, v := range params {
-            if !reflection.IsSimpleType(v) {
+            if !reflection.IsSimpleObject(v) {
                 this.log(logging.WARN, "Param error: expect simple type, but get other type")
                 return this.this
             }
@@ -198,7 +198,7 @@ func (this *BaseRunner) params(params ...interface{}) Runner {
 
 func (this *BaseRunner) paramType(paramVar interface{}) Runner {
     this.metadata = nil
-    ti, err := reflection.GetTableInfo(paramVar)
+    ti, err := reflection.GetObjectInfo(paramVar)
     if err != nil {
         this.log(logging.WARN, "%s", err.Error())
         return this.this

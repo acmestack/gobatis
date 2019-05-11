@@ -38,7 +38,7 @@ func (m *DynamicData) Replace(params ...interface{}) string {
         if t.Kind() == reflect.Ptr {
             t = t.Elem()
         }
-        if reflection.IsSimpleType(params[0]) {
+        if reflection.IsSimpleType(t) {
             return m.ReplaceWithParams(params...)
         }
         if t.Kind() == reflect.Struct {
@@ -47,7 +47,7 @@ func (m *DynamicData) Replace(params ...interface{}) string {
     } else {
         objParams := map[string]interface{}{}
         for i, v := range params {
-            if !reflection.IsSimpleType(v) {
+            if !reflection.IsSimpleObject(v) {
                 logging.Warn("Param error: expect simple type, but get other type")
                 return m.OriginData
             }
@@ -66,7 +66,7 @@ func (m *DynamicData) ReplaceWithBean(param interface{}) string {
         return m.OriginData
     }
 
-    ti, err := reflection.GetTableInfo(param)
+    ti, err := reflection.GetObjectInfo(param)
     if err != nil {
         logging.Info("%s", err.Error())
         return m.OriginData
@@ -83,7 +83,7 @@ func (m *DynamicData) ReplaceWithParams(params ...interface{}) string {
     }
     objParams := map[string]interface{}{}
     for i, v := range params {
-        //if !reflection.IsSimpleType(v) {
+        //if !reflection.IsSimpleObject(v) {
         //    logging.Warn("Param error: expect simple type, but get other type")
         //    return m.OriginData
         //}

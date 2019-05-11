@@ -16,7 +16,7 @@ import (
 )
 
 type ModelInfo struct {
-    TableInfo *reflection.TableInfo
+    TableInfo *reflection.ObjectInfo
     Model     interface{}
 }
 
@@ -58,7 +58,7 @@ func registerBuildin() {
 // 注册模型，模型描述了column和field之间的关联关系；
 // 用于获得数据库数据反序列化。未注册的模型将无法正确反序列化。
 func RegisterModel(model interface{}) *errors.ErrCode {
-    tableInfo, err := reflection.GetTableInfo(model)
+    tableInfo, err := reflection.GetObjectInfo(model)
     if err != nil {
         return errors.PARSE_MODEL_TABLEINFO_FAILED
     }
@@ -69,7 +69,7 @@ func RegisterModel(model interface{}) *errors.ErrCode {
 }
 
 func RegisterModelWithName(name string, model interface{}) *errors.ErrCode {
-    tableInfo, err := reflection.GetTableInfo(model)
+    tableInfo, err := reflection.GetObjectInfo(model)
     if err != nil {
         return errors.PARSE_MODEL_TABLEINFO_FAILED
     }
