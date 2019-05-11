@@ -15,9 +15,11 @@ import (
     "sync"
 )
 
+type ModelName string
+
 type ModelInfo struct {
-    TableInfo *reflection.ObjectInfo
-    Model     interface{}
+    ObjectInfo *reflection.ObjectInfo
+    Model      interface{}
 }
 
 type ModelManager struct {
@@ -35,24 +37,24 @@ func registerBuildin() {
     g_model_mgr.lock.Lock()
     defer g_model_mgr.lock.Unlock()
 
-    g_model_mgr.modelMap[reflection.StringType.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.EMPTY_STRING}
-    g_model_mgr.modelMap[reflection.BoolType.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.BOOL_DEFAULT}
-    g_model_mgr.modelMap[reflection.ByteType.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.BYTE_DEFAULT}
-    g_model_mgr.modelMap[reflection.Complex64Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.COMPLEX64_DEFAULT}
-    g_model_mgr.modelMap[reflection.Complex128Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.COMPLEX128_DEFAULT}
-    g_model_mgr.modelMap[reflection.Float32Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.FLOAT32_DEFAULT}
-    g_model_mgr.modelMap[reflection.Float64Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.FLOAT64_DEFAULT}
-    g_model_mgr.modelMap[reflection.Int64Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.INT64_DEFAULT}
-    g_model_mgr.modelMap[reflection.Uint64Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.UINT64_DEFAULT}
-    g_model_mgr.modelMap[reflection.Int32Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.INT32_DEFAULT}
-    g_model_mgr.modelMap[reflection.Uint32Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.UINT32_DEFAULT}
-    g_model_mgr.modelMap[reflection.Int16Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.INT16_DEFAULT}
-    g_model_mgr.modelMap[reflection.Uint16Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.UINT16_DEFAULT}
-    g_model_mgr.modelMap[reflection.Int8Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.INT8_DEFAULT}
-    g_model_mgr.modelMap[reflection.Uint8Type.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.UINT8_DEFAULT}
-    g_model_mgr.modelMap[reflection.IntType.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.INT_DEFAULT}
-    g_model_mgr.modelMap[reflection.UintType.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.UINT_DEFAULT}
-    g_model_mgr.modelMap[reflection.TimeType.Name()] = &ModelInfo{TableInfo: nil, Model: &reflection.TIME_DEFAULT}
+    g_model_mgr.modelMap[reflection.StringType.Name()] = &ModelInfo{ObjectInfo: nil, Model: &reflection.EMPTY_STRING}
+    g_model_mgr.modelMap[reflection.BoolType.Name()] = &ModelInfo{ObjectInfo: nil, Model: &reflection.BOOL_DEFAULT}
+    g_model_mgr.modelMap[reflection.ByteType.Name()] = &ModelInfo{ObjectInfo: nil, Model: &reflection.BYTE_DEFAULT}
+    g_model_mgr.modelMap[reflection.Complex64Type.Name()] = &ModelInfo{ObjectInfo: nil, Model: &reflection.COMPLEX64_DEFAULT}
+    g_model_mgr.modelMap[reflection.Complex128Type.Name()] = &ModelInfo{ObjectInfo: nil, Model: &reflection.COMPLEX128_DEFAULT}
+    g_model_mgr.modelMap[reflection.Float32Type.Name()] = &ModelInfo{ObjectInfo: nil, Model: &reflection.FLOAT32_DEFAULT}
+    g_model_mgr.modelMap[reflection.Float64Type.Name()] = &ModelInfo{ObjectInfo: nil, Model: &reflection.FLOAT64_DEFAULT}
+    g_model_mgr.modelMap[reflection.Int64Type.Name()] = &ModelInfo{ObjectInfo: nil, Model: &reflection.INT64_DEFAULT}
+    g_model_mgr.modelMap[reflection.Uint64Type.Name()] = &ModelInfo{ObjectInfo: nil, Model: &reflection.UINT64_DEFAULT}
+    g_model_mgr.modelMap[reflection.Int32Type.Name()] = &ModelInfo{ObjectInfo: nil, Model: &reflection.INT32_DEFAULT}
+    g_model_mgr.modelMap[reflection.Uint32Type.Name()] = &ModelInfo{ObjectInfo: nil, Model: &reflection.UINT32_DEFAULT}
+    g_model_mgr.modelMap[reflection.Int16Type.Name()] = &ModelInfo{ObjectInfo: nil, Model: &reflection.INT16_DEFAULT}
+    g_model_mgr.modelMap[reflection.Uint16Type.Name()] = &ModelInfo{ObjectInfo: nil, Model: &reflection.UINT16_DEFAULT}
+    g_model_mgr.modelMap[reflection.Int8Type.Name()] = &ModelInfo{ObjectInfo: nil, Model: &reflection.INT8_DEFAULT}
+    g_model_mgr.modelMap[reflection.Uint8Type.Name()] = &ModelInfo{ObjectInfo: nil, Model: &reflection.UINT8_DEFAULT}
+    g_model_mgr.modelMap[reflection.IntType.Name()] = &ModelInfo{ObjectInfo: nil, Model: &reflection.INT_DEFAULT}
+    g_model_mgr.modelMap[reflection.UintType.Name()] = &ModelInfo{ObjectInfo: nil, Model: &reflection.UINT_DEFAULT}
+    g_model_mgr.modelMap[reflection.TimeType.Name()] = &ModelInfo{ObjectInfo: nil, Model: &reflection.TIME_DEFAULT}
 }
 
 // 注册模型，模型描述了column和field之间的关联关系；
@@ -64,7 +66,7 @@ func RegisterModel(model interface{}) *errors.ErrCode {
     }
     g_model_mgr.lock.Lock()
     defer g_model_mgr.lock.Unlock()
-    g_model_mgr.modelMap[tableInfo.Name] = &ModelInfo{TableInfo: tableInfo, Model: model}
+    g_model_mgr.modelMap[tableInfo.GetClassName()] = &ModelInfo{ObjectInfo: tableInfo, Model: model}
     return nil
 }
 
@@ -75,7 +77,7 @@ func RegisterModelWithName(name string, model interface{}) *errors.ErrCode {
     }
     g_model_mgr.lock.Lock()
     defer g_model_mgr.lock.Unlock()
-    g_model_mgr.modelMap[name] = &ModelInfo{TableInfo: tableInfo, Model: model}
+    g_model_mgr.modelMap[name] = &ModelInfo{ObjectInfo: tableInfo, Model: model}
     return nil
 }
 
@@ -87,12 +89,12 @@ func FindModelInfo(name string) *ModelInfo {
 }
 
 func FindModelInfoOfBean(bean interface{}) *ModelInfo {
-    name := reflection.GetBeanName(bean)
+    name := reflection.GetBeanClassName(bean)
     return FindModelInfo(name)
 }
 
 func (mi *ModelInfo) Deserialize(columns []string, values []interface{}) (interface{}, error) {
-    ti := mi.TableInfo
+    ti := mi.ObjectInfo
     v := reflect.New(reflect.TypeOf(mi.Model).Elem()).Elem()
     //struct
     if ti != nil {

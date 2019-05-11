@@ -13,8 +13,6 @@ import (
     "reflect"
 )
 
-type ModelName string
-
 func init() {
     var typeModelName ModelName
     reflection.SetModelNameType(reflect.TypeOf(typeModelName))

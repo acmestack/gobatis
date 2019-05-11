@@ -34,7 +34,9 @@ type FieldInfo struct {
 }
 
 type ObjectInfo struct {
-    //表名
+    //包含pkg的名称
+    ClassName string
+    //Model名称（目前用于xml解析是struct的前缀：#{x.username} 中的x）
     Name string
     //字段信息
     //Fields []FieldInfo
@@ -50,36 +52,22 @@ func newObjectInfo() *ObjectInfo {
     }
 }
 
-func GetBeanName(model interface{}) string {
+func (o *ObjectInfo) GetClassName() string {
+    return o.ClassName
+}
+
+func GetBeanClassName(model interface{}) string {
     rt := reflect.TypeOf(model)
-    rv := reflect.ValueOf(model)
 
     if rt.Kind() == reflect.Ptr {
         rt = rt.Elem()
-        rv = rv.Elem()
     }
 
     if rt.Kind() == reflect.Slice {
         rt = rt.Elem()
     }
 
-    //Default name is struct name
-    name := rt.Name()
-
-    if rt.Kind() != reflect.Struct {
-        return name
-    }
-
-    //字段解析
-    for i, j := 0, rt.NumField(); i < j; i++ {
-        rtf := rt.Field(i)
-        if rtf.Type == modelNameType {
-            if rtf.Tag != "" {
-                name = string(rtf.Tag)
-            }
-        }
-    }
-    return name
+    return rt.PkgPath() + "/" + rt.Name()
 }
 
 //GetObjectInfo 解析结构体，使用：
@@ -108,6 +96,7 @@ func GetObjectInfo(model interface{}) (*ObjectInfo, error) {
     }
     //Default name is struct name
     tableInfo.Name = rt.Name()
+    tableInfo.ClassName = rt.PkgPath() + "/" + tableInfo.Name
 
     //字段解析
     for i, j := 0, rt.NumField(); i < j; i++ {
@@ -430,6 +419,19 @@ func convert2Time(data []byte, location *time.Location) (time.Time, error) {
         timeRet, err = time.ParseInLocation("2006-01-02", timeStr, location)
     }
     return timeRet, nil
+}
+
+func CheckBean(bean interface{}) error {
+    return CheckBeanValue(reflect.ValueOf(bean))
+}
+
+func CheckBeanValue(beanValue reflect.Value) error {
+    if beanValue.Kind() != reflect.Ptr {
+        return errors.RESULT_ISNOT_POINTER
+    } else if beanValue.Elem().Kind() == reflect.Ptr {
+        return errors.RESULT_PTR_VALUE_IS_POINTER
+    }
+    return nil
 }
 
 func ToSlice(arr interface{}) []interface{} {

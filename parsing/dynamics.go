@@ -9,7 +9,6 @@
 package parsing
 
 import (
-    "fmt"
     "github.com/xfali/gobatis/logging"
     "github.com/xfali/gobatis/reflection"
     "reflect"
@@ -29,68 +28,8 @@ type DynamicData struct {
 }
 
 func (m *DynamicData) Replace(params ...interface{}) string {
-    if len(m.DynamicElemMap) == 0 || len(params) == 0 {
-        return m.OriginData
-    }
-
-    if len(params) == 1 {
-        t := reflect.TypeOf(params[0])
-        if t.Kind() == reflect.Ptr {
-            t = t.Elem()
-        }
-        if reflection.IsSimpleType(t) {
-            return m.ReplaceWithParams(params...)
-        }
-        if t.Kind() == reflect.Struct {
-            return m.ReplaceWithBean(params[0])
-        }
-    } else {
-        objParams := map[string]interface{}{}
-        for i, v := range params {
-            if !reflection.IsSimpleObject(v) {
-                logging.Warn("Param error: expect simple type, but get other type")
-                return m.OriginData
-            }
-            key := fmt.Sprintf("{%d}", i)
-            objParams[key] = v
-        }
-        return m.ReplaceWithMap(objParams)
-    }
-
-    return m.OriginData
-}
-
-//需要外部确保param是一个struct
-func (m *DynamicData) ReplaceWithBean(param interface{}) string {
-    if len(m.DynamicElemMap) == 0 {
-        return m.OriginData
-    }
-
-    ti, err := reflection.GetObjectInfo(param)
-    if err != nil {
-        logging.Info("%s", err.Error())
-        return m.OriginData
-    }
-    objParams := ti.MapValue()
-
-    return m.ReplaceWithMap(objParams)
-}
-
-//需要外部确认params是一个简单类型（simple type）的切片slice
-func (m *DynamicData) ReplaceWithParams(params ...interface{}) string {
-    if len(m.DynamicElemMap) == 0 || len(params) == 0 {
-        return m.OriginData
-    }
-    objParams := map[string]interface{}{}
-    for i, v := range params {
-        //if !reflection.IsSimpleObject(v) {
-        //    logging.Warn("Param error: expect simple type, but get other type")
-        //    return m.OriginData
-        //}
-        key := fmt.Sprintf("{%d}", i)
-        objParams[key] = v
-    }
-    return m.ReplaceWithMap(objParams)
+    objMap := reflection.ParseParams(params...)
+    return m.ReplaceWithMap(objMap)
 }
 
 //需要外部确保param是一个struct

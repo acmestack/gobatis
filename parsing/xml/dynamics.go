@@ -70,7 +70,7 @@ func (de *If) Format(getFunc func(key string) string) string {
         return ""
     }
 
-    if len(andStrs) != 0 && len(orStrs) < 2{
+    if len(andStrs) != 0 && len(orStrs) < 2 {
         for _, v := range andStrs {
             ret := Compare(v, getFunc)
             if ret != true {
@@ -95,27 +95,48 @@ func (de *If) Format(getFunc func(key string) string) string {
     return ""
 }
 
+//test的参数必须是使用{}包裹起来，并且比较符号需要空格分隔，如<if test="{1} != nil"> 或者 <if test="{x.name} != nil">
 func Compare(src string, getFunc func(key string) string) bool {
     params := strings.Split(src, " ")
     if len(params) > 2 {
-        value := getFunc(params[0])
-        if value == "" {
-            value = "nil"
+        v1 := getValueFromFunc(params[0], getFunc)
+        v2 := getValueFromFunc(params[2], getFunc)
+        if v1 == "" && v2 == "" {
+            return false
         }
         switch params[1] {
         case "==":
-            if value == params[2] {
+            if v1 == v2 {
                 return true
             }
             break
         case "!=":
-            if value != params[2] {
+            if v1 != v2 {
                 return true
             }
             break
         }
     }
     return false
+}
+
+func getValueFromFunc(src string, getFunc func(key string) string) string {
+    if src == "" {
+        return ""
+    }
+    if src[:1] == "{" {
+        index := strings.Index(src, "}")
+        if index == -1 {
+            return src
+        }
+        ret := getFunc(src[1:index])
+        if ret == "" {
+            return "nil"
+        } else {
+            return ret
+        }
+    }
+    return src
 }
 
 //传入方法必须是通过参数名获得参数值

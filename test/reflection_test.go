@@ -85,13 +85,13 @@ func TestReflection5(t *testing.T) {
 
 func TestReflection6(t *testing.T) {
     v := []TestStruct1{}
-    t.Log(reflection.GetBeanName(v))
+    t.Log(reflection.GetBeanClassName(v))
 
     v2 := 10
-    t.Log(reflection.GetBeanName(v2))
+    t.Log(reflection.GetBeanClassName(v2))
 
     v3 := TestStruct2{}
-    t.Log(reflection.GetBeanName(v3))
+    t.Log(reflection.GetBeanClassName(v3))
 }
 
 func TestReflection7(t *testing.T) {
@@ -127,10 +127,10 @@ func TestReflectionParseSimple(t *testing.T) {
 
 func TestReflectionParseMap(t *testing.T) {
     ret := reflection.ParseParams(map[string]interface{}{
-        "testInt":   123,
-        "testStr":   "test",
-        "testFloat": 1.1,
-        "testTIME":  time.Now(),
+        "mapkey1_int":    123,
+        "mapkey2_string": "test",
+        "mapkey3_float":  1.1,
+        "mapkey4_time":   time.Now(),
     })
     if len(ret) == 0 {
         t.Fail()
@@ -141,12 +141,14 @@ func TestReflectionParseMap(t *testing.T) {
 }
 
 type testParseStruct struct {
+    Name     gobatis.ModelName `parse_struct`
     Username string
     Password string
 }
 
 func TestReflectionParseStruct(t *testing.T) {
     ret := reflection.ParseParams(testParseStruct{
+        "x",
         "user",
         "pw",
     })
@@ -158,11 +160,33 @@ func TestReflectionParseStruct(t *testing.T) {
     }
 }
 
+func TestReflectionParseComplex(t *testing.T) {
+    ret := reflection.ParseParams(1, map[string]interface{}{
+        "mapkey1_int":    123,
+        "mapkey2_string": "test",
+        "mapkey3_float":  1.1,
+        "mapkey4_time":   time.Now(),
+    }, "2", testParseStruct{
+        Username: "user",
+        Password: "pw",
+    }, 1.3, time.Now())
+    if len(ret) == 0 {
+        t.Fail()
+    }
+    for k, v := range ret {
+        t.Logf("complex key : %s value : %v", k, v)
+    }
+}
+
 func TestSimpleType(t *testing.T) {
     ret := reflection.IsSimpleObject(time.Time{})
     if !ret {
         t.Fail()
     }
+}
+
+func TestBeanClass(t *testing.T) {
+    t.Log(reflection.GetBeanClassName(TestStruct2{}))
 }
 
 func printTableInfo(table *reflection.ObjectInfo) {
