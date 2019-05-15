@@ -189,7 +189,7 @@ func TestBeanClass(t *testing.T) {
     t.Log(reflection.GetBeanClassName(TestStruct2{}))
 }
 
-func printTableInfo(table *reflection.ObjectInfo) {
+func printTableInfo(table *reflection.StructInfo) {
     fmt.Printf("table name is %s\n", table.Name)
     for k, v := range table.FieldMap {
         fmt.Printf("field : %s, value %s\n", k, v)

@@ -44,6 +44,7 @@ type Runner interface {
 }
 
 type Session struct {
+    ctx     context.Context
     log     logging.LogFunc
     session session.SqlSession
 }
@@ -96,9 +97,19 @@ func getSql(sqlId string) *parsing.DynamicData {
 //使用一个session操作数据库
 func (this *SessionManager) NewSession() *Session {
     return &Session{
+        ctx:     context.Background(),
         log:     this.factory.LogFunc(),
         session: this.factory.CreateSession(),
     }
+}
+
+func (this *Session) SetContext(ctx context.Context) *Session {
+    this.ctx = ctx
+    return this
+}
+
+func (this *Session) GetContext() context.Context {
+    return this.ctx
 }
 
 //开启事务执行语句
@@ -132,19 +143,19 @@ func (this *Session) SelectWithIterFunc(sqlId string, iterFunc common.IterFunc) 
 }
 
 func (this *Session) Select(sql string) Runner {
-    return createSelect(this.log, this.session, getSql(sql))
+    return createSelect(this.ctx, this.log, this.session, getSql(sql))
 }
 
 func (this *Session) Update(sql string) Runner {
-    return createUpdate(this.log, this.session, getSql(sql))
+    return createUpdate(this.ctx, this.log, this.session, getSql(sql))
 }
 
 func (this *Session) Delete(sql string) Runner {
-    return createDelete(this.log, this.session, getSql(sql))
+    return createDelete(this.ctx, this.log, this.session, getSql(sql))
 }
 
 func (this *Session) Insert(sql string) Runner {
-    return createInsert(this.log, this.session, getSql(sql))
+    return createInsert(this.ctx, this.log, this.session, getSql(sql))
 }
 
 func (this *BaseRunner) Param(params ...interface{}) Runner {
@@ -176,8 +187,9 @@ func (this *SelectIterRunner) myIterFunc(idx int64, bean interface{}) bool {
 }
 
 func (this *SelectIterRunner) Result(bean interface{}) error {
-    err := reflection.CheckBean(bean)
+    err := reflection.MustPtr(bean)
     if err != nil {
+        this.log(logging.WARN, "Result error: %s\n", err.Error())
         return err
     }
     if this.metadata == nil {
@@ -206,8 +218,9 @@ func (this *SelectRunner) Result(bean interface{}) error {
     }
     rt := reflect.TypeOf(bean)
     rv := reflect.ValueOf(bean)
-    err := reflection.CheckBeanValue(rv)
+    err := reflection.MustPtrValue(rv)
     if err != nil {
+        this.log(logging.WARN, "Result error: %s\n", err.Error())
         return err
     }
     rt = rt.Elem()
@@ -253,7 +266,7 @@ func (this *InsertRunner) Result(bean interface{}) error {
     var rv reflect.Value
     if bean != nil {
         rv = reflect.ValueOf(bean)
-        err := reflection.CheckBeanValue(rv)
+        err := reflection.MustPtrValue(rv)
         rv = rv.Elem()
         if err != nil {
             return err
@@ -279,7 +292,7 @@ func (this *UpdateRunner) Result(bean interface{}) error {
     var rv reflect.Value
     if bean != nil {
         rv = reflect.ValueOf(bean)
-        err := reflection.CheckBeanValue(rv)
+        err := reflection.MustPtrValue(rv)
         rv = rv.Elem()
         if err != nil {
             return err
@@ -300,7 +313,7 @@ func (this *DeleteRunner) Result(bean interface{}) error {
     var rv reflect.Value
     if bean != nil {
         rv = reflect.ValueOf(bean)
-        err := reflection.CheckBeanValue(rv)
+        err := reflection.MustPtrValue(rv)
         rv = rv.Elem()
         if err != nil {
             return err
@@ -323,46 +336,46 @@ func (this *BaseRunner) LastInsertId() int64 {
     return -1
 }
 
-func createSelect(log logging.LogFunc, session session.SqlSession, sqlDynamic *parsing.DynamicData) Runner {
+func createSelect(ctx context.Context, log logging.LogFunc, session session.SqlSession, sqlDynamic *parsing.DynamicData) Runner {
     ret := &SelectRunner{}
     ret.action = sqlparser.SELECT
     ret.log = log
     ret.session = session
     ret.sqlDynamicData = *sqlDynamic
-    ret.ctx = context.Background()
+    ret.ctx = ctx
     ret.this = ret
     return ret
 }
 
-func createUpdate(log logging.LogFunc, session session.SqlSession, sqlDynamic *parsing.DynamicData) Runner {
+func createUpdate(ctx context.Context, log logging.LogFunc, session session.SqlSession, sqlDynamic *parsing.DynamicData) Runner {
     ret := &UpdateRunner{}
     ret.action = sqlparser.UPDATE
     ret.log = log
     ret.session = session
     ret.sqlDynamicData = *sqlDynamic
-    ret.ctx = context.Background()
+    ret.ctx = ctx
     ret.this = ret
     return ret
 }
 
-func createDelete(log logging.LogFunc, session session.SqlSession, sqlDynamic *parsing.DynamicData) Runner {
+func createDelete(ctx context.Context, log logging.LogFunc, session session.SqlSession, sqlDynamic *parsing.DynamicData) Runner {
     ret := &DeleteRunner{}
     ret.action = sqlparser.DELETE
     ret.log = log
     ret.session = session
     ret.sqlDynamicData = *sqlDynamic
-    ret.ctx = context.Background()
+    ret.ctx = ctx
     ret.this = ret
     return ret
 }
 
-func createInsert(log logging.LogFunc, session session.SqlSession, sqlDynamic *parsing.DynamicData) Runner {
+func createInsert(ctx context.Context, log logging.LogFunc, session session.SqlSession, sqlDynamic *parsing.DynamicData) Runner {
     ret := &InsertRunner{}
     ret.action = sqlparser.INSERT
     ret.log = log
     ret.session = session
     ret.sqlDynamicData = *sqlDynamic
-    ret.ctx = context.Background()
+    ret.ctx = ctx
     ret.this = ret
     return ret
 }

@@ -33,7 +33,7 @@ type FieldInfo struct {
     Value reflect.Value
 }
 
-type ObjectInfo struct {
+type StructInfo struct {
     //包含pkg的名称
     ClassName string
     //Model名称（目前用于xml解析是struct的前缀：#{x.username} 中的x）
@@ -45,14 +45,14 @@ type ObjectInfo struct {
     FieldNameMap map[string]string
 }
 
-func newObjectInfo() *ObjectInfo {
-    return &ObjectInfo{
+func newStructInfo() *StructInfo {
+    return &StructInfo{
         FieldMap:     map[string]reflect.Value{},
         FieldNameMap: map[string]string{},
     }
 }
 
-func (o *ObjectInfo) GetClassName() string {
+func (o *StructInfo) GetClassName() string {
     return o.ClassName
 }
 
@@ -67,7 +67,12 @@ func GetBeanClassName(model interface{}) string {
         rt = rt.Elem()
     }
 
-    return rt.PkgPath() + "/" + rt.Name()
+    pkg := rt.PkgPath()
+    if pkg == "" {
+        return rt.Name()
+    } else {
+        return rt.PkgPath() + "/" + rt.Name()
+    }
 }
 
 //GetObjectInfo 解析结构体，使用：
@@ -80,9 +85,29 @@ func GetBeanClassName(model interface{}) string {
 // b）、如果tag不为‘-’使用tag name作为column名称与field映射。
 //4、如果结构体中不含有xfield的tag，则使用field name作为column名称与field映射
 //5、如果字段的tag为‘-’，则不进行columne与field的映射；
-func GetObjectInfo(model interface{}) (*ObjectInfo, error) {
-    tableInfo := newObjectInfo()
+func GetObjectInfo(model interface{}) (*StructInfo, error) {
+    rt := reflect.TypeOf(model)
 
+    if rt.Kind() == reflect.Ptr {
+        rt = rt.Elem()
+    }
+
+    switch rt.Kind() {
+    case reflect.Struct:
+        return GetStructInfo(model)
+        //case reflect.Slice:
+        //    return GetSliceInfo()
+        //case reflect.Map:
+        //    return GetMapInfo()
+        //default:
+        //    if IsSimpleType(rt) {
+        //        return GetSimpleInfo()
+        //    }
+    }
+    return nil, errors.OBJECT_NOT_SUPPORT
+}
+
+func GetStructInfo(model interface{}) (*StructInfo, error) {
     rt := reflect.TypeOf(model)
     rv := reflect.ValueOf(model)
 
@@ -91,12 +116,20 @@ func GetObjectInfo(model interface{}) (*ObjectInfo, error) {
         rv = rv.Elem()
     }
 
-    if rt.Kind() != reflect.Struct {
+    kind := rt.Kind()
+
+    if kind != reflect.Struct {
         return nil, errors.PARSE_TABLEINFO_NOT_STRUCT
     }
+    objInfo := newStructInfo()
     //Default name is struct name
-    tableInfo.Name = rt.Name()
-    tableInfo.ClassName = rt.PkgPath() + "/" + tableInfo.Name
+    objInfo.Name = rt.Name()
+    pkg := rt.PkgPath()
+    if pkg == "" {
+        objInfo.ClassName = objInfo.Name
+    } else {
+        objInfo.ClassName = rt.PkgPath() + "/" + objInfo.Name
+    }
 
     //字段解析
     for i, j := 0, rt.NumField(); i < j; i++ {
@@ -104,19 +137,19 @@ func GetObjectInfo(model interface{}) (*ObjectInfo, error) {
         rvf := rv.Field(i)
         if rtf.Type == modelNameType {
             if rtf.Tag != "" {
-                tableInfo.Name = string(rtf.Tag)
+                objInfo.Name = string(rtf.Tag)
             } else {
-                tableInfo.Name = rtf.Name
+                objInfo.Name = rtf.Name
             }
             continue
         }
 
         //没有tag,表字段名与实体字段名一致
         if rtf.Tag == "" {
-            tableInfo.FieldNameMap[rtf.Name] = rtf.Name
+            objInfo.FieldNameMap[rtf.Name] = rtf.Name
             //f := FieldInfo{Name: rtf.Name, Value: rvf}
             //tableInfo.Fields = append(tableInfo.Fields, f)
-            tableInfo.FieldMap[rtf.Name] = rvf
+            objInfo.FieldMap[rtf.Name] = rvf
             continue
         }
 
@@ -131,22 +164,22 @@ func GetObjectInfo(model interface{}) (*ObjectInfo, error) {
         } else if tagName != "" {
             fieldName = tagName
         }
-        tableInfo.FieldNameMap[fieldName] = rtf.Name
+        objInfo.FieldNameMap[fieldName] = rtf.Name
         //f := FieldInfo{Name: fieldName, Value: rvf}
         //tableInfo.Fields = append(tableInfo.Fields, f)
-        tableInfo.FieldMap[fieldName] = rvf
+        objInfo.FieldMap[fieldName] = rvf
         continue
     }
-    return tableInfo, nil
+    return objInfo, nil
 }
 
-func (ti *ObjectInfo) MapValue() map[string]interface{} {
+func (ti *StructInfo) MapValue() map[string]interface{} {
     paramMap := map[string]interface{}{}
     ti.FillMapValue(&paramMap)
     return paramMap
 }
 
-func (ti *ObjectInfo) FillMapValue(paramMap *map[string]interface{}) {
+func (ti *StructInfo) FillMapValue(paramMap *map[string]interface{}) {
     for k, v := range ti.FieldMap {
         if !v.CanInterface() {
             v = reflect.Indirect(v)
@@ -257,18 +290,18 @@ func SetValue(f reflect.Value, v interface{}) bool {
             hasAssigned = true
             f.SetString(strconv.FormatBool(vv.Bool()))
             break
-        //case reflect.Struct:
-        //    if ti, ok := v.(time.Time); ok {
-        //        hasAssigned = true
-        //        if ti.IsZero() {
-        //            f.SetString("")
-        //        } else {
-        //            f.SetString(ti.String())
-        //        }
-        //    } else {
-        //        hasAssigned = true
-        //        f.SetString(fmt.Sprintf("%v", v))
-        //    }
+            //case reflect.Struct:
+            //    if ti, ok := v.(time.Time); ok {
+            //        hasAssigned = true
+            //        if ti.IsZero() {
+            //            f.SetString("")
+            //        } else {
+            //            f.SetString(ti.String())
+            //        }
+            //    } else {
+            //        hasAssigned = true
+            //        f.SetString(fmt.Sprintf("%v", v))
+            //    }
         default:
             hasAssigned = true
             f.SetString(fmt.Sprintf("%v", v))
@@ -421,11 +454,11 @@ func convert2Time(data []byte, location *time.Location) (time.Time, error) {
     return timeRet, nil
 }
 
-func CheckBean(bean interface{}) error {
-    return CheckBeanValue(reflect.ValueOf(bean))
+func MustPtr(bean interface{}) error {
+    return MustPtrValue(reflect.ValueOf(bean))
 }
 
-func CheckBeanValue(beanValue reflect.Value) error {
+func MustPtrValue(beanValue reflect.Value) error {
     if beanValue.Kind() != reflect.Ptr {
         return errors.RESULT_ISNOT_POINTER
     } else if beanValue.Elem().Kind() == reflect.Ptr {
