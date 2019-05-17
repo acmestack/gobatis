@@ -211,51 +211,24 @@ func (this *SelectRunner) Result(bean interface{}) error {
         return errors.RUNNER_NOT_READY
     }
 
-    mi := FindModelInfoOfBean(bean)
-    if mi == nil {
-        this.log(logging.WARN, errors.MODEL_NOT_REGISTER.Error())
-        return errors.RESULT_NAME_NOT_FOUND
+    if reflection.IsNil(bean) {
+        return errors.RESULT_POINTER_IS_NIL
     }
-    rt := reflect.TypeOf(bean)
-    rv := reflect.ValueOf(bean)
-    err := reflection.MustPtrValue(rv)
+
+    //mi := FindModelInfoOfBean(bean)
+    //if mi == nil {
+    //    this.log(logging.WARN, errors.MODEL_NOT_REGISTER.Error())
+    //    return errors.RESULT_NAME_NOT_FOUND
+    //}
+    obj, err := NewObject(bean)
     if err != nil {
-        this.log(logging.WARN, "Result error: %s\n", err.Error())
         return err
     }
-    rt = rt.Elem()
-    rv = rv.Elem()
-
-    switch rt.Kind() {
-    case reflect.Slice:
-        //FIXME: bean append in loop
-        retV := rv
-        iterFunc := func(idx int64, bean interface{}) bool {
-            retV = reflect.Append(retV, reflect.ValueOf(bean))
-            return false
-        }
-        err := this.session.Query(this.ctx, mi, iterFunc, this.metadata.PrepareSql, this.metadata.Params...)
-        if err == nil {
-            rv.Set(retV)
-        } else {
-            return err
-        }
-        break
-    default:
-        v, err := this.session.SelectOne(this.ctx, mi, this.metadata.PrepareSql, this.metadata.Params...)
-        if err == nil {
-            retV := reflect.ValueOf(v)
-            if retV.IsValid() {
-                rv.Set(reflect.ValueOf(v))
-            } else {
-                return errors.RESULT_SELECT_EMPTY_VALUE
-            }
-        } else {
-            return err
-        }
-        break
+    iterFunc := func(idx int64, bean interface{}) bool {
+       return !obj.ObjectInfo.CanAddValue()
     }
-    return nil
+    return this.session.Query(this.ctx, obj, iterFunc, this.metadata.PrepareSql, this.metadata.Params...)
+
 }
 
 func (this *InsertRunner) Result(bean interface{}) error {

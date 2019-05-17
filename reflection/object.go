@@ -373,7 +373,7 @@ func GetReflectSliceInfo(rt reflect.Type, rv reflect.Value) (Object, error) {
     kind := rt.Kind()
 
     if kind != reflect.Slice {
-        return nil, errors.PARSE_TABLEINFO_NOT_SLICE
+        return nil, errors.PARSE_OBJECT_NOT_SLICE
     }
     sliceType := rt
     //获得元素类型
@@ -394,7 +394,7 @@ func GetReflectMapInfo(rt reflect.Type, rv reflect.Value) (Object, error) {
     kind := rt.Kind()
 
     if kind != reflect.Map {
-        return nil, errors.PARSE_TABLEINFO_NOT_MAP
+        return nil, errors.PARSE_OBJECT_NOT_MAP
     }
 
     if rt.Key().Kind() != reflect.String {
@@ -438,7 +438,7 @@ func GetReflectStructInfo(rt reflect.Type, rv reflect.Value) (*StructInfo, error
     kind := rt.Kind()
 
     if kind != reflect.Struct {
-        return nil, errors.PARSE_TABLEINFO_NOT_STRUCT
+        return nil, errors.PARSE_OBJECT_NOT_STRUCT
     }
     objInfo := newStructInfo()
     objInfo.Type = rt
