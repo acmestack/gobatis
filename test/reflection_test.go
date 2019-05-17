@@ -25,7 +25,7 @@ type TestStruct1 struct {
 
 func TestReflection1(t *testing.T) {
     test := TestStruct1{"table", "abc", "123"}
-    table, _ := reflection.GetObjectInfo(&test)
+    table, _ := reflection.GetStructInfo(&test)
     printTableInfo(table)
 }
 
@@ -37,7 +37,7 @@ type TestStruct2 struct {
 
 func TestReflection2(t *testing.T) {
     test := TestStruct2{"table", "abc", "123"}
-    table, _ := reflection.GetObjectInfo(&test)
+    table, _ := reflection.GetStructInfo(&test)
     printTableInfo(table)
 }
 
@@ -189,11 +189,114 @@ func TestBeanClass(t *testing.T) {
     t.Log(reflection.GetBeanClassName(TestStruct2{}))
 }
 
+func TestReflectSlice(t *testing.T) {
+    o := []TestTable{}
+    rt := reflect.TypeOf(o)
+    rv := reflect.ValueOf(o)
+
+    rt = rt.Elem()
+    t.Log(rt)
+    t.Logf("rv valid: %v\n", rv.Elem())
+}
+
+func TestReflectMap(t *testing.T) {
+    o := map[string]int{}
+    rt := reflect.TypeOf(o)
+    //rv := reflect.ValueOf(o)
+    t.Log(rt.Key())
+    rt = rt.Elem()
+    t.Log(rt)
+    //t.Logf("rv valid: %v\n", rv.Elem())
+}
+
+func TestReflectObjectStruct(t *testing.T) {
+    v := TestTable{}
+    info, err := reflection.GetObjectInfo(&v)
+    if err != nil {
+        t.Fatal()
+    }
+    t.Logf("classname :%v", info.GetClassName())
+    t.Log(v)
+    newOne := TestTable{
+        Username: "1",
+    }
+    info.SetValue(reflect.ValueOf(newOne))
+
+    t.Logf("after set :%v\n", v)
+
+    info.SetField("username", reflect.ValueOf("123"))
+    t.Logf("after setField :%v\n", v)
+}
+
+func TestReflectObjectSimpleTime(t *testing.T) {
+    v := time.Time{}
+    info, err := reflection.GetObjectInfo(&v)
+    if err != nil {
+        t.Fatal()
+    }
+    t.Logf("classname :%v", info.GetClassName())
+    t.Log(v)
+    newOne := TestTable{
+        Username: "1",
+    }
+    info.SetValue(reflect.ValueOf(newOne))
+
+    t.Logf("after set error type :%v\n", v)
+
+    info.SetValue(reflect.ValueOf(time.Now()))
+
+    t.Logf("after set now type :%v\n", v)
+
+    info.SetField("username", reflect.ValueOf("123"))
+    t.Logf("after setField :%v\n", v)
+}
+
+func TestReflectObjectSimpleFloat(t *testing.T) {
+    v := 0.0
+    info, err := reflection.GetObjectInfo(&v)
+    if err != nil {
+        t.Fatal()
+    }
+    t.Logf("classname :%v", info.GetClassName())
+    t.Log(v)
+    info.SetValue(reflect.ValueOf(1))
+
+    t.Logf("after set int type :%v\n", v)
+
+    info.SetValue(reflect.ValueOf(1.5))
+
+    t.Logf("after set float type :%v\n", v)
+}
+
+func TestReflectObjectMap(t *testing.T) {
+    v := map[string]interface{}{}
+    info, err := reflection.GetObjectInfo(&v)
+    if err != nil {
+        t.Fatal()
+    }
+    t.Logf("classname :%v", info.GetClassName())
+    t.Log(v)
+    info.SetValue(reflect.ValueOf(1))
+
+    t.Logf("after set int type :%v\n", v)
+
+    info.SetValue(reflect.ValueOf(map[string]int{"1": 1, "2": 2}))
+
+    t.Logf("after set map[string]int type :%v\n", v)
+
+    info.SetValue(reflect.ValueOf(map[string]interface{}{"1": 1, "2": 2}))
+
+    t.Logf("after set map[string]interface{} type :%v\n", v)
+
+    info.SetField("username", reflect.ValueOf("123"))
+    t.Logf("after setField :%v\n", v)
+}
+
 func printTableInfo(table *reflection.StructInfo) {
     fmt.Printf("table name is %s\n", table.Name)
-    for k, v := range table.FieldMap {
-        fmt.Printf("field : %s, value %s\n", k, v)
-    }
+    //for k, v := range table.FieldMap {
+    //    fmt.Printf("field : %s, value %s\n", k, v)
+    //}
 
     for k, v := range table.FieldNameMap {
         fmt.Printf("origin : %s, map %s\n", k, v)

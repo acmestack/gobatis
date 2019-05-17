@@ -68,7 +68,7 @@ func RegisterModelWithName(name string, model interface{}) (*ModelInfo, error) {
     if err != nil {
         return nil, err
     }
-    tableInfo, err := reflection.GetStructInfo(model)
+    tableInfo, err := reflection.GetObjectInfo(model)
     if err != nil {
         return nil, errors.PARSE_MODEL_TABLEINFO_FAILED
     }
@@ -77,7 +77,7 @@ func RegisterModelWithName(name string, model interface{}) (*ModelInfo, error) {
     if name == "" {
         name = tableInfo.GetClassName()
     }
-    ret := &ModelInfo{ObjectInfo: tableInfo, Model: model}
+    ret := &ModelInfo{ObjectInfo: nil, Model: model}
     g_model_mgr.modelMap[name] = ret
     return ret, nil
 }

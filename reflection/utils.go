@@ -11,7 +11,6 @@ package reflection
 import (
     "encoding/json"
     "fmt"
-    "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/errors"
     "github.com/xfali/gobatis/logging"
     "reflect"
@@ -19,175 +18,6 @@ import (
     "strings"
     "time"
 )
-
-var modelNameType reflect.Type
-
-func SetModelNameType(mtype reflect.Type) {
-    modelNameType = mtype
-}
-
-type FieldInfo struct {
-    //字段名
-    Name string
-    //值
-    Value reflect.Value
-}
-
-type StructInfo struct {
-    //包含pkg的名称
-    ClassName string
-    //Model名称（目前用于xml解析是struct的前缀：#{x.username} 中的x）
-    Name string
-    //字段信息
-    //Fields []FieldInfo
-    FieldMap map[string]reflect.Value
-    //表字段和实体字段映射关系
-    FieldNameMap map[string]string
-}
-
-func newStructInfo() *StructInfo {
-    return &StructInfo{
-        FieldMap:     map[string]reflect.Value{},
-        FieldNameMap: map[string]string{},
-    }
-}
-
-func (o *StructInfo) GetClassName() string {
-    return o.ClassName
-}
-
-func GetBeanClassName(model interface{}) string {
-    rt := reflect.TypeOf(model)
-
-    if rt.Kind() == reflect.Ptr {
-        rt = rt.Elem()
-    }
-
-    if rt.Kind() == reflect.Slice {
-        rt = rt.Elem()
-    }
-
-    pkg := rt.PkgPath()
-    if pkg == "" {
-        return rt.Name()
-    } else {
-        return rt.PkgPath() + "/" + rt.Name()
-    }
-}
-
-//GetObjectInfo 解析结构体，使用：
-//1、如果结构体中含有gobatis.ModelName类型的字段，则：
-// a)、如果含有tag，则使用tag作为tablename；
-// b)、如果不含有tag，则使用fieldName作为tablename。
-//2、如果结构体中不含有gobatis.ModelName类型的字段，则使用结构体名称作为tablename
-//3、如果结构体中含有xfield的tag，则：
-// a）、如果tag为‘-’，则不进行columne与field的映射；
-// b）、如果tag不为‘-’使用tag name作为column名称与field映射。
-//4、如果结构体中不含有xfield的tag，则使用field name作为column名称与field映射
-//5、如果字段的tag为‘-’，则不进行columne与field的映射；
-func GetObjectInfo(model interface{}) (*StructInfo, error) {
-    rt := reflect.TypeOf(model)
-
-    if rt.Kind() == reflect.Ptr {
-        rt = rt.Elem()
-    }
-
-    switch rt.Kind() {
-    case reflect.Struct:
-        return GetStructInfo(model)
-        //case reflect.Slice:
-        //    return GetSliceInfo()
-        //case reflect.Map:
-        //    return GetMapInfo()
-        //default:
-        //    if IsSimpleType(rt) {
-        //        return GetSimpleInfo()
-        //    }
-    }
-    return nil, errors.OBJECT_NOT_SUPPORT
-}
-
-func GetStructInfo(model interface{}) (*StructInfo, error) {
-    rt := reflect.TypeOf(model)
-    rv := reflect.ValueOf(model)
-
-    if rt.Kind() == reflect.Ptr {
-        rt = rt.Elem()
-        rv = rv.Elem()
-    }
-
-    kind := rt.Kind()
-
-    if kind != reflect.Struct {
-        return nil, errors.PARSE_TABLEINFO_NOT_STRUCT
-    }
-    objInfo := newStructInfo()
-    //Default name is struct name
-    objInfo.Name = rt.Name()
-    pkg := rt.PkgPath()
-    if pkg == "" {
-        objInfo.ClassName = objInfo.Name
-    } else {
-        objInfo.ClassName = rt.PkgPath() + "/" + objInfo.Name
-    }
-
-    //字段解析
-    for i, j := 0, rt.NumField(); i < j; i++ {
-        rtf := rt.Field(i)
-        rvf := rv.Field(i)
-        if rtf.Type == modelNameType {
-            if rtf.Tag != "" {
-                objInfo.Name = string(rtf.Tag)
-            } else {
-                objInfo.Name = rtf.Name
-            }
-            continue
-        }
-
-        //没有tag,表字段名与实体字段名一致
-        if rtf.Tag == "" {
-            objInfo.FieldNameMap[rtf.Name] = rtf.Name
-            //f := FieldInfo{Name: rtf.Name, Value: rvf}
-            //tableInfo.Fields = append(tableInfo.Fields, f)
-            objInfo.FieldMap[rtf.Name] = rvf
-            continue
-        }
-
-        if rtf.Tag == "-" {
-            continue
-        }
-
-        fieldName := rtf.Name
-        tagName := rtf.Tag.Get(common.FIELD_NAME)
-        if tagName == "-" {
-            continue
-        } else if tagName != "" {
-            fieldName = tagName
-        }
-        objInfo.FieldNameMap[fieldName] = rtf.Name
-        //f := FieldInfo{Name: fieldName, Value: rvf}
-        //tableInfo.Fields = append(tableInfo.Fields, f)
-        objInfo.FieldMap[fieldName] = rvf
-        continue
-    }
-    return objInfo, nil
-}
-
-func (ti *StructInfo) MapValue() map[string]interface{} {
-    paramMap := map[string]interface{}{}
-    ti.FillMapValue(&paramMap)
-    return paramMap
-}
-
-func (ti *StructInfo) FillMapValue(paramMap *map[string]interface{}) {
-    for k, v := range ti.FieldMap {
-        if !v.CanInterface() {
-            v = reflect.Indirect(v)
-        }
-        (*paramMap)[k] = v.Interface()
-    }
-    //(*paramMap)["tablename"] = ti.Name
-}
 
 func ReflectValue(bean interface{}) reflect.Value {
     return reflect.Indirect(reflect.ValueOf(bean))
@@ -214,18 +44,9 @@ func IsSimpleType(t reflect.Type) bool {
     return false
 }
 
-func checkBeanValue(beanValue reflect.Value) bool {
-    if beanValue.Kind() != reflect.Ptr {
-        return false
-    } else if beanValue.Elem().Kind() == reflect.Ptr {
-        return false
-    }
-    return true
-}
-
 func SafeSetValue(f reflect.Value, v interface{}) bool {
-    if !checkBeanValue(f) {
-        logging.Info("value cannot be set")
+    if err := MustPtrValue(f); err != nil {
+        logging.Info("value cannot be set: %s\n", err.Error())
         return false
     }
     f = f.Elem()
@@ -290,18 +111,18 @@ func SetValue(f reflect.Value, v interface{}) bool {
             hasAssigned = true
             f.SetString(strconv.FormatBool(vv.Bool()))
             break
-            //case reflect.Struct:
-            //    if ti, ok := v.(time.Time); ok {
-            //        hasAssigned = true
-            //        if ti.IsZero() {
-            //            f.SetString("")
-            //        } else {
-            //            f.SetString(ti.String())
-            //        }
-            //    } else {
-            //        hasAssigned = true
-            //        f.SetString(fmt.Sprintf("%v", v))
-            //    }
+        //case reflect.Struct:
+        //    if ti, ok := v.(time.Time); ok {
+        //        hasAssigned = true
+        //        if ti.IsZero() {
+        //            f.SetString("")
+        //        } else {
+        //            f.SetString(ti.String())
+        //        }
+        //    } else {
+        //        hasAssigned = true
+        //        f.SetString(fmt.Sprintf("%v", v))
+        //    }
         default:
             hasAssigned = true
             f.SetString(fmt.Sprintf("%v", v))
@@ -417,6 +238,11 @@ func SetValue(f reflect.Value, v interface{}) bool {
         } else {
             f.Set(reflect.ValueOf(v))
         }
+        break
+    case reflect.Interface:
+        hasAssigned = true
+        f.Set(vv)
+        break
     }
 
     return hasAssigned

@@ -46,7 +46,7 @@ func (parser *paramParser)parseOne(v interface{}) {
         parser.ret[strconv.Itoa(parser.index)] = v
         parser.index++
     } else if rt.Kind() == reflect.Struct {
-        oi, _ := GetObjectInfo(v)
+        oi, _ := GetStructInfo(v)
         structMap := oi.MapValue()
         for key, value := range structMap {
             parser.ret[structKey(oi, key)] = value
@@ -77,6 +77,6 @@ func (parser *paramParser)parseOne(v interface{}) {
     }
 }
 
-func structKey(oi *ObjectInfo, field string) string {
+func structKey(oi *StructInfo, field string) string {
     return oi.Name + "." + field
 }
