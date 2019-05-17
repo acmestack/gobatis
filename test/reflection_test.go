@@ -178,15 +178,45 @@ func TestReflectionParseComplex(t *testing.T) {
     }
 }
 
-func TestSimpleType(t *testing.T) {
+func TestSimpleTypeTime(t *testing.T) {
     ret := reflection.IsSimpleObject(time.Time{})
     if !ret {
         t.Fail()
     }
 }
 
+func TestSimpleTypeSliceByte(t *testing.T) {
+    ret := reflection.IsSimpleObject([]byte{})
+    if !ret {
+        t.Fail()
+    }
+
+    ret = reflection.IsSimpleObject([]int{})
+    if ret {
+        t.Fail()
+    }
+}
+
 func TestBeanClass(t *testing.T) {
     t.Log(reflection.GetBeanClassName(TestStruct2{}))
+}
+
+func TestTypeName(t *testing.T) {
+    v := []byte{}
+    t.Log(reflect.TypeOf(v).Elem().Name())
+
+    var i interface{}
+    i = v
+    t.Logf("interface %s", reflect.TypeOf(i).String())
+
+    m := map[string]interface{}{}
+    t.Logf("map %s", reflect.TypeOf(m).String())
+
+    st := TestTable{}
+    t.Logf("struct %s", reflect.TypeOf(st).String())
+
+    ptr := &v
+    t.Logf("ptr %s", reflect.TypeOf(ptr).String())
 }
 
 func TestReflectSlice(t *testing.T) {
@@ -209,87 +239,54 @@ func TestReflectMap(t *testing.T) {
     //t.Logf("rv valid: %v\n", rv.Elem())
 }
 
-func TestReflectObjectStruct(t *testing.T) {
-    v := TestTable{}
-    info, err := reflection.GetObjectInfo(&v)
-    if err != nil {
-        t.Fatal()
-    }
-    t.Logf("classname :%v", info.GetClassName())
-    t.Log(v)
-    newOne := TestTable{
-        Username: "1",
-    }
-    info.SetValue(reflect.ValueOf(newOne))
-
-    t.Logf("after set :%v\n", v)
-
-    info.SetField("username", reflect.ValueOf("123"))
-    t.Logf("after setField :%v\n", v)
+func returnInterface(b interface{}) interface{} {
+    return b
 }
 
-func TestReflectObjectSimpleTime(t *testing.T) {
-    v := time.Time{}
-    info, err := reflection.GetObjectInfo(&v)
-    if err != nil {
-        t.Fatal()
+func TestInterfaceNil(t *testing.T) {
+    var o reflection.Object
+    i := returnInterface(o)
+    if i == nil {
+        t.Log("nil")
+    } else {
+        t.Fatal("not nil")
     }
-    t.Logf("classname :%v", info.GetClassName())
-    t.Log(v)
-    newOne := TestTable{
-        Username: "1",
-    }
-    info.SetValue(reflect.ValueOf(newOne))
-
-    t.Logf("after set error type :%v\n", v)
-
-    info.SetValue(reflect.ValueOf(time.Now()))
-
-    t.Logf("after set now type :%v\n", v)
-
-    info.SetField("username", reflect.ValueOf("123"))
-    t.Logf("after setField :%v\n", v)
 }
 
-func TestReflectObjectSimpleFloat(t *testing.T) {
-    v := 0.0
-    info, err := reflection.GetObjectInfo(&v)
-    if err != nil {
-        t.Fatal()
+func TestInterfaceNil2(t *testing.T) {
+    var o reflection.Object
+    var st *reflection.StructInfo
+    st = nil
+    o = st
+    //i := returnInterface(o)
+    if o == nil {
+        t.Fatal("nil")
+    } else {
+        t.Log("not nil")
     }
-    t.Logf("classname :%v", info.GetClassName())
-    t.Log(v)
-    info.SetValue(reflect.ValueOf(1))
 
-    t.Logf("after set int type :%v\n", v)
-
-    info.SetValue(reflect.ValueOf(1.5))
-
-    t.Logf("after set float type :%v\n", v)
+    if reflection.IsNil(o) {
+        t.Log("nil")
+    } else {
+        t.Fatal("not nil")
+    }
 }
 
-func TestReflectObjectMap(t *testing.T) {
-    v := map[string]interface{}{}
-    info, err := reflection.GetObjectInfo(&v)
-    if err != nil {
-        t.Fatal()
+func TestStructNil(t *testing.T) {
+    o := (*TestTable)(nil)
+    i := returnInterface(o)
+    //var obj reflection.Object
+    //i = obj
+    if i == nil {
+        t.Fatal("nil")
+    } else {
+        t.Log("not nil")
     }
-    t.Logf("classname :%v", info.GetClassName())
-    t.Log(v)
-    info.SetValue(reflect.ValueOf(1))
-
-    t.Logf("after set int type :%v\n", v)
-
-    info.SetValue(reflect.ValueOf(map[string]int{"1": 1, "2": 2}))
-
-    t.Logf("after set map[string]int type :%v\n", v)
-
-    info.SetValue(reflect.ValueOf(map[string]interface{}{"1": 1, "2": 2}))
-
-    t.Logf("after set map[string]interface{} type :%v\n", v)
-
-    info.SetField("username", reflect.ValueOf("123"))
-    t.Logf("after setField :%v\n", v)
+    if reflection.IsNil(i) {
+        t.Log("nil")
+    } else {
+        t.Fatal("not nil")
+    }
 }
 
 func printTableInfo(table *reflection.StructInfo) {

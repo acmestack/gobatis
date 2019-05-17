@@ -10,6 +10,7 @@ package gobatis
 
 import (
     "github.com/xfali/gobatis/errors"
+    "github.com/xfali/gobatis/logging"
     "github.com/xfali/gobatis/reflection"
     "reflect"
     "sync"
@@ -68,7 +69,7 @@ func RegisterModelWithName(name string, model interface{}) (*ModelInfo, error) {
     if err != nil {
         return nil, err
     }
-    tableInfo, err := reflection.GetObjectInfo(model)
+    tableInfo, err := reflection.GetStructInfo(model)
     if err != nil {
         return nil, errors.PARSE_MODEL_TABLEINFO_FAILED
     }
@@ -77,7 +78,7 @@ func RegisterModelWithName(name string, model interface{}) (*ModelInfo, error) {
     if name == "" {
         name = tableInfo.GetClassName()
     }
-    ret := &ModelInfo{ObjectInfo: nil, Model: model}
+    ret := &ModelInfo{ObjectInfo: tableInfo, Model: model}
     g_model_mgr.modelMap[name] = ret
     return ret, nil
 }
@@ -118,4 +119,53 @@ func (mi *ModelInfo) Deserialize(columns []string, values []interface{}) (interf
     }
 
     return v.Interface(), nil
+}
+
+type ObjectInfo struct {
+    ObjectInfo reflection.Object
+    ElemInfo   reflection.Object
+}
+
+func (o *ObjectInfo) New(bean interface{}) *ObjectInfo {
+    ret := ObjectInfo{}
+    obj, err := reflection.GetObjectInfo(bean)
+    if err != nil {
+        return nil
+    }
+    ret.ObjectInfo = obj
+    if obj.CanAddValue() {
+        ev := obj.NewElemValue()
+        elemObj, err := reflection.GetReflectObjectInfo(ev.Type(), ev)
+        if err != nil {
+            return nil
+        }
+        if elemObj.CanAddValue() {
+            logging.Warn("[][]slice type not support!")
+            return nil
+        }
+        ret.ElemInfo = elemObj
+    }
+    return &ret
+}
+
+func (o *ObjectInfo) Deserialize(columns []string, values []interface{}) (interface{}, error) {
+    var obj reflection.Object
+    if o.ElemInfo != nil {
+        obj = o.ElemInfo.New()
+    } else {
+        obj = o.ObjectInfo
+    }
+
+    for i := range columns {
+        if obj.CanSetField() {
+            obj.SetField(columns[i], values[i])
+        } else {
+            obj.SetValue(reflect.ValueOf(values[0]))
+            break
+        }
+    }
+    if o.ObjectInfo.CanAddValue() {
+        o.ObjectInfo.AddValue(obj.GetValue())
+    }
+    return obj.GetValue().Interface(), nil
 }

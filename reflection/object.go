@@ -15,12 +15,41 @@ import (
     "reflect"
 )
 
+const (
+    OBJECT_UNKNOWN = iota
+    OBJECT_SIMPLETYPE
+    OBJECT_STRUCT
+    OBJECT_SLICE
+    OBJECT_MAP
+
+    OBJECT_COSTOM = 50000
+)
+
 type Object interface {
+    Kind() int
+    //生成克隆对象
+    New() Object
+    //获得值
     NewValue() reflect.Value
-    SetValue(v reflect.Value)
+    //获得元素值
+    NewElemValue() reflect.Value
+    //设置字段
     SetField(name string, v interface{})
-    Add(v reflect.Value)
+    //添加元素值
+    AddValue(v reflect.Value)
+    //获得对象名称
     GetClassName() string
+    //是否能设置field
+    CanSetField() bool
+    //是否能添加值
+    CanAddValue() bool
+
+    //设置值
+    SetValue(v reflect.Value)
+    //获得值
+    GetValue() reflect.Value
+    //变换value对象
+    Reset(v reflect.Value)
 }
 
 var modelNameType reflect.Type
@@ -34,6 +63,10 @@ type Setable struct {
     Value reflect.Value
 }
 
+type Newable struct {
+    Type reflect.Type
+}
+
 type StructInfo struct {
     //包含pkg的名称
     ClassName string
@@ -41,41 +74,66 @@ type StructInfo struct {
     Name string
     //表字段和实体字段映射关系
     FieldNameMap map[string]string
-    //类型
-    Type reflect.Type
 
     Setable
+
+    Newable
 }
 
 type SliceInfo struct {
-    elem Object
+    //包含pkg的名称
+    ClassName string
+    //元素类型
+    ElemType reflect.Type
+
     Setable
+    Newable
 }
 
 type SimpleTypeInfo struct {
     //包含pkg的名称
     ClassName string
-    //类型
-    Type reflect.Type
 
     Setable
+    Newable
 }
 
 type MapInfo struct {
     //包含pkg的名称
     ClassName string
-    //类型
-    Type reflect.Type
+    //元素类型
+    ElemType reflect.Type
 
     Setable
+    Newable
 }
 
+//FIXME:不能使用灵活转换赋值，是否放开（但效率下降）
 func (o *Setable) SetValue(v reflect.Value) {
+    if !o.Value.IsValid() {
+        o.Value = v
+    }
     if o.Value.Kind() != v.Kind() {
         logging.Warn("Set value failed")
         return
     }
+    if getTypeClassName(o.Value.Type()) != getTypeClassName(v.Type()) {
+        logging.Warn("different type!")
+        return
+    }
     o.Value.Set(v)
+}
+
+func (o *Setable) Reset(v reflect.Value) {
+    o.Value = v
+}
+
+func (o *Setable) GetValue() reflect.Value {
+    return o.Value
+}
+
+func (o *Newable) NewValue() reflect.Value {
+    return reflect.New(o.Type).Elem()
 }
 
 func newStructInfo() *StructInfo {
@@ -84,7 +142,18 @@ func newStructInfo() *StructInfo {
     }
 }
 
-func (o *StructInfo) NewValue() reflect.Value {
+func (o *StructInfo) New() Object {
+    ret := &StructInfo{
+        ClassName:    o.ClassName,
+        Name:         o.Name,
+        FieldNameMap: o.FieldNameMap,
+    }
+    ret.Type = o.Type
+    ret.Value = reflect.New(o.Type).Elem()
+    return ret
+}
+
+func (o *StructInfo) NewElemValue() reflect.Value {
     return reflect.New(o.Type).Elem()
 }
 
@@ -98,7 +167,7 @@ func (o *StructInfo) SetField(name string, ov interface{}) {
     }
 }
 
-func (o *StructInfo) Add(v reflect.Value) {
+func (o *StructInfo) AddValue(v reflect.Value) {
 
 }
 
@@ -106,24 +175,71 @@ func (o *StructInfo) GetClassName() string {
     return o.ClassName
 }
 
-func (o *SliceInfo) NewValue() reflect.Value {
-    return o.elem.NewValue()
+func (o *StructInfo) Kind() int {
+    return OBJECT_STRUCT
+}
+
+func (o *StructInfo) CanSetField() bool {
+    return true
+}
+
+func (o *StructInfo) CanAddValue() bool {
+    return false
+}
+
+func (o *SliceInfo) New() Object {
+    ret := &SliceInfo{
+        ElemType: o.ElemType,
+    }
+    ret.Type = o.Type
+    ret.Value = reflect.New(o.Type).Elem()
+    return ret
+}
+
+func (o *SliceInfo) NewElemValue() reflect.Value {
+    return reflect.New(o.ElemType).Elem()
 }
 
 func (o *SliceInfo) SetField(name string, v interface{}) {
 
 }
 
-func (o *SliceInfo) Add(v reflect.Value) {
-    //FIXME: 可能需要重新设置Value值
-    o.Value = reflect.Append(o.Value, v)
+func (o *SliceInfo) AddValue(v reflect.Value) {
+    if o.ElemType.Kind() != v.Type().Kind() {
+        logging.Warn("Add value failed, different kind")
+        return
+    }
+    newValue := reflect.Append(o.Value, v)
+    //直接设置，不使用o.SetValue，效率更高
+    o.Value.Set(newValue)
 }
 
 func (o *SliceInfo) GetClassName() string {
-    return o.elem.GetClassName()
+    return o.ClassName
 }
 
-func (o *SimpleTypeInfo) NewValue() reflect.Value {
+func (o *SliceInfo) Kind() int {
+    return OBJECT_SLICE
+}
+
+func (o *SliceInfo) CanSetField() bool {
+    return false
+}
+
+func (o *SliceInfo) CanAddValue() bool {
+    return true
+}
+
+func (o *SimpleTypeInfo) New() Object {
+    ret := &SimpleTypeInfo{
+        ClassName: o.ClassName,
+    }
+    ret.Type = o.Type
+    ret.Value = reflect.New(o.Type).Elem()
+    return ret
+}
+
+func (o *SimpleTypeInfo) NewElemValue() reflect.Value {
     return reflect.New(o.Type).Elem()
 }
 
@@ -131,12 +247,24 @@ func (o *SimpleTypeInfo) SetField(name string, ov interface{}) {
     SetValue(o.Value, ov)
 }
 
-func (o *SimpleTypeInfo) Add(v reflect.Value) {
+func (o *SimpleTypeInfo) AddValue(v reflect.Value) {
 
 }
 
 func (o *SimpleTypeInfo) GetClassName() string {
     return o.ClassName
+}
+
+func (o *SimpleTypeInfo) Kind() int {
+    return OBJECT_SIMPLETYPE
+}
+
+func (o *SimpleTypeInfo) CanSetField() bool {
+    return false
+}
+
+func (o *SimpleTypeInfo) CanAddValue() bool {
+    return false
 }
 
 //TODO: 目前仅支持map[string]interface{}，需增加其他类型支持
@@ -154,19 +282,40 @@ func (o *MapInfo) SetValue(v reflect.Value) {
     o.Value.Set(v)
 }
 
-func (o *MapInfo) NewValue() reflect.Value {
-    return reflect.New(o.Type).Elem()
+func (o *MapInfo) New() Object {
+    ret := &MapInfo{
+        ClassName: o.ClassName,
+        ElemType:  o.ElemType,
+    }
+    ret.Value = reflect.New(o.Type).Elem()
+    return ret
+}
+
+func (o *MapInfo) NewElemValue() reflect.Value {
+    return reflect.New(o.ElemType).Elem()
 }
 
 func (o *MapInfo) SetField(name string, ov interface{}) {
-    v := o.NewValue()
+    v := o.NewElemValue()
     if SetValue(v, ov) {
         o.Value.SetMapIndex(reflect.ValueOf(name), v)
     }
 }
 
-func (o *MapInfo) Add(v reflect.Value) {
+func (o *MapInfo) AddValue(v reflect.Value) {
 
+}
+
+func (o *MapInfo) CanSetField() bool {
+    return true
+}
+
+func (o *MapInfo) CanAddValue() bool {
+    return false
+}
+
+func (o *MapInfo) Kind() int {
+    return OBJECT_MAP
 }
 
 func (o *MapInfo) GetClassName() string {
@@ -208,9 +357,9 @@ func GetReflectSimpleTypeInfo(rt reflect.Type, rv reflect.Value) (Object, error)
     }
 
     ret := SimpleTypeInfo{
-        Type:      rt,
         ClassName: getTypeClassName(rt),
     }
+    ret.Type = rt
     ret.Value = rv
     return &ret, nil
 }
@@ -226,15 +375,12 @@ func GetReflectSliceInfo(rt reflect.Type, rv reflect.Value) (Object, error) {
     if kind != reflect.Slice {
         return nil, errors.PARSE_TABLEINFO_NOT_SLICE
     }
-
+    sliceType := rt
     //获得元素类型
     rt = rt.Elem()
 
-    info, err := GetReflectObjectInfo(rt, reflect.Value{})
-    if err != nil {
-        return nil, errors.GET_OBJECTINFO_FAILED
-    }
-    ret := SliceInfo{elem: info}
+    ret := SliceInfo{ElemType: rt, ClassName: getTypeClassName(sliceType)}
+    ret.Type = sliceType
     ret.Value = rv
     return &ret, nil
 }
@@ -261,7 +407,8 @@ func GetReflectMapInfo(rt reflect.Type, rv reflect.Value) (Object, error) {
         return nil, errors.GET_OBJECTINFO_FAILED
     }
 
-    ret := MapInfo{Type: rt.Elem(), ClassName: getTypeClassName(rt)}
+    ret := MapInfo{ElemType: rt.Elem(), ClassName: getTypeClassName(rt)}
+    ret.Type = rt
     ret.Value = rv
     return &ret, nil
 }
@@ -298,7 +445,7 @@ func GetReflectStructInfo(rt reflect.Type, rv reflect.Value) (*StructInfo, error
     objInfo.Value = rv
     //Default name is struct name
     objInfo.Name = rt.Name()
-    objInfo.ClassName = rt.PkgPath() + "/" + objInfo.Name
+    objInfo.ClassName = getTypeClassName(rt)
 
     //字段解析
     for i, j := 0, rt.NumField(); i < j; i++ {
@@ -362,14 +509,5 @@ func getTypeClassName(rt reflect.Type) string {
     if rt.Kind() == reflect.Ptr {
         rt = rt.Elem()
     }
-
-    if rt.Kind() == reflect.Slice {
-        rt = rt.Elem()
-    }
-    path := rt.PkgPath()
-    if path == "" {
-        return rt.Name()
-    } else {
-        return path + "/" + rt.Name()
-    }
+    return rt.String()
 }

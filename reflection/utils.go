@@ -35,10 +35,11 @@ func IsSimpleObject(bean interface{}) bool {
 func IsSimpleType(t reflect.Type) bool {
     switch t.Kind() {
     case IntKind, Int8Kind, Int16Kind, Int32Kind, Int64Kind, UintKind, Uint8Kind, Uint16Kind, Uint32Kind, Uint64Kind,
-        Float32Kind, Float64Kind, Complex64Kind, Complex128Kind, StringKind, BoolKind, ByteKind, BytesKind /*, TimeKind*/ :
+        Float32Kind, Float64Kind, Complex64Kind, Complex128Kind, StringKind, BoolKind, ByteKind /*, BytesKind, TimeKind*/ :
         return true
     }
-    if t.ConvertibleTo(TimeType) {
+
+    if t.ConvertibleTo(BytesType) || t.ConvertibleTo(TimeType) {
         return true
     }
     return false
@@ -304,4 +305,15 @@ func ToSlice(arr interface{}) []interface{} {
         ret[i] = v.Index(i).Interface()
     }
     return ret
+}
+
+func IsNil(i interface{}) bool {
+    if i == nil {
+        return true
+    }
+    vi := reflect.ValueOf(i)
+    if vi.Kind() == reflect.Ptr {
+        return vi.IsNil()
+    }
+    return false
 }
