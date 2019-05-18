@@ -6,6 +6,11 @@ Gobatis是一个golang的ORM框架，类似Java的Mybatis。支持直接执行sq
 
 建议配合[gobatis-cmd](https://github.com/xfali/gobatis-cmd)自动代码、sql生成工具使用。
 
+## 待完成项
+
+* 继续完善动态sql支持
+* 性能优化：减少逃逸、增加动态sql缓存
+
 ## 使用
 
 
@@ -48,11 +53,9 @@ type TestTable struct {
 }
 ```
 
-### 3、注册Model
+### ~~3、注册Model~~
 
-注意：只有注册后的Model才能正确的序列化和反序列化；
-
-Model注册后，Model的切片也能正确序列化和反序列化。
+目前的作用是提高执行速度，已变为非必要步骤
 ```
 func init() {
     var model TestTable
@@ -83,13 +86,27 @@ func Run() {
 
 1. ${}表示直接替换，#{}防止sql注入
 2. 与Mybatis类似，语句中${0}、${1}、${2}...${n} 对应的是Param方法中对应的不定参数，最终替换和调用底层Driver
-3. Param方法接受简单类型的不定参数（string、int、time、float等），如果参数仅为1个时，可以传递struct，底层自动解析struct获得参数，用法为：
+3. Param方法接受简单类型的不定参数（string、int、time、float等）、struct、map，底层自动解析获得参数，用法为：
 
 ```
 param := TestTable{Username:"test_user"}
 ret := TestTable{}
-session.Select("select * from test_table where username = #{username}").Param(param).Result(&ret)
+session.Select("select * from test_table where username = #{TestTable.username}").Param(param).Result(&ret)
 ```
+
+4. Param解析的参数规则（请务必按此规则对应SQL语句的占位参数）：
+* 简单类型
+  
+  对应sql参数中的#{0}、#{1}...
+  
+* map类型
+
+  对应sql参数中的#{key1}、#{key2}...
+  
+* struct类型
+  
+  对应sql参数中的#{StructName.Field1}、#{StructName.Field2}...
+  
 
 ### 6、事务
 
