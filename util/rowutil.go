@@ -16,6 +16,13 @@ import (
 
 func ScanRows(rows *sql.Rows, handler handler.ResultHandler, iterFunc common.IterFunc) int64 {
     columns, _ := rows.Columns()
+    //d, _ := rows.ColumnTypes()
+    //columns := make([]string, len(d))
+    //types := make([]string, len(d))
+    //for i := range d {
+    //    columns[i] = d[i].Name()
+    //    types[i] = d[i].DatabaseTypeName()
+    //}
     scanArgs := make([]interface{}, len(columns))
     values := make([]interface{}, len(columns))
 
