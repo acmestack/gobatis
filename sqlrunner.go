@@ -220,14 +220,14 @@ func (this *SelectRunner) Result(bean interface{}) error {
     //    this.log(logging.WARN, errors.MODEL_NOT_REGISTER.Error())
     //    return errors.RESULT_NAME_NOT_FOUND
     //}
-    obj, err := NewObject(bean)
+    obj, err := ParseObject(bean)
     if err != nil {
         return err
     }
     iterFunc := func(idx int64, bean interface{}) bool {
        return !obj.ObjectInfo.CanAddValue()
     }
-    return this.session.Query(this.ctx, obj, iterFunc, this.metadata.PrepareSql, this.metadata.Params...)
+    return this.session.Query(this.ctx, &obj, iterFunc, this.metadata.PrepareSql, this.metadata.Params...)
 
 }
 

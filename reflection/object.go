@@ -108,7 +108,6 @@ type MapInfo struct {
     Newable
 }
 
-//FIXME:不能使用灵活转换赋值，是否放开（但效率下降）
 func (o *Setable) SetValue(v reflect.Value) {
     if !o.Value.IsValid() {
         o.Value = v
@@ -253,6 +252,16 @@ func (o *SimpleTypeInfo) AddValue(v reflect.Value) {
 
 func (o *SimpleTypeInfo) GetClassName() string {
     return o.ClassName
+}
+
+func (o *SimpleTypeInfo) SetValue(v reflect.Value) {
+    if !o.Value.IsValid() {
+        o.Value = v
+    }
+
+    if !SetValue(o.Value, v.Interface()) {
+        logging.Warn("SimpleTypeInfo SetValue failed")
+    }
 }
 
 func (o *SimpleTypeInfo) Kind() int {

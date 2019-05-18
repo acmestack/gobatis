@@ -126,26 +126,26 @@ type ObjectInfo struct {
     ElemInfo   reflection.Object
 }
 
-func NewObject(bean interface{}) (*ObjectInfo, error) {
+func ParseObject(bean interface{}) (ObjectInfo, error) {
     ret := ObjectInfo{}
     obj, err := reflection.GetObjectInfo(bean)
     if err != nil {
-        return nil, err
+        return ret, err
     }
     ret.ObjectInfo = obj
     if obj.CanAddValue() {
         ev := obj.NewElemValue()
         elemObj, err := reflection.GetReflectObjectInfo(ev.Type(), ev)
         if err != nil {
-            return nil, err
+            return ret, err
         }
         if elemObj.CanAddValue() {
             logging.Warn("[][]slice type not support!")
-            return nil, errors.GET_OBJECTINFO_FAILED
+            return ret, errors.GET_OBJECTINFO_FAILED
         }
         ret.ElemInfo = elemObj
     }
-    return &ret, nil
+    return ret, nil
 }
 
 func (o *ObjectInfo) Deserialize(columns []string, values []interface{}) (interface{}, error) {
@@ -160,10 +160,7 @@ func (o *ObjectInfo) Deserialize(columns []string, values []interface{}) (interf
         if obj.CanSetField() {
             obj.SetField(columns[i], values[i])
         } else {
-            v := obj.NewValue()
-            if reflection.SetValue(v, values[0]) {
-                obj.SetValue(v)
-            }
+            obj.SetValue(reflect.ValueOf(values[0]))
             break
         }
     }
