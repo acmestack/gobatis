@@ -1,5 +1,7 @@
 # Gobatis
 
+[![Appveyor Build status](https://ci.appveyor.com/api/projects/status/oou404q28phtxhwm?svg=true)](https://ci.appveyor.com/project/xfali/gobatis)
+
 ## 介绍
 
 Gobatis是一个golang的ORM框架，类似Java的Mybatis。支持直接执行sql语句以及简单的动态sql。
