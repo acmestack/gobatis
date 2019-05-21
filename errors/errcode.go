@@ -23,6 +23,7 @@ var PARSE_OBJECT_NOT_STRUCT *ErrCode = New("11102", "Parse interface's info but 
 var PARSE_OBJECT_NOT_SLICE *ErrCode = New("11103", "Parse interface's info but not a slice")
 var PARSE_OBJECT_NOT_MAP *ErrCode = New("11104", "Parse interface's info but not a map")
 var PARSE_OBJECT_NOT_SIMPLETYPE *ErrCode = New("11105", "Parse interface's info but not a simple type")
+var SLICE_SLICE_NOT_SUPPORT *ErrCode = New("11106", "Parse interface's info: [][]slice not support")
 var GET_OBJECTINFO_FAILED *ErrCode = New("11121", "Parse interface's info failed")
 var SQL_ID_DUPLICATES *ErrCode = New("11205", "Sql id is duplicates")
 var DESERIALIZE_FAILED *ErrCode = New("11206", "Deserialize value failed")

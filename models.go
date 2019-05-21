@@ -10,7 +10,6 @@ package gobatis
 
 import (
     "github.com/xfali/gobatis/errors"
-    "github.com/xfali/gobatis/logging"
     "github.com/xfali/gobatis/reflection"
     "reflect"
     "sync"
@@ -31,7 +30,7 @@ type ModelManager struct {
 var g_model_mgr = &ModelManager{modelMap: map[string]*ModelInfo{}}
 
 func init() {
-    registerBuildin()
+    //registerBuildin()
 }
 
 func registerBuildin() {
@@ -119,53 +118,4 @@ func (mi *ModelInfo) Deserialize(columns []string, values []interface{}) (interf
     }
 
     return v.Interface(), nil
-}
-
-type ObjectInfo struct {
-    ObjectInfo reflection.Object
-    ElemInfo   reflection.Object
-}
-
-func ParseObject(bean interface{}) (ObjectInfo, error) {
-    ret := ObjectInfo{}
-    obj, err := reflection.GetObjectInfo(bean)
-    if err != nil {
-        return ret, err
-    }
-    ret.ObjectInfo = obj
-    if obj.CanAddValue() {
-        ev := obj.NewElemValue()
-        elemObj, err := reflection.GetReflectObjectInfo(ev.Type(), ev)
-        if err != nil {
-            return ret, err
-        }
-        if elemObj.CanAddValue() {
-            logging.Warn("[][]slice type not support!")
-            return ret, errors.GET_OBJECTINFO_FAILED
-        }
-        ret.ElemInfo = elemObj
-    }
-    return ret, nil
-}
-
-func (o *ObjectInfo) Deserialize(columns []string, values []interface{}) (interface{}, error) {
-    var obj reflection.Object
-    if o.ElemInfo != nil {
-        obj = o.ElemInfo.New()
-    } else {
-        obj = o.ObjectInfo
-    }
-
-    for i := range columns {
-        if obj.CanSetField() {
-            obj.SetField(columns[i], values[i])
-        } else {
-            obj.SetValue(reflect.ValueOf(values[0]))
-            break
-        }
-    }
-    if o.ObjectInfo.CanAddValue() {
-        o.ObjectInfo.AddValue(obj.GetValue())
-    }
-    return obj.GetValue().Interface(), nil
 }

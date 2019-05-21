@@ -225,7 +225,7 @@ func (this *SelectRunner) Result(bean interface{}) error {
         return err
     }
     iterFunc := func(idx int64, bean interface{}) bool {
-       return !obj.ObjectInfo.CanAddValue()
+       return !obj.obj.CanAddValue()
     }
     return this.session.Query(this.ctx, &obj, iterFunc, this.metadata.PrepareSql, this.metadata.Params...)
 

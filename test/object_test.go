@@ -154,10 +154,9 @@ func TestReflectObjectSlice(t *testing.T) {
     info.AddValue(reflect.ValueOf(TestTable{Username: "2", Password:"2"}))
     t.Logf(`after AddValue TestTable{Username: "2", Password:"2"} :%v\n`, v)
 
-    ev := info.NewElemValue()
-    einfo, _ := reflection.GetReflectObjectInfo(ev.Type(), ev)
-    einfo.SetField("username", "x")
-    info.AddValue(ev)
+    ev := info.NewElem()
+    ev.SetField("username", "x")
+    info.AddValue(ev.GetValue())
 
     t.Logf(`after AddValue new elem {Username: "x"} :%v\n`, v)
 }
