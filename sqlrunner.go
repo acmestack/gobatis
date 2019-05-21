@@ -10,7 +10,6 @@ package gobatis
 
 import (
     "context"
-    "github.com/xfali/gobatis/cache"
     "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/errors"
     "github.com/xfali/gobatis/factory"
@@ -162,17 +161,21 @@ func (this *Session) Insert(sql string) Runner {
 func (this *BaseRunner) Param(params ...interface{}) Runner {
     paramMap := reflection.ParseParams(params...)
     //TODO: 使用缓存加速，避免每次都生成动态sql
-    key := cache.CalcKey(this.sqlDynamicData.OriginData, paramMap)
-    md := cache.FindMetadata(key)
-    var err error
-    if md == nil {
-        sqlStr := this.sqlDynamicData.ReplaceWithMap(paramMap)
-        md, err = sqlparser.ParseWithParamMap(sqlStr, paramMap)
-        if err == nil {
-            cache.CacheMetadata(key, md)
-        }
-    }
+    //测试发现性能提升非常有限，故取消
+    //key := cache.CalcKey(this.sqlDynamicData.OriginData, paramMap)
+    //md := cache.FindMetadata(key)
+    //var err error
+    //if md == nil {
+    //    sqlStr := this.sqlDynamicData.ReplaceWithMap(paramMap)
+    //    md, err = sqlparser.ParseWithParamMap(sqlStr, paramMap)
+    //    if err == nil {
+    //        cache.CacheMetadata(key, md)
+    //    }
+    //}
 
+    sqlStr := this.sqlDynamicData.ReplaceWithMap(paramMap)
+    md, err := sqlparser.ParseWithParamMap(sqlStr, paramMap)
+    
     if err == nil {
         if this.action == md.Action {
             this.metadata = md
@@ -235,7 +238,7 @@ func (this *SelectRunner) Result(bean interface{}) error {
         return err
     }
     iterFunc := func(idx int64, bean interface{}) bool {
-       return !obj.obj.CanAddValue()
+        return !obj.obj.CanAddValue()
     }
     return this.session.Query(this.ctx, &obj, iterFunc, this.metadata.PrepareSql, this.metadata.Params...)
 

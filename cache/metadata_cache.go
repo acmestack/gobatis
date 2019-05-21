@@ -11,6 +11,7 @@ package cache
 import (
     "fmt"
     "github.com/xfali/gobatis/parsing/sqlparser"
+    "sort"
     "strings"
     "sync"
 )
@@ -43,9 +44,18 @@ func CacheMetadata(key MetadataCacheKey, data *sqlparser.Metadata) {
 func CalcKey(sql string, params map[string]interface{}) MetadataCacheKey {
     buf := strings.Builder{}
     buf.WriteString(sql)
-    for k, v := range params {
-        buf.WriteString(k)
-        buf.WriteString(fmt.Sprintf("%v", v))
+    list := make([]string, len(params))
+    i := 0
+    for k := range params {
+        list[i] = k
+        i++
+    }
+    sort.Slice(list, func(i, j int) bool {
+        return list[i] > list[j]
+    })
+    for i := range list {
+        buf.WriteString(list[i])
+        buf.WriteString(fmt.Sprintf("%v", params[list[i]]))
     }
     return MetadataCacheKey(buf.String())
 }
