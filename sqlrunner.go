@@ -10,6 +10,7 @@ package gobatis
 
 import (
     "context"
+    "github.com/xfali/gobatis/cache"
     "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/errors"
     "github.com/xfali/gobatis/factory"
@@ -161,8 +162,17 @@ func (this *Session) Insert(sql string) Runner {
 func (this *BaseRunner) Param(params ...interface{}) Runner {
     paramMap := reflection.ParseParams(params...)
     //TODO: 使用缓存加速，避免每次都生成动态sql
-    sqlStr := this.sqlDynamicData.ReplaceWithMap(paramMap)
-    md, err := sqlparser.ParseWithParamMap(sqlStr, paramMap)
+    key := cache.CalcKey(this.sqlDynamicData.OriginData, paramMap)
+    md := cache.FindMetadata(key)
+    var err error
+    if md == nil {
+        sqlStr := this.sqlDynamicData.ReplaceWithMap(paramMap)
+        md, err = sqlparser.ParseWithParamMap(sqlStr, paramMap)
+        if err == nil {
+            cache.CacheMetadata(key, md)
+        }
+    }
+
     if err == nil {
         if this.action == md.Action {
             this.metadata = md
