@@ -43,9 +43,9 @@ func TestReflection2(t *testing.T) {
 
 func TestReflection3(t *testing.T) {
     var test int
-    _, err := reflection.GetObjectInfo(&test)
-    if err != nil {
-        t.Log(err)
+    o, err := reflection.GetObjectInfo(&test)
+    if err == nil {
+        t.Log(o)
     } else {
         t.Fail()
     }
@@ -65,22 +65,6 @@ func TestReflection4_2(t *testing.T) {
     t.Logf("sv %v\n", sv)
     reflection.SetValue(v, []byte(sv))
     t.Log(v.Interface())
-}
-
-func TestReflection5(t *testing.T) {
-    setV := []byte("10000")
-    v, err := gobatis.FindModelInfo(reflect.TypeOf(reflection.INT_DEFAULT).Name()).Deserialize(nil, []interface{}{setV})
-    if err != nil {
-        t.Fail()
-    }
-    t.Log(v)
-
-    _, err2 := gobatis.FindModelInfo(reflect.TypeOf(reflection.INT_DEFAULT).Name()).Deserialize(nil, []interface{}{setV, nil})
-    if err2 == nil {
-        t.Fail()
-    } else {
-        t.Log(err2)
-    }
 }
 
 func TestReflection6(t *testing.T) {
@@ -222,11 +206,10 @@ func TestTypeName(t *testing.T) {
 func TestReflectSlice(t *testing.T) {
     o := []TestTable{}
     rt := reflect.TypeOf(o)
-    rv := reflect.ValueOf(o)
+    //rv := reflect.ValueOf(o)
 
     rt = rt.Elem()
     t.Log(rt)
-    t.Logf("rv valid: %v\n", rv.Elem())
 }
 
 func TestReflectMap(t *testing.T) {

@@ -13,7 +13,6 @@ import (
     "fmt"
     "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/executor"
-    "github.com/xfali/gobatis/handler"
     "github.com/xfali/gobatis/logging"
     "github.com/xfali/gobatis/reflection"
     "github.com/xfali/gobatis/transaction"
@@ -109,10 +108,6 @@ func (sess *DefaultSqlSession) Rollback() {
 
 func (sess *DefaultSqlSession) logLastSql(sql string, params ...interface{}) {
     sess.Log(logging.INFO, "sql: [%s], param: %s", sql, fmt.Sprint(params))
-}
-
-func (sess *DefaultSqlSession) getSqlContext(ctx context.Context, sql string, handler handler.ResultHandler, iterFunc common.IterFunc) *common.SqlContext {
-    return &common.SqlContext{Ctx: ctx, Sql: sql, ResultHandler: handler, IterFunc: iterFunc}
 }
 
 func (sess *DefaultSqlSession) exec(ctx context.Context, sql string, params ...interface{}) (common.Result, error) {

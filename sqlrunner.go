@@ -10,7 +10,6 @@ package gobatis
 
 import (
     "context"
-    "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/errors"
     "github.com/xfali/gobatis/factory"
     "github.com/xfali/gobatis/logging"
@@ -60,7 +59,6 @@ type BaseRunner struct {
 }
 
 type SelectRunner struct {
-    iterFunc common.IterFunc
     count    int64
     BaseRunner
 }

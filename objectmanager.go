@@ -11,7 +11,10 @@ package gobatis
 import (
     "github.com/xfali/gobatis/reflection"
     "sync"
+    "github.com/xfali/gobatis/errors"
 )
+
+type ModelName string
 
 type ObjectCache struct {
     objCache map[string]reflection.Object
@@ -51,4 +54,27 @@ func ParseObject(bean interface{}) (reflection.Object, error) {
     obj = obj.New()
     obj.ResetValue(reflection.ReflectValue(bean))
     return obj, nil
+}
+
+
+// 注册struct模型，模型描述了column和field之间的关联关系；
+// 目前已非必要条件
+func RegisterModel(model interface{})  {
+    RegisterModelWithName("", model)
+}
+
+func RegisterModelWithName(name string, model interface{}) error {
+    tableInfo, err := reflection.GetStructInfo(model)
+    if err != nil {
+        return errors.PARSE_MODEL_TABLEINFO_FAILED
+    }
+
+    globalObjectCache.lock.Lock()
+    defer globalObjectCache.lock.Unlock()
+
+    if name == "" {
+        name = tableInfo.GetClassName()
+    }
+    globalObjectCache.objCache[name] = tableInfo
+    return nil
 }
