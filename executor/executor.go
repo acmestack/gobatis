@@ -11,13 +11,13 @@ package executor
 import (
     "context"
     "github.com/xfali/gobatis/common"
-    "github.com/xfali/gobatis/handler"
+    "github.com/xfali/gobatis/reflection"
 )
 
 type Executor interface {
     Close(rollback bool)
 
-    Query(ctx context.Context, handler handler.ResultHandler, iterFunc common.IterFunc, sql string, params ... interface{}) error
+    Query(ctx context.Context, result reflection.Object, sql string, params ... interface{}) error
 
     Exec(ctx context.Context, sql string, params ... interface{}) (common.Result, error)
 

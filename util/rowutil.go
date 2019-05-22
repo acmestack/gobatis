@@ -10,11 +10,11 @@ package util
 
 import (
     "database/sql"
-    "github.com/xfali/gobatis/common"
-    "github.com/xfali/gobatis/handler"
+    "github.com/xfali/gobatis/reflection"
+    "reflect"
 )
 
-func ScanRows(rows *sql.Rows, handler handler.ResultHandler, iterFunc common.IterFunc) int64 {
+func ScanRows(rows *sql.Rows, result reflection.Object) int64 {
     columns, _ := rows.Columns()
     //d, _ := rows.ColumnTypes()
     //columns := make([]string, len(d))
@@ -35,15 +35,31 @@ func ScanRows(rows *sql.Rows, handler handler.ResultHandler, iterFunc common.Ite
             //for _, col := range values {
             //    logging.Debug("%v", col)
             //}
-            result, err := handler.Deserialize(columns, values)
-            if err == nil {
-                stop := iterFunc(index, result)
-                if stop {
-                    break
-                }
+            if !deserialize(result, columns, values) {
+                break
             }
             index++
         }
     }
     return index
+}
+
+func deserialize(result reflection.Object, columns []string, values []interface{}) bool {
+    obj := result
+    if result.CanAddValue() {
+        obj = result.NewElem()
+    }
+    for i := range columns {
+        if obj.CanSetField() {
+            obj.SetField(columns[i], values[i])
+        } else {
+            obj.SetValue(reflect.ValueOf(values[0]))
+            break
+        }
+    }
+    if result.CanAddValue() {
+        result.AddValue(obj.GetValue())
+        return true
+    }
+    return false
 }

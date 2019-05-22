@@ -59,12 +59,6 @@ type BaseRunner struct {
     this           Runner
 }
 
-type SelectIterRunner struct {
-    iterFunc common.IterFunc
-    count    int64
-    BaseRunner
-}
-
 type SelectRunner struct {
     iterFunc common.IterFunc
     count    int64
@@ -131,17 +125,6 @@ func (this *Session) Tx(txFunc func(session *Session) bool) {
     }
 }
 
-func (this *Session) SelectWithIterFunc(sqlId string, iterFunc common.IterFunc) Runner {
-    ret := &SelectIterRunner{}
-    ret.action = sqlparser.SELECT
-    ret.log = this.log
-    ret.session = this.session
-    ret.iterFunc = iterFunc
-    ret.sqlDynamicData = *getSql(sqlId)
-    ret.this = ret
-    return ret
-}
-
 func (this *Session) Select(sql string) Runner {
     return createSelect(this.ctx, this.log, this.session, getSql(sql))
 }
@@ -194,30 +177,6 @@ func (this *BaseRunner) Context(ctx context.Context) Runner {
     return this.this
 }
 
-func (this *SelectIterRunner) myIterFunc(idx int64, bean interface{}) bool {
-    this.count++
-    return this.iterFunc(idx, bean)
-}
-
-func (this *SelectIterRunner) Result(bean interface{}) error {
-    err := reflection.MustPtr(bean)
-    if err != nil {
-        this.log(logging.WARN, "Result error: %s\n", err.Error())
-        return err
-    }
-    if this.metadata == nil {
-        this.log(logging.WARN, "Sql Matadata is nil")
-        return errors.RUNNER_NOT_READY
-    }
-
-    mi := FindModelInfoOfBean(bean)
-    if mi == nil {
-        this.log(logging.WARN, errors.MODEL_NOT_REGISTER.Error())
-        return errors.RESULT_NAME_NOT_FOUND
-    }
-    return this.session.Query(this.ctx, mi, this.myIterFunc, this.metadata.PrepareSql, this.metadata.Params...)
-}
-
 func (this *SelectRunner) Result(bean interface{}) error {
     if this.metadata == nil {
         this.log(logging.WARN, "Sql Matadata is nil")
@@ -228,19 +187,11 @@ func (this *SelectRunner) Result(bean interface{}) error {
         return errors.RESULT_POINTER_IS_NIL
     }
 
-    //mi := FindModelInfoOfBean(bean)
-    //if mi == nil {
-    //    this.log(logging.WARN, errors.MODEL_NOT_REGISTER.Error())
-    //    return errors.RESULT_NAME_NOT_FOUND
-    //}
     obj, err := ParseObject(bean)
     if err != nil {
         return err
     }
-    iterFunc := func(idx int64, bean interface{}) bool {
-        return !obj.obj.CanAddValue()
-    }
-    return this.session.Query(this.ctx, &obj, iterFunc, this.metadata.PrepareSql, this.metadata.Params...)
+    return this.session.Query(this.ctx, obj, this.metadata.PrepareSql, this.metadata.Params...)
 
 }
 

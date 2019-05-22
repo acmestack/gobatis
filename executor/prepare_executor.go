@@ -12,7 +12,7 @@ import (
     "context"
     "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/errors"
-    "github.com/xfali/gobatis/handler"
+    "github.com/xfali/gobatis/reflection"
     "github.com/xfali/gobatis/transaction"
 )
 
@@ -39,7 +39,7 @@ func (exec *PrepareExecutor) Close(rollback bool) {
     }
 }
 
-func (exec *PrepareExecutor) Query(ctx context.Context, handler handler.ResultHandler, iterFunc common.IterFunc, sql string, params ...interface{}) error {
+func (exec *PrepareExecutor) Query(ctx context.Context, result reflection.Object, sql string, params ...interface{}) error {
     if exec.closed {
         return  errors.EXECUTOR_QUERY_ERROR
     }
@@ -55,7 +55,7 @@ func (exec *PrepareExecutor) Query(ctx context.Context, handler handler.ResultHa
     if err != nil {
         return err
     }
-    return stmt.Query(ctx, handler, iterFunc, params...)
+    return stmt.Query(ctx, result, params...)
 }
 
 func (exec *PrepareExecutor) Exec(ctx context.Context, sql string, params ...interface{}) (common.Result, error) {

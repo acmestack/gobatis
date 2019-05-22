@@ -12,7 +12,7 @@ import (
     "context"
     "github.com/xfali/gobatis/common"
     "github.com/xfali/gobatis/errors"
-    "github.com/xfali/gobatis/handler"
+    "github.com/xfali/gobatis/reflection"
     "github.com/xfali/gobatis/transaction"
 )
 
@@ -39,7 +39,7 @@ func (exec *SimpleExecutor) Close(rollback bool) {
     }
 }
 
-func (exec *SimpleExecutor) Query(ctx context.Context, handler handler.ResultHandler, iterFunc common.IterFunc, sql string, params ...interface{}) error {
+func (exec *SimpleExecutor) Query(ctx context.Context, result reflection.Object, sql string, params ...interface{}) error {
     if exec.closed {
         return  errors.EXECUTOR_QUERY_ERROR
     }
@@ -49,7 +49,7 @@ func (exec *SimpleExecutor) Query(ctx context.Context, handler handler.ResultHan
         return errors.EXECUTOR_GET_CONNECTION_ERROR
     }
 
-    return conn.Query(ctx, handler, iterFunc, sql, params...)
+    return conn.Query(ctx, result, sql, params...)
 }
 
 func (exec *SimpleExecutor) Exec(ctx context.Context, sql string, params ...interface{}) (common.Result, error) {

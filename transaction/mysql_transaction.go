@@ -16,7 +16,7 @@ import (
     "github.com/xfali/gobatis/connection"
     "github.com/xfali/gobatis/datasource"
     "github.com/xfali/gobatis/errors"
-    "github.com/xfali/gobatis/handler"
+    "github.com/xfali/gobatis/reflection"
     "github.com/xfali/gobatis/statement"
     "github.com/xfali/gobatis/util"
 )
@@ -94,7 +94,7 @@ func (c *TansactionConnection) Prepare(sqlStr string) (statement.Statement, erro
     return ret, nil
 }
 
-func (c *TansactionConnection) Query(ctx context.Context, handler handler.ResultHandler, iterFunc common.IterFunc, sqlStr string, params ...interface{}) error {
+func (c *TansactionConnection) Query(ctx context.Context, result reflection.Object, sqlStr string, params ...interface{}) error {
     db := c.tx
     rows, err := db.QueryContext(ctx, sqlStr, params...)
     if err != nil {
@@ -102,7 +102,7 @@ func (c *TansactionConnection) Query(ctx context.Context, handler handler.Result
     }
     defer rows.Close()
 
-    util.ScanRows(rows, handler, iterFunc)
+    util.ScanRows(rows, result)
     return nil
 }
 
@@ -111,14 +111,14 @@ func (c *TansactionConnection) Exec(ctx context.Context, sqlStr string, params .
     return db.ExecContext(ctx, sqlStr, params...)
 }
 
-func (s *TransactionStatement) Query(ctx context.Context, handler handler.ResultHandler, iterFunc common.IterFunc, params ...interface{}) error {
+func (s *TransactionStatement) Query(ctx context.Context, result reflection.Object, params ...interface{}) error {
     rows, err := s.tx.QueryContext(ctx, s.sql, params...)
     if err != nil {
         return errors.STATEMENT_QUERY_ERROR
     }
     defer rows.Close()
 
-    util.ScanRows(rows, handler, iterFunc)
+    util.ScanRows(rows, result)
     return nil
 }
 

@@ -15,6 +15,7 @@ import (
     "github.com/xfali/gobatis/executor"
     "github.com/xfali/gobatis/handler"
     "github.com/xfali/gobatis/logging"
+    "github.com/xfali/gobatis/reflection"
     "github.com/xfali/gobatis/transaction"
 )
 
@@ -39,37 +40,9 @@ func (sess *DefaultSqlSession) Close(rollback bool) {
     sess.executor.Close(rollback)
 }
 
-func (sess *DefaultSqlSession) SelectOne(ctx context.Context, handler handler.ResultHandler, sql string, params ...interface{}) (interface{}, error) {
+func (sess *DefaultSqlSession) Query(ctx context.Context, result reflection.Object, sql string, params ...interface{}) error {
     sess.logLastSql(sql, params...)
-    var ret interface{} = nil
-    iterFunc := func(idx int64, bean interface{}) bool {
-        ret = bean
-        return false
-    }
-    err := sess.executor.Query(ctx, handler, iterFunc, sql, params...)
-    if err != nil {
-        return nil, err
-    }
-    return ret, nil
-}
-
-func (sess *DefaultSqlSession) Select(ctx context.Context, handler handler.ResultHandler, sql string, params ...interface{}) ([]interface{}, error) {
-    sess.logLastSql(sql, params...)
-    var ret []interface{}
-    iterFunc := func(idx int64, bean interface{}) bool {
-        ret = append(ret, bean)
-        return true
-    }
-    err := sess.executor.Query(ctx, handler, iterFunc, sql, params...)
-    if err != nil {
-        return nil, err
-    }
-    return ret, nil
-}
-
-func (sess *DefaultSqlSession) Query(ctx context.Context, handler handler.ResultHandler, iterFunc common.IterFunc, sql string, params ...interface{}) error {
-    sess.logLastSql(sql, params...)
-    return sess.executor.Query(ctx, handler, iterFunc, sql, params...)
+    return sess.executor.Query(ctx, result, sql, params...)
 }
 
 func (sess *DefaultSqlSession) Insert(ctx context.Context, sql string, params ...interface{}) (int64, int64, error) {
