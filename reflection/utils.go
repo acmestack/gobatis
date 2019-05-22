@@ -317,3 +317,17 @@ func IsNil(i interface{}) bool {
     }
     return false
 }
+
+func CanSet(i interface{}) bool {
+    if i == nil {
+        return false
+    }
+    vi := reflect.ValueOf(i)
+    if MustPtrValue(vi) != nil {
+        return false
+    }
+    if vi.IsNil() {
+        return false
+    }
+    return true
+}

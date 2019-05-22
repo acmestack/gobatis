@@ -48,6 +48,7 @@ var RESULT_PTR_VALUE_IS_POINTER *ErrCode = New("31002", "result type is pointer 
 var RUNNER_NOT_READY *ErrCode = New("31003", "Runner not ready, may sql or param have some error")
 var RESULT_NAME_NOT_FOUND *ErrCode = New("31004", "result name not found")
 var RESULT_SELECT_EMPTY_VALUE *ErrCode = New("31005", "select return empty value")
+var RESULT_SET_VALUE_FAILED *ErrCode = New("31006", "result set value failed")
 
 func New(code, message string) *ErrCode {
     ret := &ErrCode{

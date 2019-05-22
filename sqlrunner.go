@@ -17,7 +17,6 @@ import (
     "github.com/xfali/gobatis/parsing/sqlparser"
     "github.com/xfali/gobatis/reflection"
     "github.com/xfali/gobatis/session"
-    "reflect"
 )
 
 type SessionManager struct {
@@ -198,19 +197,10 @@ func (this *InsertRunner) Result(bean interface{}) error {
         this.log(logging.WARN, "Sql Matadata is nil")
         return errors.RUNNER_NOT_READY
     }
-    var rv reflect.Value
-    if bean != nil {
-        rv = reflect.ValueOf(bean)
-        err := reflection.MustPtrValue(rv)
-        rv = rv.Elem()
-        if err != nil {
-            return err
-        }
-    }
     i, id, err := this.session.Insert(this.ctx, this.metadata.PrepareSql, this.metadata.Params...)
     this.lastId = id
-    if bean != nil {
-        reflection.SetValue(rv, i)
+    if reflection.CanSet(bean) {
+        reflection.SetValue(reflection.ReflectValue(bean), i)
     }
     return err
 }
@@ -224,18 +214,9 @@ func (this *UpdateRunner) Result(bean interface{}) error {
         this.log(logging.WARN, "Sql Matadata is nil")
         return errors.RUNNER_NOT_READY
     }
-    var rv reflect.Value
-    if bean != nil {
-        rv = reflect.ValueOf(bean)
-        err := reflection.MustPtrValue(rv)
-        rv = rv.Elem()
-        if err != nil {
-            return err
-        }
-    }
     i, err := this.session.Update(this.ctx, this.metadata.PrepareSql, this.metadata.Params...)
-    if bean != nil {
-        reflection.SetValue(rv, i)
+    if reflection.CanSet(bean) {
+        reflection.SetValue(reflection.ReflectValue(bean), i)
     }
     return err
 }
@@ -245,18 +226,9 @@ func (this *DeleteRunner) Result(bean interface{}) error {
         this.log(logging.WARN, "Sql Matadata is nil")
         return errors.RUNNER_NOT_READY
     }
-    var rv reflect.Value
-    if bean != nil {
-        rv = reflect.ValueOf(bean)
-        err := reflection.MustPtrValue(rv)
-        rv = rv.Elem()
-        if err != nil {
-            return err
-        }
-    }
     i, err := this.session.Delete(this.ctx, this.metadata.PrepareSql, this.metadata.Params...)
-    if bean != nil {
-        reflection.SetValue(rv, i)
+    if reflection.CanSet(bean) {
+        reflection.SetValue(reflection.ReflectValue(bean), i)
     }
     return err
 }
