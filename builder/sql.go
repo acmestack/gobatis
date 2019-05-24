@@ -240,11 +240,11 @@ func (f *SQLFragment) Decs() *SQLFragment {
     return fragment
 }
 
-func (f *SQLFragment) Acs() *SQLFragment {
+func (f *SQLFragment) Asc() *SQLFragment {
     fragment := &SQLFragment{}
     fragment.initParent(f)
 
-    fragment.builder.WriteString("ACS ")
+    fragment.builder.WriteString("ASC ")
     return fragment
 }
 
