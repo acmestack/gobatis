@@ -232,11 +232,11 @@ func (f *SQLFragment) OrderBy(columns ...string) *SQLFragment {
     return fragment
 }
 
-func (f *SQLFragment) Decs() *SQLFragment {
+func (f *SQLFragment) Desc() *SQLFragment {
     fragment := &SQLFragment{}
     fragment.initParent(f)
 
-    fragment.builder.WriteString("DECS ")
+    fragment.builder.WriteString("DESC ")
     return fragment
 }
 

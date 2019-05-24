@@ -34,12 +34,12 @@ func TestSqlBuilderSelect(t *testing.T) {
             Hook(hook).
             OrderBy("name").
             Hook(hook).
-            Decs().
+            Desc().
             Hook(hook).
             String()
         t.Log(str)
 
-        if strings.TrimSpace(str) != `SELECT A.test1, B.test2 FROM test_a WHERE id = 1 AND name=2 GROUP BY name ORDER BY name DECS` {
+        if strings.TrimSpace(str) != `SELECT A.test1, B.test2 FROM test_a WHERE id = 1 AND name=2 GROUP BY name ORDER BY name DESC` {
             t.FailNow()
         }
     })
@@ -63,12 +63,12 @@ func TestSqlBuilderSelect(t *testing.T) {
             Hook(hook).
             OrderBy("name").
             Hook(hook).
-            Decs().
+            Desc().
             Hook(hook).
             String()
         t.Log(str)
 
-        if strings.TrimSpace(str) != `SELECT A.test1, B.test2, test3 FROM test_a AS A, test_b AS B WHERE id = 1 AND name=2 GROUP BY name ORDER BY name DECS` {
+        if strings.TrimSpace(str) != `SELECT A.test1, B.test2, test3 FROM test_a AS A, test_b AS B WHERE id = 1 AND name=2 GROUP BY name ORDER BY name DESC` {
             t.FailNow()
         }
     })
