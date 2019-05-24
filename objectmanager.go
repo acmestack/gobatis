@@ -64,7 +64,7 @@ func RegisterModel(model interface{})  {
 }
 
 func RegisterModelWithName(name string, model interface{}) error {
-    tableInfo, err := reflection.GetStructInfo(model)
+    tableInfo, err := reflection.GetObjectInfo(model)
     if err != nil {
         return errors.PARSE_MODEL_TABLEINFO_FAILED
     }

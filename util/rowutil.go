@@ -16,19 +16,14 @@ import (
 
 func ScanRows(rows *sql.Rows, result reflection.Object) int64 {
     columns, _ := rows.Columns()
-    //d, _ := rows.ColumnTypes()
-    //columns := make([]string, len(d))
-    //types := make([]string, len(d))
-    //for i := range d {
-    //    columns[i] = d[i].Name()
-    //    types[i] = d[i].DatabaseTypeName()
-    //}
+
     scanArgs := make([]interface{}, len(columns))
     values := make([]interface{}, len(columns))
 
     for j := range values {
         scanArgs[j] = &values[j]
     }
+
     var index int64 = 0
     for rows.Next() {
         if err := rows.Scan(scanArgs...); err == nil {

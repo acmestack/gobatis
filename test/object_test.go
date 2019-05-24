@@ -95,7 +95,10 @@ func TestReflectObjectMap(t *testing.T) {
     t.Logf("after set map[string]interface{} type :%v\n", v)
 
     info.SetField("username", reflect.ValueOf("123"))
-    t.Logf("after setField :%v\n", v)
+    t.Logf("after setField username 123 :%v\n", v)
+
+    info.SetField("username", reflect.ValueOf("321"))
+    t.Logf("after setField username 321 :%v\n", v)
 }
 
 func TestReflectObjectSlice2(t *testing.T) {

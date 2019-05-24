@@ -331,3 +331,17 @@ func CanSet(i interface{}) bool {
     }
     return true
 }
+
+func NewValue(t reflect.Type) reflect.Value {
+    if t.Kind() == reflect.Ptr {
+        t = t.Elem()
+    }
+    if t.Kind() == reflect.Ptr {
+        panic("Error Type")
+    }
+    return reflect.New(t).Elem()
+}
+
+func New(t reflect.Type) interface{} {
+    return NewValue(t).Interface()
+}
