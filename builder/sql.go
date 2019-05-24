@@ -11,6 +11,7 @@ package builder
 import (
     "fmt"
     "strings"
+    "strconv"
 )
 
 type SQLFragment struct {
@@ -248,23 +249,23 @@ func (f *SQLFragment) Asc() *SQLFragment {
     return fragment
 }
 
-func (f *SQLFragment) Offset(offset string) *SQLFragment {
+func (f *SQLFragment) Offset(offset int64) *SQLFragment {
     fragment := &SQLFragment{}
     fragment.initParent(f)
 
     fragment.builder.WriteString("OFFSET ")
-    fragment.builder.WriteString(offset)
+    fragment.builder.WriteString(strconv.FormatInt(offset, 10))
     fragment.builder.WriteString(" ")
 
     return fragment
 }
 
-func (f *SQLFragment) Limit(limit string) *SQLFragment {
+func (f *SQLFragment) Limit(limit int64) *SQLFragment {
     fragment := &SQLFragment{}
     fragment.initParent(f)
 
     fragment.builder.WriteString("LIMIT ")
-    fragment.builder.WriteString(limit)
+    fragment.builder.WriteString(strconv.FormatInt(limit, 10))
     fragment.builder.WriteString(" ")
 
     return fragment
