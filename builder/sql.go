@@ -248,6 +248,28 @@ func (f *SQLFragment) Asc() *SQLFragment {
     return fragment
 }
 
+func (f *SQLFragment) Offset(offset string) *SQLFragment {
+    fragment := &SQLFragment{}
+    fragment.initParent(f)
+
+    fragment.builder.WriteString("OFFSET ")
+    fragment.builder.WriteString(offset)
+    fragment.builder.WriteString(" ")
+
+    return fragment
+}
+
+func (f *SQLFragment) Limit(limit string) *SQLFragment {
+    fragment := &SQLFragment{}
+    fragment.initParent(f)
+
+    fragment.builder.WriteString("LIMIT ")
+    fragment.builder.WriteString(limit)
+    fragment.builder.WriteString(" ")
+
+    return fragment
+}
+
 func (f *SQLFragment) Set(column string, value string) *SQLFragment {
     fragment := &SQLFragment{}
     fragment.initParent(f)
