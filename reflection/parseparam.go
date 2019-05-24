@@ -52,14 +52,16 @@ func (parser *paramParser)parseOne(v interface{}) {
             parser.ret[structKey(oi, key)] = value
         }
     } else if rt.Kind() == reflect.Slice {
-        l := rv.Len()
-        for i := 0; i < l; i++ {
-            elemV := rv.Index(i)
-            if !elemV.CanInterface() {
-                elemV = reflect.Indirect(elemV)
-            }
-            parser.parseOne(elemV.Interface())
-        }
+        //l := rv.Len()
+        //for i := 0; i < l; i++ {
+        //    elemV := rv.Index(i)
+        //    if !elemV.CanInterface() {
+        //        elemV = reflect.Indirect(elemV)
+        //    }
+        //    parser.parseOne(elemV.Interface())
+        //}
+        parser.ret[strconv.Itoa(parser.index)] = v
+        parser.index++
     } else if rt.Kind() == reflect.Map {
         keys := rv.MapKeys()
         for _, key := range keys {

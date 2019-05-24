@@ -1,17 +1,28 @@
-# Gobatis
+# gobatis
 
 [![Appveyor Build status](https://ci.appveyor.com/api/projects/status/oou404q28phtxhwm?svg=true)](https://ci.appveyor.com/project/xfali/gobatis)
 
 ## 介绍
 
-Gobatis是一个golang的ORM框架，类似Java的Mybatis。支持直接执行sql语句以及简单的动态sql。
+gobatis是一个golang的ORM框架，类似Java的Mybatis。支持直接执行sql语句以及简单的动态sql。
 
 建议配合[gobatis-cmd](https://github.com/xfali/gobatis-cmd)自动代码、sql生成工具使用。
 
+支持的动态sql标签：
+
+ 标签 | 说明
+:---: | :---
+if | 动态 SQL 通常要做的事情是根据条件包含 where 子句的一部分。
+where| where 元素只会在至少有一个子元素的条件返回 SQL 子句的情况下才去插入“WHERE”子句。而且，若语句的开头为“AND”或“OR”，where 元素也会将它们去除。 
+set | set 元素会动态前置 SET 关键字，同时也会删掉无关的逗号。
+include | 使用<sql>标签定义的语句替换。
+choose<br>when<br>otherwise | 有时我们不想应用到所有的条件语句，而只想从中择其一项。针对这种情况，gobatis 提供了 choose 元素，它有点像switch 语句。
+
 ## 待完成项
 
-* 继续完善动态sql支持
-* 性能优化：减少逃逸、增加动态sql缓存
+* 继续完善动态sql支持（foreach、trim）
+* ~~性能优化：增加动态sql缓存~~
+(已经实现，但测试发现性能提升很小，目前该功能被关闭)
 
 ## 使用
 
@@ -57,7 +68,7 @@ type TestTable struct {
 
 ### ~~3、注册Model~~
 
-目前的作用是提高执行速度，已变为非必要步骤
+作用是提高执行速度，已变为非必要步骤，现在gobatis会自动缓存。
 ```
 func init() {
     var model TestTable
@@ -211,3 +222,22 @@ gobatis.RegisterMapperFile(filePath)
 ### 8、gobatis-cmd生成文件使用示例
 
 参考[cmd_test](https://github.com/xfali/gobatis/tree/master/test/cmd)
+
+### 9、 SQL语句构建器
+
+xml特性有非常强大的动态SQL生成方案，当需要在代码中嵌入SQL语句中，可使用SQL语句构建器：
+```
+import "github.com/xfali/gobatis/builder"
+```
+```
+str := builder.Select("test1", "test2").
+        From("test_table").
+        Where("id = 1").
+        And().
+        Where("name=2").
+        GroupBy("name").
+        OrderBy("name").
+        Decs().
+        String()
+    t.Log(str)
+```
