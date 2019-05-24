@@ -20,8 +20,38 @@ func TestSqlBuilderSelect(t *testing.T) {
         return f
     }
     t.Run("once call", func(t *testing.T) {
-        str := builder.Select("A.test1", "B.test2").
+        str := builder.Select("test1", "test2").
+            Hook(hook).
             From("test_a").
+            Hook(hook).
+            Where("id = 1").
+            And().
+            Hook(hook).
+            Where("name=2").
+            Hook(hook).
+            GroupBy("name").
+            Hook(hook).
+            OrderBy("name").
+            Hook(hook).
+            Desc().
+            Hook(hook).
+            Offset(5).
+            Hook(hook).
+            Limit(10).
+            Hook(hook).
+            String()
+        t.Log(str)
+
+        if strings.TrimSpace(str) != `SELECT test1, test2 FROM test_a WHERE id = 1 AND name=2 GROUP BY name ORDER BY name DESC OFFSET 5 LIMIT 10` {
+            t.FailNow()
+        }
+    })
+
+    t.Run("multi call", func(t *testing.T) {
+        str := builder.Select("A.test1", "B.test2").
+            Select("B.test3").
+            From("test_a AS A").
+            From("test_b AS B").
             Where("id = 1").
             And().
             Where("name=2").
@@ -33,36 +63,7 @@ func TestSqlBuilderSelect(t *testing.T) {
             String()
         t.Log(str)
 
-        if strings.TrimSpace(str) != `SELECT A.test1, B.test2 FROM test_a WHERE id = 1 AND name=2 GROUP BY name ORDER BY name DESC OFFSET 5 LIMIT 10` {
-            t.FailNow()
-        }
-    })
-
-    t.Run("multi call", func(t *testing.T) {
-        str := builder.Select("A.test1", "B.test2").
-            Hook(hook).
-            Select("test3").
-            Hook(hook).
-            From("test_a AS A").
-            Hook(hook).
-            From("test_b AS B").
-            Hook(hook).
-            Where("id = 1").
-            Hook(hook).
-            And().
-            Hook(hook).
-            Where("name=2").
-            Hook(hook).
-            GroupBy("name").
-            Hook(hook).
-            OrderBy("name").
-            Hook(hook).
-            Desc().
-            Hook(hook).
-            String()
-        t.Log(str)
-
-        if strings.TrimSpace(str) != `SELECT A.test1, B.test2, test3 FROM test_a AS A, test_b AS B WHERE id = 1 AND name=2 GROUP BY name ORDER BY name DESC` {
+        if strings.TrimSpace(str) != `SELECT A.test1, B.test2, B.test3 FROM test_a AS A, test_b AS B WHERE id = 1 AND name=2 GROUP BY name ORDER BY name DESC OFFSET 5 LIMIT 10` {
             t.FailNow()
         }
     })

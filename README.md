@@ -229,14 +229,18 @@ gobatis xml特性有非常强大的动态SQL生成方案，当需要在代码中
 import "github.com/xfali/gobatis/builder"
 ```
 ```
-    str := builder.Select("test1", "test2").
-        From("test_table").
-        Where("id = 1").
-        And().
-        Where("name=2").
-        GroupBy("name").
-        OrderBy("name").
-        Decs().
-        String()
+    str := builder.Select("A.test1", "B.test2").
+            Select("B.test3").
+            From("test_a AS A").
+            From("test_b AS B").
+            Where("id = 1").
+            And().
+            Where("name=2").
+            GroupBy("name").
+            OrderBy("name").
+            Desc().
+            Offset(5).
+            Limit(10).
+            String()
     t.Log(str)
 ```
