@@ -47,11 +47,25 @@ type If struct {
 }
 
 type Where struct {
-    If []If `xml:"if"`
+    Choose Choose `xml:"choose"`
+    If     []If   `xml:"if"`
 }
 
 type Set struct {
     If []If `xml:"if"`
+}
+
+type When struct {
+    If
+}
+
+type Otherwise struct {
+    Date string `xml:",chardata"`
+}
+
+type Choose struct {
+    When      []When    `xml:"when"`
+    Otherwise Otherwise `xml:"otherwise"`
 }
 
 //传入方法必须是通过参数名获得参数值
@@ -184,21 +198,51 @@ func (de *Where) Format(getFunc func(key string) string) string {
             ifStr := de.If[i].Format(getFunc)
             if ifStr != "" {
                 if !set {
-                    if strings.ToLower(ifStr[:3]) == "or " {
-                        ifStr = strings.TrimSpace(ifStr[3:])
-                    } else if strings.ToLower(ifStr[:4]) == "and " {
-                        ifStr = strings.TrimSpace(ifStr[4:])
-                    }
+                    ifStr = removeAndOr(ifStr)
                     set = true
                 }
                 ret.WriteString(ifStr)
                 ret.WriteString(" ")
             }
         }
+    } else {
+        chooseStr := de.Choose.Format(getFunc)
+        chooseStr = removeAndOr(chooseStr)
+        if chooseStr != "" {
+            ret.WriteString(chooseStr)
+        }
     }
     retStr := ret.String()
     if retStr != "" {
         retStr = " where " + retStr
+    }
+    return retStr
+}
+
+func removeAndOr(src string) string {
+    if len(src) > 3 && strings.ToLower(src[:3]) == "or " {
+        src = strings.TrimSpace(src[3:])
+    } else if len(src) > 4 && strings.ToLower(src[:4]) == "and " {
+        src = strings.TrimSpace(src[4:])
+    }
+    return src
+}
+
+func (de *Choose) Format(getFunc func(key string) string) string {
+    ret := strings.Builder{}
+    if len(de.When) > 0 {
+        for i := range de.When {
+            ifStr := de.When[i].Format(getFunc)
+            if ifStr != "" {
+                ret.WriteString(ifStr)
+                ret.WriteString(" ")
+                break
+            }
+        }
+    }
+    retStr := ret.String()
+    if retStr == "" {
+        retStr = strings.TrimSpace(de.Otherwise.Date)
     }
     return retStr
 }
@@ -221,12 +265,14 @@ type IfProcessor string
 type WhereProcessor string
 type SetProcessor string
 type IncludeProcessor string
+type ChooseProcessor string
 
 var gProcessorMap = map[string]typeProcessor{
     "if":      IfProcessor("if"),
     "where":   WhereProcessor("where"),
     "set":     SetProcessor("set"),
     "include": IncludeProcessor("include"),
+    "choose":  ChooseProcessor("choose"),
 }
 
 func (d IfProcessor) EndStr() string {
@@ -277,6 +323,18 @@ func (d IncludeProcessor) Parse(src string) parsing.DynamicElement {
     return &v
 }
 
+func (d ChooseProcessor) EndStr() string {
+    return "</" + string(d) + ">"
+}
+
+func (d ChooseProcessor) Parse(src string) parsing.DynamicElement {
+    v := Choose{}
+    if xml.Unmarshal([]byte(src), &v) != nil {
+        logging.Warn("parse if element failed")
+    }
+    return &v
+}
+
 func ParseDynamic(src string, sqls []Sql) (*parsing.DynamicData, error) {
     src = escape(src)
 
@@ -300,7 +358,7 @@ func ParseDynamic(src string, sqls []Sql) (*parsing.DynamicData, error) {
             if index != -1 {
                 subStr = subStr[:index]
             }
-            //logging.Debug("Found element : %s\n", subStr)
+            logging.Debug("Found element : %s\n", subStr)
             if typeProcessor, ok := gProcessorMap[subStr]; ok {
                 subStr = src[start:]
                 endStr := typeProcessor.EndStr()

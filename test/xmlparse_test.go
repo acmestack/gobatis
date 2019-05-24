@@ -10,7 +10,9 @@ package test
 
 import (
     "github.com/xfali/gobatis"
+    "github.com/xfali/gobatis/logging"
     "github.com/xfali/gobatis/parsing/xml"
+    "strings"
     "testing"
     "time"
 )
@@ -119,8 +121,8 @@ func TestXmlDynamic3(t *testing.T) {
 
 func TestXmlDynamic4(t *testing.T) {
     testV := TestTable{
-        Username:"testuser",
-        Password:"testpw",
+        Username: "testuser",
+        Password: "testpw",
     }
     gobatis.RegisterModel(&testV)
     src := `SELECT <include refid="select_field"></include> FROM PERSON
@@ -142,8 +144,8 @@ func TestXmlDynamic4(t *testing.T) {
 
 func TestXmlDynamic5(t *testing.T) {
     testV := TestTable{
-        Username:"testuser",
-        Password:"testpw",
+        Username: "testuser",
+        Password: "testpw",
     }
     gobatis.RegisterModel(&testV)
     src := `UPDATE PERSON
@@ -234,3 +236,136 @@ func TestXmlDynamicIf3(t *testing.T) {
     t.Logf("arg now : %s\n", m.Replace(time.Now()))
 }
 
+func TestXmlDynamicChoose(t *testing.T) {
+    src := `SELECT * FROM BLOG WHERE state = 'ACTIVE'
+<choose>
+    <when test="{first} != nil">
+      AND first = #{first}
+    </when>
+    <when test="{second} != nil">
+      AND second = #{second}
+    </when>
+    <otherwise>
+      AND third = 1
+    </otherwise>
+  </choose>
+    `
+    logging.SetLevel(logging.DEBUG)
+    m, err := xml.ParseDynamic(src, nil)
+    if err != nil {
+        t.Fatal(err)
+    }
+    t.Run("choose first", func(t *testing.T) {
+        params := map[string]interface{}{
+            "first": "first",
+        }
+        ret := m.Replace(params)
+        t.Logf("arg first : %s\n", ret)
+
+        if strings.Index(ret, "AND first = #{first}") == -1 {
+            t.FailNow()
+        }
+    })
+
+    t.Run("choose second", func(t *testing.T) {
+        params := map[string]interface{}{
+            "second": "second",
+        }
+        ret := m.Replace(params)
+        t.Logf("arg second : %s\n", ret)
+
+        if strings.Index(ret, "AND second = #{second}") == -1 {
+            t.FailNow()
+        }
+    })
+
+    t.Run("both", func(t *testing.T) {
+        params := map[string]interface{}{
+            "first":  "first",
+            "second": "second",
+        }
+        ret := m.Replace(params)
+        t.Logf("arg both : %s\n", ret)
+
+        if strings.Index(ret, "AND first = #{first}") == -1 {
+            t.FailNow()
+        }
+    })
+
+    t.Run("none", func(t *testing.T) {
+        ret := m.Replace()
+        t.Logf("arg none : %s\n", ret)
+
+        if strings.Index(ret, "AND third = 1") == -1 {
+            t.FailNow()
+        }
+    })
+}
+
+func TestXmlDynamicWhere(t *testing.T) {
+    src := `SELECT * FROM PERSON
+        <where>
+            <choose>
+                <when test="{first} != nil">
+                    AND first = #{first}
+                </when>
+                <when test="{second} != nil">
+                    AND second = #{second}
+                </when>
+                <otherwise>
+                    AND third = 1
+                </otherwise>
+            </choose>
+        </where>
+`
+    logging.SetLevel(logging.DEBUG)
+    m, err := xml.ParseDynamic(src, nil)
+    if err != nil {
+        t.Fatal(err)
+    }
+    t.Run("choose first", func(t *testing.T) {
+        params := map[string]interface{}{
+            "first": "first",
+        }
+        ret := m.Replace(params)
+        t.Logf("arg first : %s\n", ret)
+
+        if strings.Index(ret, "where first = #{first}") == -1 {
+            t.FailNow()
+        }
+    })
+
+    t.Run("choose second", func(t *testing.T) {
+        params := map[string]interface{}{
+            "second": "second",
+        }
+        ret := m.Replace(params)
+        t.Logf("arg second : %s\n", ret)
+
+        if strings.Index(ret, "where second = #{second}") == -1 {
+            t.FailNow()
+        }
+    })
+
+    t.Run("both", func(t *testing.T) {
+        params := map[string]interface{}{
+            "first":  "first",
+            "second": "second",
+        }
+        ret := m.Replace(params)
+        t.Logf("arg both : %s\n", ret)
+
+        if strings.Index(ret, "where first = #{first}") == -1 {
+            t.FailNow()
+        }
+    })
+
+    t.Run("none", func(t *testing.T) {
+        ret := m.Replace()
+        t.Logf("arg none : %s\n", ret)
+
+        if strings.Index(ret, "where third = 1") == -1 {
+            t.FailNow()
+        }
+    })
+}

@@ -36,7 +36,7 @@ func (m *DynamicData) Replace(params ...interface{}) string {
 func (m *DynamicData) ReplaceWithMap(objParams map[string]interface{}) string {
     if len(m.DynamicElemMap) == 0 || len(objParams) == 0 {
         logging.Info("map is empty")
-        return m.OriginData
+        //return m.OriginData
     }
 
     getFunc := func(s string) string {
