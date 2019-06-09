@@ -41,6 +41,10 @@ func (m *DynamicData) ReplaceWithMap(objParams map[string]interface{}) string {
 
     getFunc := func(s string) string {
         if o, ok := objParams[s]; ok {
+            if str, ok := o.(string); ok {
+                return str
+            }
+
             //zero time convert to empty string (for <if> </if> element)
             if ti, ok := o.(time.Time); ok {
                 if ti.IsZero() {
@@ -49,6 +53,7 @@ func (m *DynamicData) ReplaceWithMap(objParams map[string]interface{}) string {
                     return ti.String()
                 }
             }
+
             var str string
             reflection.SafeSetValue(reflect.ValueOf(&str), o)
             return str

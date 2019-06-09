@@ -10,8 +10,11 @@ package xml
 
 import (
     "encoding/xml"
+    "fmt"
     "github.com/xfali/gobatis/logging"
     "github.com/xfali/gobatis/parsing"
+    "github.com/xfali/gobatis/reflection"
+    "strconv"
     "strings"
     "unicode"
 )
@@ -23,6 +26,7 @@ type Foreach struct {
     Index      string `xml:"index,attr"`
     Open       string `xml:"open,attr"`
     Close      string `xml:"close,attr"`
+    Data       string `xml:",chardata"`
 }
 
 type Sql struct {
@@ -43,7 +47,7 @@ type Include struct {
 
 type If struct {
     Test string `xml:"test,attr"`
-    Date string `xml:",chardata"`
+    Data string `xml:",chardata"`
 }
 
 type Where struct {
@@ -60,7 +64,7 @@ type When struct {
 }
 
 type Otherwise struct {
-    Date string `xml:",chardata"`
+    Data string `xml:",chardata"`
 }
 
 type Choose struct {
@@ -91,7 +95,7 @@ func (de *If) Format(getFunc func(key string) string) string {
                 return ""
             }
         }
-        return strings.TrimSpace(de.Date)
+        return strings.TrimSpace(de.Data)
     }
 
     ret := false
@@ -99,7 +103,7 @@ func (de *If) Format(getFunc func(key string) string) string {
         for _, v := range orStrs {
             ret = Compare(v, getFunc)
             if ret == true {
-                return strings.TrimSpace(de.Date)
+                return strings.TrimSpace(de.Data)
             }
         }
         if ret == false {
@@ -242,9 +246,40 @@ func (de *Choose) Format(getFunc func(key string) string) string {
     }
     retStr := ret.String()
     if retStr == "" {
-        retStr = strings.TrimSpace(de.Otherwise.Date)
+        retStr = strings.TrimSpace(de.Otherwise.Data)
     }
     return retStr
+}
+
+func (de *Foreach) Format(getFunc func(key string) string) string {
+    if de.Collection == "" {
+        return ""
+    }
+
+    listStr := getValueFromFunc(de.Collection, getFunc)
+    if listStr == "" || listStr == "nil" {
+        return ""
+    }
+
+    elems := reflection.ParseSliceParamString(listStr)
+    ret := strings.Builder{}
+    ret.WriteString(de.Open)
+    itemStr := fmt.Sprintf("#{%s}", de.Item)
+    indexStr := fmt.Sprintf("#{%s}", de.Index)
+    length := len(elems)
+    originData := strings.TrimSpace(de.Data)
+    realStr := ""
+    for i, v := range elems {
+        realStr = strings.Replace(originData, itemStr, v, -1)
+        realStr = strings.Replace(realStr, indexStr, strconv.Itoa(i), -1)
+        ret.WriteString(realStr)
+        if i < length-1 {
+            ret.WriteString(de.Separator)
+        }
+    }
+    ret.WriteString(de.Close)
+
+    return ret.String()
 }
 
 func escape(src string) string {
@@ -266,6 +301,7 @@ type WhereProcessor string
 type SetProcessor string
 type IncludeProcessor string
 type ChooseProcessor string
+type ForeachProcessor string
 
 var gProcessorMap = map[string]typeProcessor{
     "if":      IfProcessor("if"),
@@ -273,6 +309,7 @@ var gProcessorMap = map[string]typeProcessor{
     "set":     SetProcessor("set"),
     "include": IncludeProcessor("include"),
     "choose":  ChooseProcessor("choose"),
+    "foreach": ForeachProcessor("foreach"),
 }
 
 func (d IfProcessor) EndStr() string {
@@ -329,6 +366,18 @@ func (d ChooseProcessor) EndStr() string {
 
 func (d ChooseProcessor) Parse(src string) parsing.DynamicElement {
     v := Choose{}
+    if xml.Unmarshal([]byte(src), &v) != nil {
+        logging.Warn("parse if element failed")
+    }
+    return &v
+}
+
+func (d ForeachProcessor) EndStr() string {
+    return "</" + string(d) + ">"
+}
+
+func (d ForeachProcessor) Parse(src string) parsing.DynamicElement {
+    v := Foreach{}
     if xml.Unmarshal([]byte(src), &v) != nil {
         logging.Warn("parse if element failed")
     }

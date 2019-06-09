@@ -369,3 +369,25 @@ func TestXmlDynamicWhere(t *testing.T) {
         }
     })
 }
+
+func TestXmlDynamicForeach(t *testing.T) {
+    src := `SELECT * FROM PERSON WHERE IN
+        <foreach item="item" index="index" collection="{0}"
+            open="(" separator="," close=")">
+            #{item}
+        </foreach>
+`
+    logging.SetLevel(logging.DEBUG)
+    m, err := xml.ParseDynamic(src, nil)
+    if err != nil {
+        t.Fatal(err)
+    }
+    t.Run("foreach first", func(t *testing.T) {
+        params := []string{
+            "first", "second",
+        }
+        ret := m.Replace(params)
+        t.Logf("arg first : %s\n", ret)
+
+    })
+}

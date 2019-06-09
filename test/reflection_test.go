@@ -162,6 +162,20 @@ func TestReflectionParseComplex(t *testing.T) {
     }
 }
 
+func TestReflectionParseSlice(t *testing.T) {
+    ret := reflection.ParseParams([]int{1,2,3,4})
+    if len(ret) == 0 {
+        t.Fail()
+    }
+    for k, v := range ret {
+        t.Logf("complex key : %s value : %v", k, v)
+        elems := reflection.ParseSliceParamString(v.(string))
+        for _, e := range elems {
+            t.Logf("slice elem %v\n", e)
+        }
+    }
+}
+
 func TestSimpleTypeTime(t *testing.T) {
     ret := reflection.IsSimpleObject(time.Time{})
     if !ret {

@@ -17,10 +17,11 @@ where| where 元素只会在至少有一个子元素的条件返回 SQL 子句�
 set | set 元素会动态前置 SET 关键字，同时也会删掉无关的逗号。
 include | 使用sql标签定义的语句替换。
 choose<br>when<br>otherwise | 有时我们不想应用到所有的条件语句，而只想从中择其一项。针对这种情况，gobatis 提供了 choose 元素，它有点像switch 语句。
+foreach | foreach 允许指定一个集合，声明可以在元素体内使用的集合项（item）和索引（index）变量。
 
 ## 待完成项
 
-* 继续完善动态sql支持（foreach、trim）
+* 继续完善动态sql支持（trim）
 * ~~性能优化：增加动态sql缓存~~
 (已经实现，但测试发现性能提升很小，目前该功能被关闭)
 

@@ -9,8 +9,14 @@
 package reflection
 
 import (
+    "github.com/xormplus/builder"
     "reflect"
     "strconv"
+    "strings"
+)
+
+const(
+    slice_param_separator = "_&eLEm_"
 )
 
 type paramParser struct {
@@ -60,7 +66,29 @@ func (parser *paramParser)parseOne(v interface{}) {
         //    }
         //    parser.parseOne(elemV.Interface())
         //}
-        parser.ret[strconv.Itoa(parser.index)] = v
+        l := rv.Len()
+        builder := builder.StringBuilder{}
+        for i := 0; i < l; i++ {
+            elemV := rv.Index(i)
+            if !elemV.CanInterface() {
+                elemV = reflect.Indirect(elemV)
+            }
+            if elemV.Kind() == reflect.String {
+                builder.WriteString(elemV.String())
+            } else {
+                var str string
+                if SafeSetValue(reflect.ValueOf(&str), elemV.Interface()) {
+                    builder.WriteString(str)
+                } else {
+                    //log
+                }
+            }
+
+            if i < l - 1 {
+                builder.WriteString(slice_param_separator)
+            }
+        }
+        parser.ret[strconv.Itoa(parser.index)] = builder.String()
         parser.index++
     } else if rt.Kind() == reflect.Map {
         keys := rv.MapKeys()
@@ -77,6 +105,10 @@ func (parser *paramParser)parseOne(v interface{}) {
             }
         }
     }
+}
+
+func ParseSliceParamString(src string) []string {
+    return strings.Split(src, slice_param_separator)
 }
 
 func structKey(oi *StructInfo, field string) string {
