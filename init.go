@@ -3,17 +3,17 @@
  * All right reserved.
  * @author xiongfa.li
  * @version V1.0
- * Description: 
+ * Description:
  */
 
 package gobatis
 
 import (
-    "github.com/xfali/gobatis/reflection"
-    "reflect"
+	"github.com/xfali/gobatis/reflection"
+	"reflect"
 )
 
 func init() {
-    var typeModelName ModelName
-    reflection.SetModelNameType(reflect.TypeOf(typeModelName))
+	var typeModelName ModelName
+	reflection.SetModelNameType(reflect.TypeOf(typeModelName))
 }

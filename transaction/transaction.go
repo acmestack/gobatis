@@ -3,23 +3,23 @@
  * All right reserved.
  * @author xiongfa.li
  * @version V1.0
- * Description: 
+ * Description:
  */
 
 package transaction
 
 import (
-    "github.com/xfali/gobatis/connection"
+	"github.com/xfali/gobatis/connection"
 )
 
 type Transaction interface {
-    Close()
+	Close()
 
-    GetConnection() connection.Connection
+	GetConnection() connection.Connection
 
-    Begin() error
+	Begin() error
 
-    Commit() error
+	Commit() error
 
-    Rollback() error
+	Rollback() error
 }

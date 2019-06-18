@@ -3,93 +3,93 @@
  * All right reserved.
  * @author xiongfa.li
  * @version V1.0
- * Description: 
+ * Description:
  */
 
 package xml
 
 import (
-    "encoding/xml"
-    "github.com/xfali/gobatis/logging"
-    "io"
-    "io/ioutil"
-    "os"
+	"encoding/xml"
+	"github.com/xfali/gobatis/logging"
+	"io"
+	"io/ioutil"
+	"os"
 )
 
 const (
-    MapperStart = "mapper"
+	MapperStart = "mapper"
 )
 
 func ParseFile(path string) (*Mapper, error) {
-    file, err := os.Open(path) // For read access.
-    if err != nil {
-        logging.Warn("error: %v", err)
-        return nil, err
-    }
-    defer file.Close()
-    data, err := ioutil.ReadAll(file)
-    if err != nil {
-        logging.Warn("error: %v", err)
-        return nil, err
-    }
+	file, err := os.Open(path) // For read access.
+	if err != nil {
+		logging.Warn("error: %v", err)
+		return nil, err
+	}
+	defer file.Close()
+	data, err := ioutil.ReadAll(file)
+	if err != nil {
+		logging.Warn("error: %v", err)
+		return nil, err
+	}
 
-    return Parse(data)
+	return Parse(data)
 }
 
 func Parse(data []byte) (*Mapper, error) {
-    v := Mapper{}
-    err := xml.Unmarshal(data, &v)
-    if err != nil {
-        logging.Warn("error: %v", err)
-        return nil, err
-    }
-    return &v, nil
+	v := Mapper{}
+	err := xml.Unmarshal(data, &v)
+	if err != nil {
+		logging.Warn("error: %v", err)
+		return nil, err
+	}
+	return &v, nil
 }
 
 func parseInner(r io.Reader) {
-    decoder := xml.NewDecoder(r)
-    var strName string
-    for {
-        token, err := decoder.Token()
-        if err != nil {
-            break
-        }
+	decoder := xml.NewDecoder(r)
+	var strName string
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			break
+		}
 
-        name := getStartElementName(token)
-        if name != nil {
-            if name.Local == MapperStart {
-                switch t := token.(type) {
-                case xml.StartElement:
-                    stelm := xml.StartElement(t)
-                    logging.Debug("start: ", stelm.Name.Local)
-                    strName = stelm.Name.Local
-                case xml.EndElement:
-                    endelm := xml.EndElement(t)
-                    logging.Debug("end: ", endelm.Name.Local)
-                case xml.CharData:
-                    data := xml.CharData(t)
-                    str := string(data)
-                    switch strName {
-                    case "City":
-                        logging.Debug("city:", str)
-                    case "first":
-                        logging.Debug("first: ", str)
-                    }
-                }
-                break
-            }
-        }
-    }
+		name := getStartElementName(token)
+		if name != nil {
+			if name.Local == MapperStart {
+				switch t := token.(type) {
+				case xml.StartElement:
+					stelm := xml.StartElement(t)
+					logging.Debug("start: ", stelm.Name.Local)
+					strName = stelm.Name.Local
+				case xml.EndElement:
+					endelm := xml.EndElement(t)
+					logging.Debug("end: ", endelm.Name.Local)
+				case xml.CharData:
+					data := xml.CharData(t)
+					str := string(data)
+					switch strName {
+					case "City":
+						logging.Debug("city:", str)
+					case "first":
+						logging.Debug("first: ", str)
+					}
+				}
+				break
+			}
+		}
+	}
 }
 
 func getStartElementName(token xml.Token) *xml.Name {
-    switch t := token.(type) {
-    case xml.StartElement:
-        stelm := xml.StartElement(t)
-        logging.Debug("start: ", stelm.Name.Local)
-        return &stelm.Name
-    }
-    return nil
+	switch t := token.(type) {
+	case xml.StartElement:
+		stelm := xml.StartElement(t)
+		logging.Debug("start: ", stelm.Name.Local)
+		return &stelm.Name
+	}
+	return nil
 }
 
 //   * If the struct has a field of type []byte or string with tag

@@ -3,12 +3,12 @@
  * All right reserved.
  * @author xiongfa.li
  * @version V1.0
- * Description: 
+ * Description:
  */
 
 package datasource
 
 type DataSource interface {
-    DriverName() string
-    Url() string
+	DriverName() string
+	Url() string
 }

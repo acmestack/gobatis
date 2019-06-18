@@ -3,30 +3,30 @@
  * All right reserved.
  * @author xiongfa.li
  * @version V1.0
- * Description: 
+ * Description:
  */
 
 package session
 
 import (
-    "context"
-    "github.com/xfali/gobatis/reflection"
+	"context"
+	"github.com/xfali/gobatis/reflection"
 )
 
 type SqlSession interface {
-    Close(rollback bool)
+	Close(rollback bool)
 
-    Query(ctx context.Context, result reflection.Object, sql string, params ...interface{}) error
+	Query(ctx context.Context, result reflection.Object, sql string, params ...interface{}) error
 
-    Insert(ctx context.Context, sql string, params ...interface{}) (int64, int64, error)
+	Insert(ctx context.Context, sql string, params ...interface{}) (int64, int64, error)
 
-    Update(ctx context.Context, sql string, params ...interface{}) (int64, error)
+	Update(ctx context.Context, sql string, params ...interface{}) (int64, error)
 
-    Delete(ctx context.Context, sql string, params ...interface{}) (int64, error)
+	Delete(ctx context.Context, sql string, params ...interface{}) (int64, error)
 
-    Begin()
+	Begin()
 
-    Commit()
+	Commit()
 
-    Rollback()
+	Rollback()
 }

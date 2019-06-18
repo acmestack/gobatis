@@ -3,7 +3,7 @@
  * All right reserved.
  * @author xiongfa.li
  * @version V1.0
- * Description: 
+ * Description:
  */
 
 package errors
@@ -11,9 +11,9 @@ package errors
 import "fmt"
 
 type ErrCode struct {
-    Code    string `json:"code"`
-    Message string `json:"msg"`
-    fmtErr  string `json:"-"`
+	Code    string `json:"code"`
+	Message string `json:"msg"`
+	fmtErr  string `json:"-"`
 }
 
 var PARSE_MODEL_TABLEINFO_FAILED *ErrCode = New("11001", "Parse Model's table info failed")
@@ -51,14 +51,14 @@ var RESULT_SELECT_EMPTY_VALUE *ErrCode = New("31005", "select return empty value
 var RESULT_SET_VALUE_FAILED *ErrCode = New("31006", "result set value failed")
 
 func New(code, message string) *ErrCode {
-    ret := &ErrCode{
-        Code: code,
-        Message: message,
-        fmtErr: fmt.Sprintf("{ \"code\" : \"%s\", \"msg\" : \"%s\" }", code, message),
-    }
-    return ret
+	ret := &ErrCode{
+		Code:    code,
+		Message: message,
+		fmtErr:  fmt.Sprintf("{ \"code\" : \"%s\", \"msg\" : \"%s\" }", code, message),
+	}
+	return ret
 }
 
 func (e *ErrCode) Error() string {
-    return e.fmtErr
+	return e.fmtErr
 }

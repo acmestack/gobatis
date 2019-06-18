@@ -3,78 +3,77 @@
  * All right reserved.
  * @author xiongfa.li
  * @version V1.0
- * Description: 
+ * Description:
  */
 
 package gobatis
 
 import (
-    "github.com/xfali/gobatis/reflection"
-    "sync"
-    "github.com/xfali/gobatis/errors"
+	"github.com/xfali/gobatis/errors"
+	"github.com/xfali/gobatis/reflection"
+	"sync"
 )
 
 type ModelName string
 
 type ObjectCache struct {
-    objCache map[string]reflection.Object
-    lock     sync.Mutex
+	objCache map[string]reflection.Object
+	lock     sync.Mutex
 }
 
 var globalObjectCache = ObjectCache{
-    objCache: map[string]reflection.Object{},
+	objCache: map[string]reflection.Object{},
 }
 
 func findObject(bean interface{}) reflection.Object {
-    classname := reflection.GetBeanClassName(bean)
-    globalObjectCache.lock.Lock()
-    defer globalObjectCache.lock.Unlock()
+	classname := reflection.GetBeanClassName(bean)
+	globalObjectCache.lock.Lock()
+	defer globalObjectCache.lock.Unlock()
 
-    return globalObjectCache.objCache[classname]
+	return globalObjectCache.objCache[classname]
 }
 
 func cacheObject(obj reflection.Object) {
-    globalObjectCache.lock.Lock()
-    defer globalObjectCache.lock.Unlock()
+	globalObjectCache.lock.Lock()
+	defer globalObjectCache.lock.Unlock()
 
-    globalObjectCache.objCache[obj.GetClassName()] = obj
+	globalObjectCache.objCache[obj.GetClassName()] = obj
 }
 
 func ParseObject(bean interface{}) (reflection.Object, error) {
-    obj := findObject(bean)
-    var err error
-    if obj == nil {
-        obj, err = reflection.GetObjectInfo(bean)
-        if err != nil {
-            return nil, err
-        }
+	obj := findObject(bean)
+	var err error
+	if obj == nil {
+		obj, err = reflection.GetObjectInfo(bean)
+		if err != nil {
+			return nil, err
+		}
 
-        cacheObject(obj)
-    }
-    obj = obj.New()
-    obj.ResetValue(reflection.ReflectValue(bean))
-    return obj, nil
+		cacheObject(obj)
+	}
+	obj = obj.New()
+	obj.ResetValue(reflection.ReflectValue(bean))
+	return obj, nil
 }
-
 
 // 注册struct模型，模型描述了column和field之间的关联关系；
 // 目前已非必要条件
-func RegisterModel(model interface{})  {
-    RegisterModelWithName("", model)
+func RegisterModel(model interface{}) {
+	RegisterModelWithName("", model)
 }
 
 func RegisterModelWithName(name string, model interface{}) error {
-    tableInfo, err := reflection.GetObjectInfo(model)
-    if err != nil {
-        return errors.PARSE_MODEL_TABLEINFO_FAILED
-    }
+	tableInfo, err := reflection.GetObjectInfo(model)
+	if err != nil {
+		return errors.PARSE_MODEL_TABLEINFO_FAILED
+	}
 
-    globalObjectCache.lock.Lock()
-    defer globalObjectCache.lock.Unlock()
+	globalObjectCache.lock.Lock()
+	defer globalObjectCache.lock.Unlock()
 
-    if name == "" {
-        name = tableInfo.GetClassName()
-    }
-    globalObjectCache.objCache[name] = tableInfo
-    return nil
+	if name == "" {
+		name = tableInfo.GetClassName()
+	}
+	globalObjectCache.objCache[name] = tableInfo
+	return nil
 }

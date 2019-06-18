@@ -3,12 +3,12 @@
  * All right reserved.
  * @author xiongfa.li
  * @version V1.0
- * Description: 
+ * Description:
  */
 
 package common
 
 type Result interface {
-    LastInsertId() (int64, error)
-    RowsAffected() (int64, error)
+	LastInsertId() (int64, error)
+	RowsAffected() (int64, error)
 }

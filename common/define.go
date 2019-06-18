@@ -3,7 +3,7 @@
  * All right reserved.
  * @author xiongfa.li
  * @version V1.0
- * Description: 
+ * Description:
  */
 
 package common
@@ -15,7 +15,6 @@ package common
 //  打断迭代返回true
 type IterFunc func(idx int64, bean interface{}) bool
 
-const(
-    FIELD_NAME = "xfield"
+const (
+	FIELD_NAME = "xfield"
 )
-
