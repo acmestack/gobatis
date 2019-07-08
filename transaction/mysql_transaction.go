@@ -11,7 +11,6 @@ package transaction
 import (
 	"context"
 	"database/sql"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/xfali/gobatis/common"
 	"github.com/xfali/gobatis/connection"
 	"github.com/xfali/gobatis/datasource"

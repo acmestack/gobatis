@@ -12,6 +12,7 @@ import (
 	"github.com/xfali/gobatis"
 	"github.com/xfali/gobatis/factory"
 	"github.com/xfali/gobatis/logging"
+	_ "github.com/go-sql-driver/mysql"
 	"testing"
 )
 
