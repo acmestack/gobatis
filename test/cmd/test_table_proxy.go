@@ -18,9 +18,9 @@ func New(proxyMrg *gobatis.SessionManager) *TestTableCallProxy {
 	return (*TestTableCallProxy)(proxyMrg.NewSession())
 }
 
-func (proxy *TestTableCallProxy) Tx(txFunc func(s *TestTableCallProxy) bool) {
+func (proxy *TestTableCallProxy) Tx(txFunc func(s *TestTableCallProxy) error) {
 	sess := (*gobatis.Session)(proxy)
-	sess.Tx(func(session *gobatis.Session) bool {
+	sess.Tx(func(session *gobatis.Session) error {
 		return txFunc(proxy)
 	})
 }

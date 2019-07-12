@@ -230,16 +230,19 @@ func TestTx1(t *testing.T) {
 
 	var testList []TestTable
 
-	mgr.NewSession().Tx(func(session *gobatis.Session) bool {
+	mgr.NewSession().Tx(func(session *gobatis.Session) error {
 		ret := 0
-		session.Insert("insert_id").Param(testV).Result(&ret)
+		err := session.Insert("insert_id").Param(testV).Result(&ret)
+		if err != nil {
+			return err
+		}
 		t.Logf("ret %d\n", ret)
 		session.Select("select_id").Param().Result(&testList)
 		for _, v := range testList {
 			t.Logf("data: %v", v)
 		}
 		//commit
-		return true
+		return nil
 	})
 }
 
@@ -269,9 +272,13 @@ func TestTx2(t *testing.T) {
 
 	var testList []TestTable
 
-	mgr.NewSession().Tx(func(session *gobatis.Session) bool {
+	mgr.NewSession().Tx(func(session *gobatis.Session) error {
 		ret := 0
-		session.Insert("insert_id").Param(testV).Result(&ret)
+		err := session.Insert("insert_id").Param(testV).Result(&ret)
+		if err != nil {
+			t.Logf("error %v\n", err)
+			return err
+		}
 		t.Logf("ret %d\n", ret)
 		session.Select("select_id").Param().Result(&testList)
 		for _, v := range testList {
@@ -281,6 +288,6 @@ func TestTx2(t *testing.T) {
 		panic("ROLLBACK panic!!")
 
 		//rollback
-		return false
+		return nil
 	})
 }

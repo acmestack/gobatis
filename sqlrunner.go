@@ -104,9 +104,9 @@ func (this *Session) GetContext() context.Context {
 }
 
 //开启事务执行语句
-//返回true则提交，返回false回滚
+//返回nil则提交，返回error回滚
 //抛出异常错误触发回滚
-func (this *Session) Tx(txFunc func(session *Session) bool) {
+func (this *Session) Tx(txFunc func(session *Session) error) {
 	this.session.Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -115,7 +115,7 @@ func (this *Session) Tx(txFunc func(session *Session) bool) {
 		}
 	}()
 
-	if txFunc(this) != true {
+	if txFunc(this) != nil {
 		this.session.Rollback()
 	} else {
 		this.session.Commit()
