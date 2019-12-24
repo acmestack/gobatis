@@ -9,12 +9,16 @@
 package factory
 
 import (
-	"github.com/xfali/gobatis/logging"
-	"github.com/xfali/gobatis/session"
+    "github.com/xfali/gobatis/executor"
+    "github.com/xfali/gobatis/logging"
+    "github.com/xfali/gobatis/session"
+    "github.com/xfali/gobatis/transaction"
 )
 
 type Factory interface {
-	InitDB() error
-	CreateSession() session.SqlSession
-	LogFunc() logging.LogFunc
+    InitDB() error
+    CreateTransaction() transaction.Transaction
+    CreateExecutor(transaction.Transaction) executor.Executor
+    CreateSession() session.SqlSession
+    LogFunc() logging.LogFunc
 }

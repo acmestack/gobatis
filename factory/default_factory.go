@@ -9,56 +9,64 @@
 package factory
 
 import (
-	"database/sql"
-	"github.com/xfali/gobatis/datasource"
-	"github.com/xfali/gobatis/executor"
-	"github.com/xfali/gobatis/logging"
-	"github.com/xfali/gobatis/session"
-	"github.com/xfali/gobatis/transaction"
+    "database/sql"
+    "github.com/xfali/gobatis/datasource"
+    "github.com/xfali/gobatis/executor"
+    "github.com/xfali/gobatis/logging"
+    "github.com/xfali/gobatis/session"
+    "github.com/xfali/gobatis/transaction"
 )
 
 type DefaultFactory struct {
-	Host     string
-	Port     int
-	DBName   string
-	Username string
-	Password string
-	Charset  string
+    Host     string
+    Port     int
+    DBName   string
+    Username string
+    Password string
+    Charset  string
 
-	MaxConn     int
-	MaxIdleConn int
-	Log         logging.LogFunc
+    MaxConn     int
+    MaxIdleConn int
+    Log         logging.LogFunc
 
-	ds datasource.DataSource
-	db *sql.DB
+    ds datasource.DataSource
+    db *sql.DB
 }
 
 func (f *DefaultFactory) InitDB() error {
-	f.ds = &datasource.MysqlDataSource{
-		Host:     f.Host,
-		Port:     f.Port,
-		DBName:   f.DBName,
-		Username: f.Username,
-		Password: f.Password,
-		Charset:  f.Charset,
-	}
+    f.ds = &datasource.MysqlDataSource{
+        Host:     f.Host,
+        Port:     f.Port,
+        DBName:   f.DBName,
+        Username: f.Username,
+        Password: f.Password,
+        Charset:  f.Charset,
+    }
 
-	db, err := sql.Open(f.ds.DriverName(), f.ds.Url())
-	db.SetMaxOpenConns(f.MaxConn)
-	db.SetMaxIdleConns(f.MaxIdleConn)
-	if err != nil {
-		return err
-	}
+    db, err := sql.Open(f.ds.DriverName(), f.ds.Url())
+    db.SetMaxOpenConns(f.MaxConn)
+    db.SetMaxIdleConns(f.MaxIdleConn)
+    if err != nil {
+        return err
+    }
 
-	f.db = db
-	return nil
+    f.db = db
+    return nil
+}
+
+func (f *DefaultFactory) CreateTransaction() transaction.Transaction {
+    return transaction.NewMysqlTransaction(f.ds, f.db)
+}
+
+func (f *DefaultFactory) CreateExecutor(transaction transaction.Transaction) executor.Executor {
+    return executor.NewSimpleExecutor(transaction)
 }
 
 func (f *DefaultFactory) CreateSession() session.SqlSession {
-	tx := transaction.NewMysqlTransaction(f.ds, f.db)
-	return session.NewDefaultSqlSession(f.Log, tx, executor.NewSimpleExecutor(tx), false)
+    tx := f.CreateTransaction()
+    return session.NewDefaultSqlSession(f.Log, tx, f.CreateExecutor(tx), false)
 }
 
 func (f *DefaultFactory) LogFunc() logging.LogFunc {
-	return f.Log
+    return f.Log
 }

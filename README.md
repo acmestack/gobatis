@@ -126,7 +126,7 @@ session.Select("select * from test_table where username = #{TestTable.username}"
 
 使用
 ```
-    mgr.NewSession().Tx(func(session *gobatis.Session) bool {
+    mgr.NewSession().Tx(func(session *gobatis.Session) error {
         ret := 0
         session.Insert("insert_id").Param(testV).Result(&ret)
         
@@ -138,11 +138,11 @@ session.Select("select * from test_table where username = #{TestTable.username}"
             t.Logf("data: %v", v)
         }
         //commit
-        return true
+        return nil
     })
 ```
-1. 当参数的func返回true，则提交
-2. 当参数的func返回false，则回滚
+1. 当参数的func返回nil，则提交
+2. 当参数的func返回非nil的错误，则回滚
 3. 当参数的func内抛出panic，则回滚
 
 ### 7、xml
@@ -165,30 +165,30 @@ gobatis.RegisterMapperFile(filePath)
 
 ```
 <mapper namespace="test_package.TestTable">
-    <sql id="columns_id">id,username,password,update_time</sql>
+    <sql id="columns_id">`id`,`username`,`password`,`update_time`</sql>
 
     <select id="selectTestTable">
-        SELECT <include refid="columns_id"> </include> FROM test_table
+        SELECT <include refid="columns_id"> </include> FROM `TEST_TABLE`
         <where>
-            <if test="{TestTable.id} != nil and {TestTable.id} != 0">AND id = #{TestTable.id} </if>
-            <if test="{TestTable.username} != nil">AND username = #{TestTable.username} </if>
-            <if test="{TestTable.password} != nil">AND password = #{TestTable.password} </if>
-            <if test="{TestTable.update_time} != nil">AND update_time = #{TestTable.update_time} </if>
+            <if test="{TestTable.id} != nil and {TestTable.id} != 0">AND `id` = #{TestTable.id} </if>
+            <if test="{TestTable.username} != nil">AND `username` = #{TestTable.username} </if>
+            <if test="{TestTable.password} != nil">AND `password` = #{TestTable.password} </if>
+            <if test="{TestTable.update_time} != nil">AND `update_time` = #{TestTable.update_time} </if>
         </where>
     </select>
 
     <select id="selectTestTableCount">
-        SELECT COUNT(*) FROM test_table
+        SELECT COUNT(*) FROM `TEST_TABLE`
         <where>
-            <if test="{TestTable.id} != nil and {TestTable.id} != 0">AND id = #{TestTable.id} </if>
-            <if test="{TestTable.username} != nil">AND username = #{TestTable.username} </if>
-            <if test="{TestTable.password} != nil">AND password = #{TestTable.password} </if>
-            <if test="{TestTable.update_time} != nil">AND update_time = #{TestTable.update_time} </if>
+            <if test="{TestTable.id} != nil and {TestTable.id} != 0">AND `id` = #{TestTable.id} </if>
+            <if test="{TestTable.username} != nil">AND `username` = #{TestTable.username} </if>
+            <if test="{TestTable.password} != nil">AND `password` = #{TestTable.password} </if>
+            <if test="{TestTable.update_time} != nil">AND `update_time` = #{TestTable.update_time} </if>
         </where>
     </select>
 
     <insert id="insertTestTable">
-        INSERT INTO test_table (id,username,password,update_time)
+        INSERT INTO `TEST_TABLE` (`id`,`username`,`password`,`update_time`)
         VALUES(
         #{TestTable.id},
         #{TestTable.username},
@@ -198,22 +198,22 @@ gobatis.RegisterMapperFile(filePath)
     </insert>
 
     <update id="updateTestTable">
-        UPDATE test_table
+        UPDATE `TEST_TABLE`
         <set>
-            <if test="{TestTable.username} != nil"> username = #{TestTable.username} </if>
-            <if test="{TestTable.password} != nil"> password = #{TestTable.password} </if>
-            <if test="{TestTable.update_time} != nil"> update_time = #{TestTable.update_time} </if>
+            <if test="{TestTable.username} != nil"> `username` = #{TestTable.username} </if>
+            <if test="{TestTable.password} != nil"> `password` = #{TestTable.password} </if>
+            <if test="{TestTable.update_time} != nil"> `update_time` = #{TestTable.update_time} </if>
         </set>
-        WHERE id = #{TestTable.id}
+        WHERE `id` = #{TestTable.id}
     </update>
 
     <delete id="deleteTestTable">
-        DELETE FROM test_table
+        DELETE FROM `TEST_TABLE`
         <where>
-            <if test="{TestTable.id} != nil and {TestTable.id} != 0">AND id = #{TestTable.id} </if>
-            <if test="{TestTable.username} != nil">AND username = #{TestTable.username} </if>
-            <if test="{TestTable.password} != nil">AND password = #{TestTable.password} </if>
-            <if test="{TestTable.update_time} != nil">AND update_time = #{TestTable.update_time} </if>
+            <if test="{TestTable.id} != nil and {TestTable.id} != 0">AND `id` = #{TestTable.id} </if>
+            <if test="{TestTable.username} != nil">AND `username` = #{TestTable.username} </if>
+            <if test="{TestTable.password} != nil">AND `password` = #{TestTable.password} </if>
+            <if test="{TestTable.update_time} != nil">AND `update_time` = #{TestTable.update_time} </if>
         </where>
     </delete>
 </mapper>
