@@ -245,3 +245,21 @@ import "github.com/xfali/gobatis/builder"
             String()
     t.Log(str)
 ```
+
+## 其他
+
+### 1、分页
+使用[pagehelper](https://github.com/xfali/pagehelper): gobatis的配套分页工具
+ ```$xslt
+go get github.com/xfali/pagehelper
+```
+### 2、模糊查询支持
+使用LIKE CONCAT('%',#{field},'%')
+
+举例：
+```$xslt
+ SELECT <include refid="columns_id"> </include> FROM `TEST_TABLE`
+        <where>
+            <if test="{TestTable.username} != nil">AND `username` LIKE CONCAT('%',#{TestTable.username},'%') </if>
+        </where>
+```
