@@ -249,22 +249,13 @@ func (f *SQLFragment) Asc() *SQLFragment {
 	return fragment
 }
 
-func (f *SQLFragment) Offset(offset int64) *SQLFragment {
-	fragment := &SQLFragment{}
-	fragment.initParent(f)
-
-	fragment.builder.WriteString("OFFSET ")
-	fragment.builder.WriteString(strconv.FormatInt(offset, 10))
-	fragment.builder.WriteString(" ")
-
-	return fragment
-}
-
-func (f *SQLFragment) Limit(limit int64) *SQLFragment {
+func (f *SQLFragment) Limit(offset, limit int64) *SQLFragment {
 	fragment := &SQLFragment{}
 	fragment.initParent(f)
 
 	fragment.builder.WriteString("LIMIT ")
+	fragment.builder.WriteString(strconv.FormatInt(offset, 10))
+	fragment.builder.WriteString(", ")
 	fragment.builder.WriteString(strconv.FormatInt(limit, 10))
 	fragment.builder.WriteString(" ")
 

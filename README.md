@@ -240,8 +240,7 @@ import "github.com/xfali/gobatis/builder"
             GroupBy("name").
             OrderBy("name").
             Desc().
-            Offset(5).
-            Limit(10).
+            Limit(5, 10).
             String()
     t.Log(str)
 ```
