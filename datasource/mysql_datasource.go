@@ -10,6 +10,8 @@ package datasource
 
 import "fmt"
 
+//import _ "github.com/go-sql-driver/mysql"
+
 type MysqlDataSource struct {
 	Host     string
 	Port     int
@@ -23,6 +25,6 @@ func (ds *MysqlDataSource) DriverName() string {
 	return "mysql"
 }
 
-func (ds *MysqlDataSource) Info() string {
+func (ds *MysqlDataSource) DriverInfo() string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s", ds.Username, ds.Password, ds.Host, ds.Port, ds.DBName, ds.Charset)
 }

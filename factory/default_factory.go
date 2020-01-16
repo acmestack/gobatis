@@ -53,7 +53,7 @@ func (f *DefaultFactory) InitDB() error {
 		return errors.FACTORY_INITED
 	}
 
-	db, err := sql.Open(f.DataSource.DriverName(), f.DataSource.Info())
+	db, err := sql.Open(f.DataSource.DriverName(), f.DataSource.DriverInfo())
 	if err != nil {
 		return err
 	}
@@ -63,6 +63,13 @@ func (f *DefaultFactory) InitDB() error {
 	db.SetConnMaxLifetime(f.ConnMaxLifetime)
 
 	f.db = db
+	return nil
+}
+
+func (f *DefaultFactory) Close() error {
+	if f.db != nil {
+		return f.db.Close()
+	}
 	return nil
 }
 

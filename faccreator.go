@@ -16,6 +16,11 @@ import (
 type FacOpt func(f *factory.DefaultFactory)
 
 func NewFactory(opts ...FacOpt) factory.Factory {
+	f, _ := CreateFactory(opts...)
+	return f
+}
+
+func CreateFactory(opts ...FacOpt) (factory.Factory, error) {
 	f := &factory.DefaultFactory{
 		Log: logging.DefaultLogf,
 	}
@@ -38,11 +43,12 @@ func NewFactory(opts ...FacOpt) factory.Factory {
 		}
 	}
 
-	if f.InitDB() != nil {
-		return nil
+	err := f.InitDB()
+	if err != nil {
+		return nil, err
 	}
 
-	return f
+	return f, nil
 }
 
 func SetMaxConn(v int) FacOpt {

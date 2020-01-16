@@ -9,9 +9,10 @@
 package test
 
 import (
+	//_ "github.com/go-sql-driver/mysql"
 	"github.com/xfali/gobatis"
+	"github.com/xfali/gobatis/datasource"
 	"github.com/xfali/gobatis/factory"
-	"github.com/xfali/gobatis/logging"
 	"testing"
 )
 
@@ -22,23 +23,24 @@ type TestTable struct {
 	Password  string            `xfield:"password"`
 }
 
+func connect() factory.Factory {
+	return gobatis.NewFactory(
+		gobatis.SetMaxConn(100),
+		gobatis.SetMaxIdleConn(50),
+		gobatis.SetDataSource(&datasource.MysqlDataSource{
+			Host:     "localhost",
+			Port:     3306,
+			DBName:   "test",
+			Username: "root",
+			Password: "123",
+			Charset:  "utf8",
+		}))
+}
+
 func TestSelectgobatis(t *testing.T) {
 	var testV TestTable
-	fac := factory.DefaultFactory{
-		Host:     "localhost",
-		Port:     3306,
-		DBName:   "test",
-		Username: "root",
-		Password: "123",
-		Charset:  "utf8",
 
-		MaxConn:     1000,
-		MaxIdleConn: 500,
-
-		Log: logging.DefaultLogf,
-	}
-	fac.InitDB()
-	mgr := gobatis.NewSessionManager(&fac)
+	mgr := gobatis.NewSessionManager(connect())
 	gobatis.RegisterSql("queryTest", "select * from test_table where id = #{0}")
 	gobatis.RegisterModel(&testV)
 	mgr.NewSession().Select("queryTest").Param(1, 200, 300).Result(&testV)
@@ -48,21 +50,8 @@ func TestSelectgobatis(t *testing.T) {
 
 func TestSelectgobatis2(t *testing.T) {
 	var testV TestTable
-	fac := factory.DefaultFactory{
-		Host:     "localhost",
-		Port:     3306,
-		DBName:   "test",
-		Username: "root",
-		Password: "123",
-		Charset:  "utf8",
 
-		MaxConn:     1000,
-		MaxIdleConn: 500,
-
-		Log: logging.DefaultLogf,
-	}
-	fac.InitDB()
-	mgr := gobatis.NewSessionManager(&fac)
+	mgr := gobatis.NewSessionManager(connect())
 	gobatis.RegisterSql("queryTest", "select * from test_table limit 10")
 	gobatis.RegisterModel(&testV)
 	testList := []TestTable{}
@@ -75,21 +64,8 @@ func TestSelectgobatis2(t *testing.T) {
 
 func TestSelectgobatis3(t *testing.T) {
 	var testV TestTable
-	fac := factory.DefaultFactory{
-		Host:     "localhost",
-		Port:     3306,
-		DBName:   "test",
-		Username: "root",
-		Password: "123",
-		Charset:  "utf8",
 
-		MaxConn:     1000,
-		MaxIdleConn: 500,
-
-		Log: logging.DefaultLogf,
-	}
-	fac.InitDB()
-	mgr := gobatis.NewSessionManager(&fac)
+	mgr := gobatis.NewSessionManager(connect())
 	gobatis.RegisterSql("queryTest", "select count(*) from test_table")
 	gobatis.RegisterModel(&testV)
 	i := 0
@@ -98,21 +74,8 @@ func TestSelectgobatis3(t *testing.T) {
 
 func TestInsertgobatis(t *testing.T) {
 	var testV TestTable
-	fac := factory.DefaultFactory{
-		Host:     "localhost",
-		Port:     3306,
-		DBName:   "test",
-		Username: "root",
-		Password: "123",
-		Charset:  "utf8",
 
-		MaxConn:     1000,
-		MaxIdleConn: 500,
-
-		Log: logging.DefaultLogf,
-	}
-	fac.InitDB()
-	mgr := gobatis.NewSessionManager(&fac)
+	mgr := gobatis.NewSessionManager(connect())
 	gobatis.RegisterSql("insertTest", "insert into test_table (username, password) value(#{username}, #{password})")
 	gobatis.RegisterModel(&testV)
 	testV.Username = "test_user"
@@ -124,21 +87,8 @@ func TestInsertgobatis(t *testing.T) {
 
 func TestUpdategobatis(t *testing.T) {
 	var testV TestTable
-	fac := factory.DefaultFactory{
-		Host:     "localhost",
-		Port:     3306,
-		DBName:   "test",
-		Username: "root",
-		Password: "123",
-		Charset:  "utf8",
 
-		MaxConn:     1000,
-		MaxIdleConn: 500,
-
-		Log: logging.DefaultLogf,
-	}
-	fac.InitDB()
-	mgr := gobatis.NewSessionManager(&fac)
+	mgr := gobatis.NewSessionManager(connect())
 	gobatis.RegisterSql("updateTest", "update test_table set username = #{username}, password = #{password} where id = 1")
 	gobatis.RegisterModel(&testV)
 	testV.Username = "test_user"
@@ -150,21 +100,8 @@ func TestUpdategobatis(t *testing.T) {
 
 func TestDeletegobatis(t *testing.T) {
 	var testV TestTable
-	fac := factory.DefaultFactory{
-		Host:     "localhost",
-		Port:     3306,
-		DBName:   "test",
-		Username: "root",
-		Password: "123",
-		Charset:  "utf8",
 
-		MaxConn:     1000,
-		MaxIdleConn: 500,
-
-		Log: logging.DefaultLogf,
-	}
-	fac.InitDB()
-	mgr := gobatis.NewSessionManager(&fac)
+	mgr := gobatis.NewSessionManager(connect())
 	gobatis.RegisterSql("deleteTest", "delete from test_table where username = #{username}, password = #{password}")
 	gobatis.RegisterModel(&testV)
 	testV.Username = "test_user"
@@ -176,21 +113,8 @@ func TestDeletegobatis(t *testing.T) {
 
 func TestDynamicSelectgobatis(t *testing.T) {
 	var testV TestTable
-	fac := factory.DefaultFactory{
-		Host:     "localhost",
-		Port:     3306,
-		DBName:   "test",
-		Username: "root",
-		Password: "123",
-		Charset:  "utf8",
 
-		MaxConn:     1000,
-		MaxIdleConn: 500,
-
-		Log: logging.DefaultLogf,
-	}
-	fac.InitDB()
-	mgr := gobatis.NewSessionManager(&fac)
+	mgr := gobatis.NewSessionManager(connect())
 	gobatis.RegisterSql("deleteTest", `select id from test_table 
         <where> 
             <if test="">
@@ -205,21 +129,7 @@ func TestDynamicSelectgobatis(t *testing.T) {
 }
 
 func TestTx1(t *testing.T) {
-	fac := factory.DefaultFactory{
-		Host:     "localhost",
-		Port:     3306,
-		DBName:   "test",
-		Username: "root",
-		Password: "123",
-		Charset:  "utf8",
-
-		MaxConn:     1000,
-		MaxIdleConn: 500,
-
-		Log: logging.DefaultLogf,
-	}
-	fac.InitDB()
-	mgr := gobatis.NewSessionManager(&fac)
+	mgr := gobatis.NewSessionManager(connect())
 	testV := TestTable{
 		Username: "testuser",
 		Password: "testpw",
@@ -247,21 +157,7 @@ func TestTx1(t *testing.T) {
 }
 
 func TestTx2(t *testing.T) {
-	fac := factory.DefaultFactory{
-		Host:     "localhost",
-		Port:     3306,
-		DBName:   "test",
-		Username: "root",
-		Password: "123",
-		Charset:  "utf8",
-
-		MaxConn:     1000,
-		MaxIdleConn: 500,
-
-		Log: logging.DefaultLogf,
-	}
-	fac.InitDB()
-	mgr := gobatis.NewSessionManager(&fac)
+	mgr := gobatis.NewSessionManager(connect())
 	testV := TestTable{
 		Username: "testuser",
 		Password: "testpw",

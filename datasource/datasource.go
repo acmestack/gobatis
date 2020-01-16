@@ -10,5 +10,5 @@ package datasource
 
 type DataSource interface {
 	DriverName() string
-	Info() string
+	DriverInfo() string
 }

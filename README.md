@@ -46,6 +46,25 @@ func InitDB() *gobatis.SessionManager {
     return gobatis.NewSessionManager(&fac)
 }
 ```
+*注意：*
+
+gobatis.NewFactory当连接数据库失败时会返回nil，如果需要知道具体的失败原因请使用：
+```cassandraql
+fac, err := gobatis.CreateFactory(
+    		gobatis.SetMaxConn(100),
+    		gobatis.SetMaxIdleConn(50),
+    		gobatis.SetDataSource(&datasource.MysqlDataSource{
+    			Host:     "localhost",
+    			Port:     3306,
+    			DBName:   "test",
+    			Username: "root",
+    			Password: "123",
+    			Charset:  "utf8",
+    		}))
+if err != nil {
+    t.Log(err)
+}
+```
 
 ### 2、定义Model
 
