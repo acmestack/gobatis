@@ -9,10 +9,9 @@
 package test
 
 import (
-	"github.com/xfali/gobatis"
-	"github.com/xfali/gobatis/factory"
-	"github.com/xfali/gobatis/logging"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/xfali/gobatis"
+	"github.com/xfali/gobatis/datasource"
 	"testing"
 )
 
@@ -25,23 +24,20 @@ type SqlTest struct {
 var sessionMgr *gobatis.SessionManager
 
 func init() {
-	fac := factory.DefaultFactory{
-		Host:     "localhost",
-		Port:     3306,
-		DBName:   "test",
-		Username: "root",
-		Password: "123",
-		Charset:  "utf8",
-
-		MaxConn:     1000,
-		MaxIdleConn: 500,
-
-		Log: logging.DefaultLogf,
-	}
-	fac.InitDB()
+	fac := gobatis.NewFactory(
+		gobatis.SetMaxConn(100),
+		gobatis.SetMaxIdleConn(50),
+		gobatis.SetDataSource(&datasource.MysqlDataSource{
+			Host:     "localhost",
+			Port:     3306,
+			DBName:   "test",
+			Username: "root",
+			Password: "123",
+			Charset:  "utf8",
+		}))
 	var testV TestTable
 	gobatis.RegisterModel(&testV)
-	sessionMgr = gobatis.NewSessionManager(&fac)
+	sessionMgr = gobatis.NewSessionManager(fac)
 }
 
 func TestSelectWithSimpleType(t *testing.T) {

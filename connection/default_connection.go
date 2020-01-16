@@ -18,19 +18,19 @@ import (
 	"github.com/xfali/gobatis/util"
 )
 
-type MysqlConnection sql.DB
-type MysqlStatement sql.Stmt
+type DefaultConnection sql.DB
+type DefaultStatement sql.Stmt
 
-func (c *MysqlConnection) Prepare(sqlStr string) (statement.Statement, error) {
+func (c *DefaultConnection) Prepare(sqlStr string) (statement.Statement, error) {
 	db := (*sql.DB)(c)
 	s, err := db.Prepare(sqlStr)
 	if err != nil {
 		return nil, errors.CONNECTION_PREPARE_ERROR
 	}
-	return (*MysqlStatement)(s), nil
+	return (*DefaultStatement)(s), nil
 }
 
-func (c *MysqlConnection) Query(ctx context.Context, result reflection.Object, sqlStr string, params ...interface{}) error {
+func (c *DefaultConnection) Query(ctx context.Context, result reflection.Object, sqlStr string, params ...interface{}) error {
 	db := (*sql.DB)(c)
 	rows, err := db.QueryContext(ctx, sqlStr, params...)
 	if err != nil {
@@ -42,12 +42,12 @@ func (c *MysqlConnection) Query(ctx context.Context, result reflection.Object, s
 	return nil
 }
 
-func (c *MysqlConnection) Exec(ctx context.Context, sqlStr string, params ...interface{}) (common.Result, error) {
+func (c *DefaultConnection) Exec(ctx context.Context, sqlStr string, params ...interface{}) (common.Result, error) {
 	db := (*sql.DB)(c)
 	return db.ExecContext(ctx, sqlStr, params...)
 }
 
-func (s *MysqlStatement) Query(ctx context.Context, result reflection.Object, params ...interface{}) error {
+func (s *DefaultStatement) Query(ctx context.Context, result reflection.Object, params ...interface{}) error {
 	stmt := (*sql.Stmt)(s)
 	rows, err := stmt.QueryContext(ctx, params...)
 	if err != nil {
@@ -59,12 +59,12 @@ func (s *MysqlStatement) Query(ctx context.Context, result reflection.Object, pa
 	return nil
 }
 
-func (s *MysqlStatement) Exec(ctx context.Context, params ...interface{}) (common.Result, error) {
+func (s *DefaultStatement) Exec(ctx context.Context, params ...interface{}) (common.Result, error) {
 	stmt := (*sql.Stmt)(s)
 	return stmt.ExecContext(ctx, params...)
 }
 
-func (s *MysqlStatement) Close() {
+func (s *DefaultStatement) Close() {
 	stmt := (*sql.Stmt)(s)
 	stmt.Close()
 }

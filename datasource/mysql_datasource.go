@@ -23,6 +23,6 @@ func (ds *MysqlDataSource) DriverName() string {
 	return "mysql"
 }
 
-func (ds *MysqlDataSource) Url() string {
+func (ds *MysqlDataSource) Info() string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s", ds.Username, ds.Password, ds.Host, ds.Port, ds.DBName, ds.Charset)
 }

@@ -20,30 +20,30 @@ import (
 	"github.com/xfali/gobatis/util"
 )
 
-type MysqlTransaction struct {
+type DefaultTransaction struct {
 	ds datasource.DataSource
 	db *sql.DB
 	tx *sql.Tx
 }
 
-func NewMysqlTransaction(ds datasource.DataSource, db *sql.DB) *MysqlTransaction {
-	ret := &MysqlTransaction{ds: ds, db: db}
+func NewDefaultTransaction(ds datasource.DataSource, db *sql.DB) *DefaultTransaction {
+	ret := &DefaultTransaction{ds: ds, db: db}
 	return ret
 }
 
-func (trans *MysqlTransaction) GetConnection() connection.Connection {
+func (trans *DefaultTransaction) GetConnection() connection.Connection {
 	if trans.tx == nil {
-		return (*connection.MysqlConnection)(trans.db)
+		return (*connection.DefaultConnection)(trans.db)
 	} else {
-		return &TansactionConnection{tx: trans.tx}
+		return &TransactionConnection{tx: trans.tx}
 	}
 }
 
-func (trans *MysqlTransaction) Close() {
+func (trans *DefaultTransaction) Close() {
 
 }
 
-func (trans *MysqlTransaction) Begin() error {
+func (trans *DefaultTransaction) Begin() error {
 	tx, err := trans.db.Begin()
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func (trans *MysqlTransaction) Begin() error {
 	return nil
 }
 
-func (trans *MysqlTransaction) Commit() error {
+func (trans *DefaultTransaction) Commit() error {
 	if trans.tx == nil {
 		return errors.TRANSACTION_WITHOUT_BEGIN
 	}
@@ -64,7 +64,7 @@ func (trans *MysqlTransaction) Commit() error {
 	return nil
 }
 
-func (trans *MysqlTransaction) Rollback() error {
+func (trans *DefaultTransaction) Rollback() error {
 	if trans.tx == nil {
 		return errors.TRANSACTION_WITHOUT_BEGIN
 	}
@@ -76,7 +76,7 @@ func (trans *MysqlTransaction) Rollback() error {
 	return nil
 }
 
-type TansactionConnection struct {
+type TransactionConnection struct {
 	tx *sql.Tx
 }
 
@@ -85,7 +85,7 @@ type TransactionStatement struct {
 	sql string
 }
 
-func (c *TansactionConnection) Prepare(sqlStr string) (statement.Statement, error) {
+func (c *TransactionConnection) Prepare(sqlStr string) (statement.Statement, error) {
 	ret := &TransactionStatement{
 		tx:  c.tx,
 		sql: sqlStr,
@@ -93,7 +93,7 @@ func (c *TansactionConnection) Prepare(sqlStr string) (statement.Statement, erro
 	return ret, nil
 }
 
-func (c *TansactionConnection) Query(ctx context.Context, result reflection.Object, sqlStr string, params ...interface{}) error {
+func (c *TransactionConnection) Query(ctx context.Context, result reflection.Object, sqlStr string, params ...interface{}) error {
 	db := c.tx
 	rows, err := db.QueryContext(ctx, sqlStr, params...)
 	if err != nil {
@@ -105,7 +105,7 @@ func (c *TansactionConnection) Query(ctx context.Context, result reflection.Obje
 	return nil
 }
 
-func (c *TansactionConnection) Exec(ctx context.Context, sqlStr string, params ...interface{}) (common.Result, error) {
+func (c *TransactionConnection) Exec(ctx context.Context, sqlStr string, params ...interface{}) (common.Result, error) {
 	db := c.tx
 	return db.ExecContext(ctx, sqlStr, params...)
 }

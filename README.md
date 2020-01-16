@@ -32,20 +32,17 @@ foreach | foreach 允许指定一个集合，声明可以在元素体内使用�
 
 ```
 func InitDB() *gobatis.SessionManager {
-    fac := factory.DefaultFactory{
-        Host:     "localhost",
-        Port:     3306,
-        DBName:   "test",
-        Username: "root",
-        Password: "123",
-        Charset:  "utf8",
-
-        MaxConn:     1000,
-        MaxIdleConn: 500,
-
-        Log: logging.DefaultLogf,
-    }
-    fac.Init()
+    fac := gobatis.NewFactory(
+    		gobatis.SetMaxConn(100),
+    		gobatis.SetMaxIdleConn(50),
+    		gobatis.SetDataSource(&datasource.MysqlDataSource{
+    			Host:     "localhost",
+    			Port:     3306,
+    			DBName:   "test",
+    			Username: "root",
+    			Password: "123",
+    			Charset:  "utf8",
+    		}))
     return gobatis.NewSessionManager(&fac)
 }
 ```

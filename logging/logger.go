@@ -42,6 +42,10 @@ func SetLevel(level int) {
 	gLogLevel = level
 }
 
+func DummyLog(level int, format string, args ...interface{}) {
+
+}
+
 func DefaultLogf(level int, format string, args ...interface{}) {
 	if gLogLevel > level {
 		return
