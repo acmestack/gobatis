@@ -38,20 +38,22 @@ func connect() factory.Factory {
 			Host:     "localhost",
 			Port:     3306,
 			DBName:   "test",
-			Username: "root",
-			Password: "123",
+			Username: "test",
+			Password: "test",
 			Charset:  "utf8",
 		}))
 }
 
 func initTest(t *testing.T) (err error) {
 	sql_table := "CREATE TABLE IF NOT EXISTS `test_table` (" +
-		"`id` INTEGER PRIMARY KEY AUTOINCREMENT," +
-		"`username` VARCHAR(64) NULL," +
-		"`password` VARCHAR(64) NULL," +
-		"`createTime` TIMESTAMP default (datetime('now', 'localtime')));"
+		"`id` int(11) NOT NULL AUTO_INCREMENT,"+
+		"`username` varchar(255) DEFAULT NULL," +
+		"`password` varchar(255) DEFAULT NULL," +
+		"`createTime` datetime DEFAULT NULL,"+
+		"PRIMARY KEY (`id`)" +
+	") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"
 
-	db, err := sql.Open("mysql", "root:123@tcp(localhost:3306)/test?charset=utf8")
+	db, err := sql.Open("mysql", "test:test@tcp(localhost8:3306)/test?charset=utf8")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +71,7 @@ func initTest(t *testing.T) (err error) {
 	return nil
 }
 
-func TestSqlite3(t *testing.T) {
+func TestMysql(t *testing.T) {
 	initTest(t)
 	var testV TestTable
 
@@ -112,7 +114,7 @@ func TestSqlite3(t *testing.T) {
 	t.Logf("%v %v", testV.Username, testV.Password)
 }
 
-func TestSqliteTx(t *testing.T) {
+func TestMysqlTx(t *testing.T) {
 	initTest(t)
 	var testV TestTable
 
