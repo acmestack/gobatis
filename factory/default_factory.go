@@ -45,12 +45,16 @@ type DefaultFactory struct {
 	mutex sync.Mutex
 }
 
-func (f *DefaultFactory) InitDB() error {
+func (f *DefaultFactory) Open(ds datasource.DataSource) error {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
 	if f.db != nil {
 		return errors.FACTORY_INITED
+	}
+
+	if ds != nil {
+		f.DataSource = ds
 	}
 
 	db, err := sql.Open(f.DataSource.DriverName(), f.DataSource.DriverInfo())
@@ -71,6 +75,10 @@ func (f *DefaultFactory) Close() error {
 		return f.db.Close()
 	}
 	return nil
+}
+
+func (f *DefaultFactory) GetDataSource() datasource.DataSource {
+	return f.DataSource
 }
 
 func (f *DefaultFactory) CreateTransaction() transaction.Transaction {

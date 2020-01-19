@@ -43,7 +43,7 @@ func CreateFactory(opts ...FacOpt) (factory.Factory, error) {
 		}
 	}
 
-	err := f.InitDB()
+	err := f.Open(f.DataSource)
 	if err != nil {
 		return nil, err
 	}

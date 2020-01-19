@@ -9,6 +9,7 @@
 package factory
 
 import (
+	"github.com/xfali/gobatis/datasource"
 	"github.com/xfali/gobatis/executor"
 	"github.com/xfali/gobatis/logging"
 	"github.com/xfali/gobatis/session"
@@ -16,8 +17,10 @@ import (
 )
 
 type Factory interface {
-	InitDB() error
+	Open(datasource.DataSource) error
 	Close() error
+
+	GetDataSource() datasource.DataSource
 
 	CreateTransaction() transaction.Transaction
 	CreateExecutor(transaction.Transaction) executor.Executor
