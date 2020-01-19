@@ -31,18 +31,6 @@ func CreateFactory(opts ...FacOpt) (factory.Factory, error) {
 		}
 	}
 
-	//For compatibility with older versions
-	if f.DataSource == nil {
-		f.DataSource = &datasource.MysqlDataSource{
-			Host:     f.Host,
-			Port:     f.Port,
-			DBName:   f.DBName,
-			Username: f.Username,
-			Password: f.Password,
-			Charset:  f.Charset,
-		}
-	}
-
 	err := f.Open(f.DataSource)
 	if err != nil {
 		return nil, err

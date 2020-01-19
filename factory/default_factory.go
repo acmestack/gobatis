@@ -21,19 +21,6 @@ import (
 )
 
 type DefaultFactory struct {
-	// Deprecated: Use gobatis.NewFactory instead.
-	Host string
-	// Deprecated: Use gobatis.NewFactory instead.
-	Port int
-	// Deprecated: Use gobatis.NewFactory instead.
-	DBName string
-	// Deprecated: Use gobatis.NewFactory instead.
-	Username string
-	// Deprecated: Use gobatis.NewFactory instead.
-	Password string
-	// Deprecated: Use gobatis.NewFactory instead.
-	Charset string
-
 	MaxConn         int
 	MaxIdleConn     int
 	ConnMaxLifetime time.Duration
@@ -102,4 +89,9 @@ func (f *DefaultFactory) WithLock(lockFunc func(fac *DefaultFactory)) {
 	f.mutex.Lock()
 	lockFunc(f)
 	f.mutex.Unlock()
+}
+
+// Deprecated: Use Open instead
+func (f *DefaultFactory) InitDB() error {
+	return f.Open(f.DataSource)
 }
