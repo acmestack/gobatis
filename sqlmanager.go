@@ -12,40 +12,50 @@ import (
 	"github.com/xfali/gobatis/errors"
 	"github.com/xfali/gobatis/logging"
 	"github.com/xfali/gobatis/parsing"
+	"github.com/xfali/gobatis/parsing/sqlparser"
+	"github.com/xfali/gobatis/parsing/template"
 	"github.com/xfali/gobatis/parsing/xml"
 	"sync"
 )
 
-type SqlManager struct {
+type dynamicSqlManager struct {
 	sqlMap map[string]*parsing.DynamicData
 	lock   sync.Mutex
 }
 
-var g_sql_mgr = SqlManager{sqlMap: map[string]*parsing.DynamicData{}}
+type sqlManager struct {
+	dynamicSqlMgr  *dynamicSqlManager
+	templateSqlMgr *template.Manager
+}
+
+var g_sql_mgr = sqlManager{
+	dynamicSqlMgr:  &dynamicSqlManager{sqlMap: map[string]*parsing.DynamicData{}},
+	templateSqlMgr: template.NewManager(),
+}
 
 func RegisterSql(sqlId string, sql string) error {
-	g_sql_mgr.lock.Lock()
-	defer g_sql_mgr.lock.Unlock()
+	g_sql_mgr.dynamicSqlMgr.lock.Lock()
+	defer g_sql_mgr.dynamicSqlMgr.lock.Unlock()
 
-	if _, ok := g_sql_mgr.sqlMap[sqlId]; ok {
+	if _, ok := g_sql_mgr.dynamicSqlMgr.sqlMap[sqlId]; ok {
 		return errors.SQL_ID_DUPLICATES
 	} else {
 		dd := &parsing.DynamicData{OriginData: sql}
-		g_sql_mgr.sqlMap[sqlId] = dd
+		g_sql_mgr.dynamicSqlMgr.sqlMap[sqlId] = dd
 	}
 	return nil
 }
 
 func UnregisterSql(sqlId string) {
-	g_sql_mgr.lock.Lock()
-	defer g_sql_mgr.lock.Unlock()
+	g_sql_mgr.dynamicSqlMgr.lock.Lock()
+	defer g_sql_mgr.dynamicSqlMgr.lock.Unlock()
 
-	delete(g_sql_mgr.sqlMap, sqlId)
+	delete(g_sql_mgr.dynamicSqlMgr.sqlMap, sqlId)
 }
 
 func RegisterMapperData(data []byte) error {
-	g_sql_mgr.lock.Lock()
-	defer g_sql_mgr.lock.Unlock()
+	g_sql_mgr.dynamicSqlMgr.lock.Lock()
+	defer g_sql_mgr.dynamicSqlMgr.lock.Unlock()
 
 	mapper, err := xml.Parse(data)
 	if err != nil {
@@ -57,8 +67,8 @@ func RegisterMapperData(data []byte) error {
 }
 
 func RegisterMapperFile(file string) error {
-	g_sql_mgr.lock.Lock()
-	defer g_sql_mgr.lock.Unlock()
+	g_sql_mgr.dynamicSqlMgr.lock.Lock()
+	defer g_sql_mgr.dynamicSqlMgr.lock.Unlock()
 
 	mapper, err := xml.ParseFile(file)
 	if err != nil {
@@ -72,18 +82,31 @@ func RegisterMapperFile(file string) error {
 func formatMapper(mapper *xml.Mapper) error {
 	ret := mapper.Format()
 	for k, v := range ret {
-		if _, ok := g_sql_mgr.sqlMap[k]; ok {
+		if _, ok := g_sql_mgr.dynamicSqlMgr.sqlMap[k]; ok {
 			return errors.SQL_ID_DUPLICATES
 		} else {
-			g_sql_mgr.sqlMap[k] = v
+			g_sql_mgr.dynamicSqlMgr.sqlMap[k] = v
 		}
 	}
 	return nil
 }
 
-func FindSql(sqlId string) *parsing.DynamicData {
-	g_sql_mgr.lock.Lock()
-	defer g_sql_mgr.lock.Unlock()
+func FindDynamicSql(sqlId string) (sqlparser.SqlParser, bool) {
+	g_sql_mgr.dynamicSqlMgr.lock.Lock()
+	defer g_sql_mgr.dynamicSqlMgr.lock.Unlock()
 
-	return g_sql_mgr.sqlMap[sqlId]
+	v, ok := g_sql_mgr.dynamicSqlMgr.sqlMap[sqlId]
+	return v, ok
+}
+
+func RegisterTemplateData(data []byte) error {
+	return g_sql_mgr.templateSqlMgr.RegisterData(data)
+}
+
+func RegisterTemplateFile(file string) error {
+	return g_sql_mgr.templateSqlMgr.RegisterFile(file)
+}
+
+func FindTemplateSql(sqlId string) (sqlparser.SqlParser, bool) {
+	return g_sql_mgr.templateSqlMgr.FindSql(sqlId)
 }

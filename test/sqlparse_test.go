@@ -131,7 +131,7 @@ func TestSqlParserWithParamMap1(t *testing.T) {
 		"id":        123,
 		"name":      "test_name",
 	}
-	ret, _ := sqlparser.ParseWithParamMap(sqlStr, params)
+	ret, _ := sqlparser.ParseWithParamMap("mysql", sqlStr, params)
 	t.Log(ret.String())
 	if ret.Action != sqlparser.SELECT {
 		t.Fail()
@@ -145,7 +145,7 @@ func TestSqlParserWithParamMap2(t *testing.T) {
 		"id":        123,
 		"name":      "test_name",
 	}
-	_, err := sqlparser.ParseWithParamMap(sqlStr, params)
+	_, err := sqlparser.ParseWithParamMap("mysql", sqlStr, params)
 	if err == nil {
 		t.Fail()
 	} else {
@@ -160,7 +160,7 @@ func TestSqlParserWithParamMap3(t *testing.T) {
 		"id":        123,
 		//"name" : "test_name",
 	}
-	_, err := sqlparser.ParseWithParamMap(sqlStr, params)
+	_, err := sqlparser.ParseWithParamMap("mysql", sqlStr, params)
 	if err == nil {
 		t.Fail()
 	} else {
@@ -184,7 +184,7 @@ func TestSqlParserWithParamMap4(t *testing.T) {
 	params := ti.MapValue()
 	params["tablename"] = ti.Name
 
-	ret, _ := sqlparser.ParseWithParamMap(sqlStr, params)
+	ret, _ := sqlparser.ParseWithParamMap("mysql", sqlStr, params)
 	t.Log(ret.String())
 	if ret.Action != sqlparser.SELECT {
 		t.Fail()

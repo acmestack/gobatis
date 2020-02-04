@@ -24,5 +24,8 @@ func (ds *PostgreDataSource) DriverName() string {
 }
 
 func (ds *PostgreDataSource) DriverInfo() string {
+	if ds.SslMode == "" {
+		ds.SslMode = "disable"
+	}
 	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", ds.Host, ds.Port, ds.Username, ds.Password, ds.DBName, ds.SslMode)
 }

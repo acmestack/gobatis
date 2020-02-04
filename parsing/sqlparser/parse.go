@@ -30,6 +30,10 @@ type Metadata struct {
 	Params     []interface{}
 }
 
+type SqlParser interface {
+	ParseMetadata(driverName string, params ...interface{}) (*Metadata, error)
+}
+
 func SimpleParse(sql string) (*Metadata, error) {
 	ret := Metadata{}
 	sql = strings.Trim(sql, " ")
@@ -122,7 +126,7 @@ func ParseWithParams(sql string, params ...interface{}) (*Metadata, error) {
 	return &ret, nil
 }
 
-func ParseWithParamMap(sql string, params map[string]interface{}) (*Metadata, error) {
+func ParseWithParamMap(driverName, sql string, params map[string]interface{}) (*Metadata, error) {
 	ret := Metadata{}
 	sql = strings.Trim(sql, " ")
 	action := sql[:6]
@@ -133,6 +137,9 @@ func ParseWithParamMap(sql string, params map[string]interface{}) (*Metadata, er
 	subStr := sql
 	firstIndex, lastIndex := -1, -1
 	var c string
+	var index int = 0
+	holder := selectHolder(driverName)
+
 	for {
 		firstIndex = strings.Index(subStr, "{")
 		if firstIndex == -1 || firstIndex == 0 {
@@ -156,7 +163,9 @@ func ParseWithParamMap(sql string, params map[string]interface{}) (*Metadata, er
 							subStr = strings.Replace(subStr, oldStr, newStr, -1)
 						} else if c == "#" {
 							oldStr := "#{" + varName + "}"
-							ret.PrepareSql = strings.Replace(ret.PrepareSql, oldStr, "?", -1)
+							index++
+							h := holder(index)
+							ret.PrepareSql = strings.Replace(ret.PrepareSql, oldStr, h, -1)
 							ret.Params = append(ret.Params, value)
 						}
 					} else {
@@ -169,6 +178,28 @@ func ParseWithParamMap(sql string, params map[string]interface{}) (*Metadata, er
 	}
 
 	return &ret, nil
+}
+
+type holder func(int) string
+
+var gHolderMap = map[string]holder{
+	"mysql":    mysqlHolder,
+	"postgres": postgresHolder,
+}
+
+func selectHolder(driverName string) holder {
+	if v, ok := gHolderMap[driverName]; ok {
+		return v
+	}
+	return mysqlHolder
+}
+
+func mysqlHolder(int) string {
+	return "?"
+}
+
+func postgresHolder(i int) string {
+	return "$" + strconv.Itoa(i)
 }
 
 func interface2String(i interface{}) string {

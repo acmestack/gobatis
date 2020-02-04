@@ -45,16 +45,18 @@ type Session struct {
 	ctx     context.Context
 	log     logging.LogFunc
 	session session.SqlSession
+	driver  string
 }
 
 type BaseRunner struct {
-	session        session.SqlSession
-	sqlDynamicData parsing.DynamicData
-	action         string
-	metadata       *sqlparser.Metadata
-	log            logging.LogFunc
-	ctx            context.Context
-	this           Runner
+	session   session.SqlSession
+	sqlParser sqlparser.SqlParser
+	action    string
+	metadata  *sqlparser.Metadata
+	log       logging.LogFunc
+	driver    string
+	ctx       context.Context
+	this      Runner
 }
 
 type SelectRunner struct {
@@ -75,11 +77,14 @@ type DeleteRunner struct {
 	BaseRunner
 }
 
-func getSql(sqlId string) *parsing.DynamicData {
-	ret := FindSql(sqlId)
+func getSql(sqlId string) sqlparser.SqlParser {
+	ret, ok := FindDynamicSql(sqlId)
+	if !ok {
+		ret, ok = FindTemplateSql(sqlId)
+	}
 	//FIXME: 当没有查找到sqlId对应的sql语句，则尝试使用sqlId直接操作数据库
 	//该设计可能需要设计一个更合理的方式
-	if ret == nil {
+	if !ok {
 		return &parsing.DynamicData{OriginData: sqlId}
 	}
 	return ret
@@ -91,6 +96,7 @@ func (this *SessionManager) NewSession() *Session {
 		ctx:     context.Background(),
 		log:     this.factory.LogFunc(),
 		session: this.factory.CreateSession(),
+		driver:  this.factory.GetDataSource().DriverName(),
 	}
 }
 
@@ -123,38 +129,35 @@ func (this *Session) Tx(txFunc func(session *Session) error) {
 }
 
 func (this *Session) Select(sql string) Runner {
-	return createSelect(this.ctx, this.log, this.session, getSql(sql))
+	return this.createSelect(getSql(sql))
 }
 
 func (this *Session) Update(sql string) Runner {
-	return createUpdate(this.ctx, this.log, this.session, getSql(sql))
+	return this.createUpdate(getSql(sql))
 }
 
 func (this *Session) Delete(sql string) Runner {
-	return createDelete(this.ctx, this.log, this.session, getSql(sql))
+	return this.createDelete(getSql(sql))
 }
 
 func (this *Session) Insert(sql string) Runner {
-	return createInsert(this.ctx, this.log, this.session, getSql(sql))
+	return this.createInsert(getSql(sql))
 }
 
 func (this *BaseRunner) Param(params ...interface{}) Runner {
-	paramMap := reflection.ParseParams(params...)
 	//TODO: 使用缓存加速，避免每次都生成动态sql
 	//测试发现性能提升非常有限，故取消
 	//key := cache.CalcKey(this.sqlDynamicData.OriginData, paramMap)
 	//md := cache.FindMetadata(key)
 	//var err error
 	//if md == nil {
-	//    sqlStr := this.sqlDynamicData.ReplaceWithMap(paramMap)
-	//    md, err = sqlparser.ParseWithParamMap(sqlStr, paramMap)
+	//    md, err := this.sqlParser.Parse(params...)
 	//    if err == nil {
 	//        cache.CacheMetadata(key, md)
 	//    }
 	//}
 
-	sqlStr := this.sqlDynamicData.ReplaceWithMap(paramMap)
-	md, err := sqlparser.ParseWithParamMap(sqlStr, paramMap)
+	md, err := this.sqlParser.ParseMetadata(this.driver, params...)
 
 	if err == nil {
 		if this.action == md.Action {
@@ -243,46 +246,50 @@ func (this *BaseRunner) LastInsertId() int64 {
 	return -1
 }
 
-func createSelect(ctx context.Context, log logging.LogFunc, session session.SqlSession, sqlDynamic *parsing.DynamicData) Runner {
+func (this *Session)createSelect(parser sqlparser.SqlParser) Runner {
 	ret := &SelectRunner{}
 	ret.action = sqlparser.SELECT
-	ret.log = log
-	ret.session = session
-	ret.sqlDynamicData = *sqlDynamic
-	ret.ctx = ctx
+	ret.log = this.log
+	ret.session = this.session
+	ret.sqlParser = parser
+	ret.ctx = this.ctx
+	ret.driver = this.driver
 	ret.this = ret
 	return ret
 }
 
-func createUpdate(ctx context.Context, log logging.LogFunc, session session.SqlSession, sqlDynamic *parsing.DynamicData) Runner {
+func (this *Session)createUpdate(parser sqlparser.SqlParser) Runner {
 	ret := &UpdateRunner{}
 	ret.action = sqlparser.UPDATE
-	ret.log = log
-	ret.session = session
-	ret.sqlDynamicData = *sqlDynamic
-	ret.ctx = ctx
+	ret.log = this.log
+	ret.session = this.session
+	ret.sqlParser = parser
+	ret.ctx = this.ctx
+	ret.driver = this.driver
 	ret.this = ret
 	return ret
 }
 
-func createDelete(ctx context.Context, log logging.LogFunc, session session.SqlSession, sqlDynamic *parsing.DynamicData) Runner {
+func (this *Session)createDelete(parser sqlparser.SqlParser) Runner {
 	ret := &DeleteRunner{}
 	ret.action = sqlparser.DELETE
-	ret.log = log
-	ret.session = session
-	ret.sqlDynamicData = *sqlDynamic
-	ret.ctx = ctx
+	ret.log = this.log
+	ret.session = this.session
+	ret.sqlParser = parser
+	ret.ctx = this.ctx
+	ret.driver = this.driver
 	ret.this = ret
 	return ret
 }
 
-func createInsert(ctx context.Context, log logging.LogFunc, session session.SqlSession, sqlDynamic *parsing.DynamicData) Runner {
+func (this *Session)createInsert(parser sqlparser.SqlParser) Runner {
 	ret := &InsertRunner{}
 	ret.action = sqlparser.INSERT
-	ret.log = log
-	ret.session = session
-	ret.sqlDynamicData = *sqlDynamic
-	ret.ctx = ctx
+	ret.log = this.log
+	ret.session = this.session
+	ret.sqlParser = parser
+	ret.ctx = this.ctx
+	ret.driver = this.driver
 	ret.this = ret
 	return ret
 }
