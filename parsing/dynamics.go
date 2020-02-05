@@ -69,7 +69,7 @@ func (m *DynamicData) ReplaceWithMap(objParams map[string]interface{}) string {
 	return ret
 }
 
-func (m *DynamicData) ParseMetadata(driverName string, params ...interface{})(*sqlparser.Metadata, error) {
+func (m *DynamicData) ParseMetadata(driverName string, params ...interface{}) (*sqlparser.Metadata, error) {
 	paramMap := reflection.ParseParams(params...)
 	sqlStr := m.ReplaceWithMap(paramMap)
 	return sqlparser.ParseWithParamMap(driverName, sqlStr, paramMap)

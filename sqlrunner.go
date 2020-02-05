@@ -13,7 +13,6 @@ import (
 	"github.com/xfali/gobatis/errors"
 	"github.com/xfali/gobatis/factory"
 	"github.com/xfali/gobatis/logging"
-	"github.com/xfali/gobatis/parsing"
 	"github.com/xfali/gobatis/parsing/sqlparser"
 	"github.com/xfali/gobatis/reflection"
 	"github.com/xfali/gobatis/session"
@@ -77,19 +76,6 @@ type DeleteRunner struct {
 	BaseRunner
 }
 
-func getSql(sqlId string) sqlparser.SqlParser {
-	ret, ok := FindDynamicSql(sqlId)
-	if !ok {
-		ret, ok = FindTemplateSql(sqlId)
-	}
-	//FIXME: 当没有查找到sqlId对应的sql语句，则尝试使用sqlId直接操作数据库
-	//该设计可能需要设计一个更合理的方式
-	if !ok {
-		return &parsing.DynamicData{OriginData: sqlId}
-	}
-	return ret
-}
-
 //使用一个session操作数据库
 func (this *SessionManager) NewSession() *Session {
 	return &Session{
@@ -129,19 +115,19 @@ func (this *Session) Tx(txFunc func(session *Session) error) {
 }
 
 func (this *Session) Select(sql string) Runner {
-	return this.createSelect(getSql(sql))
+	return this.createSelect(FindSqlParser(sql))
 }
 
 func (this *Session) Update(sql string) Runner {
-	return this.createUpdate(getSql(sql))
+	return this.createUpdate(FindSqlParser(sql))
 }
 
 func (this *Session) Delete(sql string) Runner {
-	return this.createDelete(getSql(sql))
+	return this.createDelete(FindSqlParser(sql))
 }
 
 func (this *Session) Insert(sql string) Runner {
-	return this.createInsert(getSql(sql))
+	return this.createInsert(FindSqlParser(sql))
 }
 
 func (this *BaseRunner) Param(params ...interface{}) Runner {

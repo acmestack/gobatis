@@ -118,7 +118,7 @@ func (m *Manager) RegisterFile(file string) error {
 	return nil
 }
 
-func (m *Manager) FindSql(sqlId string) (*Parser, bool) {
+func (m *Manager) FindSqlParser(sqlId string) (*Parser, bool) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 
