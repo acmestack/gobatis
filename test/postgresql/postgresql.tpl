@@ -1,8 +1,7 @@
 {{define "selectTestTable"}}
 {{$COLUMNS := "id, username, password"}}
-SELECT {{$COLUMNS}} FROM test_table WHERE 1=1
-        {{if (ne .Username "")}} AND username = '{{.Username}}' {{end}}
-        {{if (ne .Password "")}} AND password = '{{.Password}}' {{end}}
+SELECT {{$COLUMNS}} FROM test_table
+{{where (ne .Username "") "AND" "username" .Username "" | where (ne .Password "pw") "AND" "password" .Password}}
 {{end}}
 
 {{define "insertTestTable"}}
@@ -16,15 +15,12 @@ INSERT INTO test_table ({{$COLUMNS}})
 {{end}}
 
 {{define "updateTestTable"}}
-UPDATE test_table SET id = id
-  {{if (ne .Username "")}} , username = '{{.Username}}' {{end}}
-  {{if (ne .Password "")}} , password = '{{.Password}}' {{end}}
-{{if (ne .Id 0)}} WHERE id = {{.Id}} {{end}}
+UPDATE test_table
+{{set (ne .Username "") "username" .Username "" | set (ne .Password "") "password" .Password}}
+{{where (ne .Id 0) "AND" "id" .Id ""}}
 {{end}}
 
 {{define "deleteTestTable"}}
-DELETE FROM test_table WHERE 1=1
-    {{if (ne .Id 0)}} AND id = {{.Id}} {{end}}
-    {{if (ne .Username "")}} AND username = {{.Username}} {{end}}
-    {{if (ne .Password "")}} AND password = {{.Password}} {{end}}
+DELETE FROM test_table
+{{where (ne .Id 0) "AND" "id" .Id "" | where (ne .Username "") "AND" "username" .Username | where (ne .Password "") "AND" "password" .Password}}
 {{end}}

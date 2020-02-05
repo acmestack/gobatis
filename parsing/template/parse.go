@@ -8,10 +8,10 @@ package template
 import (
 	"github.com/xfali/gobatis/logging"
 	"github.com/xfali/gobatis/parsing/sqlparser"
-	"html/template"
 	"io/ioutil"
 	"strings"
 	"sync"
+	"text/template"
 )
 
 type Parser struct {
@@ -25,8 +25,9 @@ func (p *Parser) ParseMetadata(driverName string, params ...interface{}) (*sqlpa
 	if len(params) > 0 {
 		param = params[0]
 	}
-
-	err := p.tpl.Execute(&b, param)
+	fm := selectFuncMap(driverName)
+	tpl := p.tpl.Funcs(fm)
+	err := tpl.Execute(&b, param)
 	if err != nil {
 		return nil, err
 	}
@@ -40,22 +41,6 @@ func (p *Parser) ParseMetadata(driverName string, params ...interface{}) (*sqlpa
 	ret.Params = nil
 
 	return ret, nil
-}
-
-func updateSet(sets ... string) string {
-	b := strings.Builder{}
-	for _, v := range sets {
-		if len(v) > 0 {
-			b.WriteString(strings.TrimSpace(v))
-			b.WriteString(",")
-		}
-	}
-	setStr := b.String()
-	if len(setStr) == 0 {
-		return ""
-	} else {
-		return " SET " + setStr[:len(setStr)-1]
-	}
 }
 
 type Manager struct {
@@ -74,9 +59,7 @@ func (m *Manager) RegisterData(data []byte) error {
 	defer m.lock.Unlock()
 
 	tpl := template.New("")
-	tpl = tpl.Funcs(template.FuncMap{
-		"updateSet": updateSet,
-	})
+	tpl = tpl.Funcs(dummyFuncMap)
 	tpl, err := tpl.Parse(string(data))
 	if err != nil {
 		logging.Warn("register template data failed: %s err: %v\n", string(data), err)
@@ -96,14 +79,12 @@ func (m *Manager) RegisterFile(file string) error {
 	defer m.lock.Unlock()
 
 	tpl := template.New("")
-	tpl = tpl.Funcs(template.FuncMap{
-		"updateSet": updateSet,
-	})
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
 		logging.Warn("register template file failed: %s err: %v\n", file, err)
 		return err
 	}
+	tpl = tpl.Funcs(dummyFuncMap)
 	tpl, err = tpl.Parse(string(data))
 	if err != nil {
 		logging.Warn("register template file failed: %s err: %v\n", file, err)
