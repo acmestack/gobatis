@@ -6,6 +6,7 @@
 
 gobatis是一个golang的ORM框架，类似Java的Mybatis。支持直接执行sql语句以及动态sql。
 
+
 建议配合[gobatis-cmd](https://github.com/xfali/gobatis-cmd)自动代码、sql生成工具使用。
 
 支持的动态sql标签：
@@ -18,6 +19,8 @@ set | set 元素会动态前置 SET 关键字，同时也会删掉无关的逗�
 include | 使用sql标签定义的语句替换。
 choose<br>when<br>otherwise | 有时我们不想应用到所有的条件语句，而只想从中择其一项。针对这种情况，gobatis 提供了 choose 元素，它有点像switch 语句。
 foreach | foreach 允许指定一个集合，声明可以在元素体内使用的集合项（item）和索引（index）变量。
+
+除了xml之外，gobatis也支持使用go template的mapper格式。
 
 ## 待完成项
 
@@ -235,11 +238,59 @@ gobatis.RegisterMapperFile(filePath)
 </mapper>
 ```
 
-### 8、gobatis-cmd生成文件使用示例
+### 8、template
+
+gobatis也支持go template的sql解析及动态sql
+
+1. 注册template
+
+```
+gobatis.RegisterTemplateData([]byte(main_xml))
+```
+
+或
+    
+```
+gobatis.RegisterTemplateFile(filePath)
+```
+
+2. template示例
+
+```
+{{define "selectTestTable"}}
+{{$COLUMNS := "id, username, password"}}
+SELECT {{$COLUMNS}} FROM test_table
+{{where (ne .Username "") "AND" "username" .Username "" | where (ne .Password "pw") "AND" "password" .Password}}
+{{end}}
+
+{{define "insertTestTable"}}
+{{$COLUMNS := "id, username, password"}}
+INSERT INTO test_table ({{$COLUMNS}})
+  VALUES(
+  {{.Id}},
+  '{{.Username}}',
+  '{{.Password}}'
+  )
+{{end}}
+
+{{define "updateTestTable"}}
+UPDATE test_table
+{{set (ne .Username "") "username" .Username "" | set (ne .Password "") "password" .Password}}
+{{where (ne .Id 0) "AND" "id" .Id ""}}
+{{end}}
+
+{{define "deleteTestTable"}}
+DELETE FROM test_table
+{{where (ne .Id 0) "AND" "id" .Id "" | where (ne .Username "") "AND" "username" .Username | where (ne .Password "") "AND" "password" .Password}}
+{{end}}
+```
+其中where和set是gobatis的自定义函数，用于智能的生成动态sql
+
+### 9、gobatis-cmd生成文件使用示例
 
 参考[cmd_test](https://github.com/xfali/gobatis/tree/master/test/cmd)
 
-### 9、 SQL语句构建器
+### 10、 SQL语句构建器
 
 gobatis xml特性有非常强大的动态SQL生成方案，当需要在代码中嵌入SQL语句时，也可使用SQL语句构建器：
 ```
