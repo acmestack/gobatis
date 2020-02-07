@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"github.com/xfali/gobatis/logging"
 	"github.com/xfali/gobatis/parsing"
-	"github.com/xfali/gobatis/reflection"
 	"strconv"
 	"strings"
 	"unicode"
@@ -138,6 +137,20 @@ func Compare(src string, getFunc func(key string) string) bool {
 	return false
 }
 
+func getKey(src string) string {
+	if src == "" {
+		return ""
+	}
+	if src[:1] == "{" {
+		index := strings.Index(src, "}")
+		if index == -1 {
+			return src
+		}
+		return src[1:index]
+	}
+	return src
+}
+
 func getValueFromFunc(src string, getFunc func(key string) string) string {
 	if src == "" {
 		return ""
@@ -256,26 +269,30 @@ func (de *Foreach) Format(getFunc func(key string) string) string {
 		return ""
 	}
 
-	listStr := getValueFromFunc(de.Collection, getFunc)
-	if listStr == "" || listStr == "nil" {
-		return ""
-	}
-
-	elems := reflection.ParseSliceParamString(listStr)
+	collectionKey := getKey(de.Collection)
+	value := getValueFromFunc(de.Collection, getFunc)
+	//if value == "" || value == "nil" {
+	//	return ""
+	//}
+	//
+	//elems := reflection.ParseSliceParamString(value)
+	//length := len(elems)
+	length, _ := strconv.Atoi(value)
 	ret := strings.Builder{}
 	ret.WriteString(de.Open)
-	itemStr := fmt.Sprintf("#{%s}", de.Item)
 	indexStr := fmt.Sprintf("#{%s}", de.Index)
-	length := len(elems)
+
 	originData := strings.TrimSpace(de.Data)
 	realStr := ""
-	for i, v := range elems {
-		realStr = strings.Replace(originData, itemStr, v, -1)
+	i := 0
+	for i < length {
+		realStr = strings.Replace(originData, de.Item, fmt.Sprintf("%s[%d]", collectionKey, i), -1)
 		realStr = strings.Replace(realStr, indexStr, strconv.Itoa(i), -1)
 		ret.WriteString(realStr)
 		if i < length-1 {
 			ret.WriteString(de.Separator)
 		}
+		i++
 	}
 	ret.WriteString(de.Close)
 

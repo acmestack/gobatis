@@ -169,10 +169,33 @@ func TestReflectionParseSlice(t *testing.T) {
 	}
 	for k, v := range ret {
 		t.Logf("complex key : %s value : %v", k, v)
-		elems := reflection.ParseSliceParamString(v.(string))
-		for _, e := range elems {
-			t.Logf("slice elem %v\n", e)
-		}
+		//elems := reflection.ParseSliceParamString(v.(string))
+		//for _, e := range elems {
+		//	t.Logf("slice elem %v\n", e)
+		//}
+	}
+}
+
+func TestReflectionParseStructSlice(t *testing.T) {
+	ret := reflection.ParseParams([]testParseStruct{
+		{
+			Username: "user1",
+			Password: "pw1",
+		},
+		{
+			Username: "user2",
+			Password: "pw2",
+		},
+	})
+	if len(ret) == 0 {
+		t.Fail()
+	}
+	for k, v := range ret {
+		t.Logf("complex key : %s value : %v", k, v)
+		//elems := reflection.ParseSliceParamString(v.(string))
+		//for _, e := range elems {
+		//	t.Logf("slice elem %v\n", e)
+		//}
 	}
 }
 
