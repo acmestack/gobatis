@@ -58,7 +58,7 @@ func (sess *DefaultSqlSession) Insert(ctx context.Context, sql string, params ..
 
 	id, err := ret.LastInsertId()
 	if err != nil {
-		return 0, -1, err
+		return count, id, err
 	}
 	return count, id, nil
 }

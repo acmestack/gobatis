@@ -62,7 +62,9 @@ func postgresUpdateSet(b bool, column string, value interface{}, origin string) 
 			buf.WriteString(",")
 		}
 	}
+	buf.WriteString(`"`)
 	buf.WriteString(column)
+	buf.WriteString(`"`)
 	buf.WriteString(" = ")
 	if s, ok := value.(string); ok {
 		buf.WriteString(`'`)
@@ -119,7 +121,9 @@ func postgresWhere(b bool, cond, column string, value interface{}, origin string
 		buf.WriteString(" ")
 	}
 
+	buf.WriteString(`"`)
 	buf.WriteString(column)
+	buf.WriteString(`"`)
 	buf.WriteString(" = ")
 	if s, ok := value.(string); ok {
 		buf.WriteString(`'`)

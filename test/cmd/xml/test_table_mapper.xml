@@ -1,0 +1,54 @@
+<mapper namespace="test_package.TestTable">
+    <sql id="columns_id">"id","username","password","createtime"</sql>
+
+    <select id="selectTestTable">
+        SELECT <include refid="columns_id"> </include> FROM "test_table"
+        <where>
+            <if test="{TestTable.id} != nil and {TestTable.id} != 0">AND "id" = #{TestTable.id} </if>
+            <if test="{TestTable.username} != nil">AND "username" = #{TestTable.username} </if>
+            <if test="{TestTable.password} != nil">AND "password" = #{TestTable.password} </if>
+            <if test="{TestTable.createtime} != nil">AND "createtime" = #{TestTable.createtime} </if>
+        </where>
+    </select>
+
+    <select id="selectTestTableCount">
+        SELECT COUNT(*) FROM "test_table"
+        <where>
+            <if test="{TestTable.id} != nil and {TestTable.id} != 0">AND "id" = #{TestTable.id} </if>
+            <if test="{TestTable.username} != nil">AND "username" = #{TestTable.username} </if>
+            <if test="{TestTable.password} != nil">AND "password" = #{TestTable.password} </if>
+            <if test="{TestTable.createtime} != nil">AND "createtime" = #{TestTable.createtime} </if>
+        </where>
+    </select>
+
+    <insert id="insertTestTable">
+        INSERT INTO "test_table" ("id","username","password","createtime")
+        VALUES(
+        #{TestTable.id},
+        #{TestTable.username},
+        #{TestTable.password},
+        #{TestTable.createtime}
+        )
+        RETURNING ID
+    </insert>
+
+    <update id="updateTestTable">
+        UPDATE "test_table"
+        <set>
+            <if test="{TestTable.username} != nil"> "username" = #{TestTable.username} </if>
+            <if test="{TestTable.password} != nil"> "password" = #{TestTable.password} </if>
+            <if test="{TestTable.createtime} != nil"> "createtime" = #{TestTable.createtime} </if>
+        </set>
+        WHERE "id" = #{TestTable.id}
+    </update>
+
+    <delete id="deleteTestTable">
+        DELETE FROM "test_table"
+        <where>
+            <if test="{TestTable.id} != nil and {TestTable.id} != 0">AND "id" = #{TestTable.id} </if>
+            <if test="{TestTable.username} != nil">AND "username" = #{TestTable.username} </if>
+            <if test="{TestTable.password} != nil">AND "password" = #{TestTable.password} </if>
+            <if test="{TestTable.createtime} != nil">AND "createtime" = #{TestTable.createtime} </if>
+        </where>
+    </delete>
+</mapper>

@@ -1,0 +1,23 @@
+{{define "selectTestTable"}}
+SELECT "id","username","password","createtime" FROM "test_table"
+{{where (ne .Id 0) "AND" "id" .Id "" | where (ne .Username "") "AND" "username" .Username | where (ne .Password "") "AND" "password" .Password | where (ne .Createtime ) "AND" "createtime" .Createtime}}
+{{end}}
+
+{{define "insertTestTable"}}
+INSERT INTO "test_table"("id","username","password","createtime")
+VALUES(
+{{.Id}}, '{{.Username}}', '{{.Password}}', {{.Createtime}})
+RETURNING ID
+{{end}}
+
+{{define "updateTestTable"}}
+UPDATE "test_table"
+{{set (ne .Id 0) "id" .Id "" | set (ne .Username "") "username" .Username | set (ne .Password "") "password" .Password | set (ne .Createtime ) "createtime" .Createtime}}
+{{where (ne .Id 0) "AND" "id" .Id ""}}
+{{end}}
+
+{{define "deleteTestTable"}}
+DELETE FROM "test_table"
+{{where (ne .Id 0) "AND" "id" .Id "" | where (ne .Username "") "AND" "username" .Username | where (ne .Password "") "AND" "password" .Password | where (ne .Createtime ) "AND" "createtime" .Createtime}}
+{{end}}
+
