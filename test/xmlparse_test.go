@@ -396,12 +396,11 @@ func TestXmlDynamicForeach(t *testing.T) {
 }
 
 func TestXmlDynamicForeach2(t *testing.T) {
-	src := `INSERT INTO TEST_TABLE(id, username, password) VALUES(
+	src := `INSERT INTO TEST_TABLE(id, username, password) VALUES
         <foreach item="item" index="index" collection="{0}"
             open="(" separator="," close=")">
             #{item}
         </foreach>
-		)
 `
 	logging.SetLevel(logging.DEBUG)
 	m, err := xml.ParseDynamic(src, nil)
@@ -422,12 +421,11 @@ func TestXmlDynamicForeach2(t *testing.T) {
 }
 
 func TestXmlDynamicForeach3(t *testing.T) {
-	src := `INSERT INTO TEST_TABLE(id, username, password) VALUES(
+	src := `INSERT INTO TEST_TABLE(id, username, password) VALUES
         <foreach item="item" index="index" collection="{0}"
             open="" separator="," close="">
             (#{item.testParseStruct.Username}, #{item.testParseStruct.Password})
         </foreach>
-		)
 `
 	logging.SetLevel(logging.DEBUG)
 	m, err := xml.ParseDynamic(src, nil)

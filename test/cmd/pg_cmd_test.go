@@ -62,6 +62,16 @@ func TestInsert(t *testing.T) {
 	t.Logf("insert ret is %d, id is %d", ret, id)
 }
 
+func TestInsertBatch(t *testing.T) {
+	ret, id, err := InsertBatchTestTable(sessionMgr.NewSession(), []TestTable{
+		{Username: "test_insert_user4", Password: "test_pw4"},
+	})
+	if err != nil {
+		t.Log(err)
+	}
+	t.Logf("insert ret is %d, id is %d", ret, id)
+}
+
 func TestUpdate(t *testing.T) {
 	ret, err := UpdateTestTable(sessionMgr.NewSession(), TestTable{Id: 1, Username: "test_insert_user", Password: "update_pw"})
 	if err != nil {
