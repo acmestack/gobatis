@@ -152,6 +152,22 @@ func TestParser2(t *testing.T) {
 		t.Log(md)
 	})
 
+	t.Run("insertBatch", func(t *testing.T) {
+		p, ok := gobatis.FindTemplateSqlParser("insertBatchTestTable")
+		if !ok {
+			t.Fatal(ok)
+		}
+		md, err := p.ParseMetadata("mysql",[]TestTable{
+			{Id: 11, UserName: "user11", Password: "pw11"},
+			{Id: 12, UserName: "user12", Password: "pw12"},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		t.Log(md)
+	})
+
 	t.Run("update", func(t *testing.T) {
 		p, ok := gobatis.FindTemplateSqlParser("updateTestTable")
 		if !ok {

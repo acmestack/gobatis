@@ -30,6 +30,18 @@ func TestSessionTpl(t *testing.T) {
 		t.Log(ret)
 	})
 
+	t.Run("insertBatch", func(t *testing.T) {
+		mgr := gobatis.NewSessionManager(connect())
+		sess := mgr.NewSession()
+		var ret int
+		err := sess.Insert("insertBatchTestTable").Param([]TestTable{
+			{Id: 13, Username: "user13", Password: "pw13"},
+			{Id: 14, Username: "user14", Password: "pw14"},
+		}).Result(&ret)
+		t.Log(err)
+		t.Log(ret)
+	})
+
 	t.Run("update", func(t *testing.T) {
 		mgr := gobatis.NewSessionManager(connect())
 		sess := mgr.NewSession()

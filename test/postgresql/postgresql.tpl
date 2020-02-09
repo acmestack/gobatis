@@ -14,6 +14,14 @@ INSERT INTO test_table ({{$COLUMNS}})
   )
 {{end}}
 
+{{define "insertBatchTestTable"}}
+{{$size := len . | add -1}}
+INSERT INTO "test_table"("id","username","password")
+VALUES {{range $i, $v := .}}
+({{$v.Id}}, '{{$v.Username}}', '{{$v.Password}}'){{if lt $i $size}},{{end}}
+{{end}}
+{{end}}
+
 {{define "updateTestTable"}}
 UPDATE test_table
 {{set (ne .Username "") "username" .Username "" | set (ne .Password "") "password" .Password}}

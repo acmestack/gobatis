@@ -19,6 +19,10 @@ func dummyWhere(b bool, cond, column string, value interface{}, origin string) s
 	return origin
 }
 
+func commonAdd(a, b int) int {
+	return a + b
+}
+
 func mysqlUpdateSet(b bool, column string, value interface{}, origin string) string {
 	if !b {
 		return origin
@@ -138,16 +142,19 @@ func postgresWhere(b bool, cond, column string, value interface{}, origin string
 var mysqlFuncMap = template.FuncMap{
 	"set":   mysqlUpdateSet,
 	"where": mysqlWhere,
+	"add":   commonAdd,
 }
 
 var postgresFuncMap = template.FuncMap{
 	"set":   postgresUpdateSet,
 	"where": postgresWhere,
+	"add":   commonAdd,
 }
 
 var dummyFuncMap = template.FuncMap{
 	"set":   dummyUpdateSet,
 	"where": dummyWhere,
+	"add":   commonAdd,
 }
 
 var funcMap = map[string]template.FuncMap{
