@@ -93,7 +93,7 @@ func TestParser(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		t.Log(md.PrepareSql)
+		t.Log(md)
 	})
 
 	t.Run("insert", func(t *testing.T) {
@@ -102,7 +102,19 @@ func TestParser(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		t.Log(md.PrepareSql)
+		t.Log(md)
+	})
+
+	t.Run("insertBatch", func(t *testing.T) {
+		tmp, _ := mgr.FindSqlParser("insertBatchTestTable")
+		md, err := tmp.ParseMetadata(driverName, []TestTable{
+			{Id: 1, UserName: "user1", Password: "pw1"},
+			{Id: 2, UserName: "user2", Password: "pw2"},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(md)
 	})
 
 	t.Run("update", func(t *testing.T) {
@@ -111,7 +123,7 @@ func TestParser(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		t.Log(md.PrepareSql)
+		t.Log(md)
 	})
 
 	t.Run("delete", func(t *testing.T) {
@@ -120,7 +132,7 @@ func TestParser(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		t.Log(md.PrepareSql)
+		t.Log(md)
 	})
 }
 

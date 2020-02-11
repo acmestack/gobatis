@@ -1,7 +1,7 @@
 {{define "selectTestTable"}}
 {{$COLUMNS := "`id`, `username`, `password`"}}
 SELECT {{$COLUMNS}} FROM `TEST_TABLE`
-{{where (ne .UserName "") "AND" "username" .UserName "" | where (ne .Password "pw") "AND" "password" .Password | where (ne .Status -1) "AND" "status" .Status }}
+{{where (ne .UserName "") "AND" "username" (arg .UserName) "" | where (ne .Password "pw") "AND" "password" (arg .Password) | where (ne .Status -1) "AND" "status" (arg .Status) }}
 {{end}}
 
 {{define "insertTestTable"}}
@@ -18,7 +18,7 @@ INSERT INTO `TEST_TABLE` ({{$COLUMNS}})
 {{$size := len . | add -1}}
 INSERT INTO test_table ({{$COLUMNS}})
   VALUES {{range $i, $v := .}}
-  ({{$v.Id}}, '{{$v.UserName}}', '{{$v.Password}}'){{if lt $i $size}},{{end}}
+  ({{arg $v.Id}}, {{arg $v.UserName}}, {{arg $v.Password}}){{if lt $i $size}},{{end}}
   {{end}}
 {{end}}
 

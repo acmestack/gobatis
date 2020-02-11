@@ -25,8 +25,8 @@ func (p *Parser) ParseMetadata(driverName string, params ...interface{}) (*sqlpa
 	if len(params) > 0 {
 		param = params[0]
 	}
-	fm := selectFuncMap(driverName)
-	tpl := p.tpl.Funcs(fm)
+	dynamic := selectDynamic(driverName)
+	tpl := p.tpl.Funcs(dynamic.getFuncMap())
 	err := tpl.Execute(&b, param)
 	if err != nil {
 		return nil, err
@@ -37,8 +37,7 @@ func (p *Parser) ParseMetadata(driverName string, params ...interface{}) (*sqlpa
 	action := sql[:6]
 	action = strings.ToLower(action)
 	ret.Action = action
-	ret.PrepareSql = sql
-	ret.Params = nil
+	ret.PrepareSql, ret.Params = dynamic.format(sql)
 
 	return ret, nil
 }

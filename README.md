@@ -284,7 +284,17 @@ DELETE FROM test_table
 {{where (ne .Id 0) "AND" "id" .Id "" | where (ne .Username "") "AND" "username" .Username | where (ne .Password "") "AND" "password" .Password}}
 {{end}}
 ```
-其中where和set是gobatis的自定义函数，用于智能的生成动态sql
+其中where、set、arg是gobatis的自定义函数，用于智能生成动态sql
+
+arg用于将对象动态转换为占位符，并保存为SQL参数，如:
+```cassandraql
+SELECT * FROM TABLENAME WHERE name = {{arg .Name}}
+```
+以mysql为例，将解析为：
+```cassandraql
+SELECT * FROM TABLENAME WHERE name = ? 
+```
+同时Name的值将自动保存为SQL参数，自动传入，起到类似xml中#{MODEL.Name}的效果。
 
 ### 9、gobatis-cmd生成文件使用示例
 
