@@ -1,7 +1,7 @@
 {{define "selectTestTable"}}
 {{$COLUMNS := "`id`, `username`, `password`"}}
 SELECT {{$COLUMNS}} FROM `TEST_TABLE`
-{{where (ne .UserName "") "AND" "username" (arg .UserName) "" | where (ne .Password "pw") "AND" "password" (arg .Password) | where (ne .Status -1) "AND" "status" (arg .Status) }}
+{{where (ne .UserName "") "AND" "username" (arg .UserName) "" | where (ne .Password "pw") "AND" "password" (arg .Password) | where (ne .Status -1) "AND" "status" (arg .Status) | where .Time "AND" "time" (arg .Time) }}
 {{end}}
 
 {{define "insertTestTable"}}

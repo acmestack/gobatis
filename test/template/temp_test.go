@@ -11,6 +11,7 @@ import (
 	"os"
 	"testing"
 	"text/template"
+	"time"
 )
 
 type TestTable struct {
@@ -18,6 +19,7 @@ type TestTable struct {
 	UserName string
 	Password string
 	Status   int
+	Time     time.Time
 }
 
 var driverName = "mysql"
@@ -86,7 +88,7 @@ func TestTemplate(t *testing.T) {
 func TestParser(t *testing.T) {
 	mgr := tmp2.NewManager()
 	mgr.RegisterFile("./sql.tpl")
-	var param = TestTable{Id: 1, UserName: "user", Password: "pw"}
+	var param = TestTable{Id: 1, UserName: "user", Password: "pw", Time: time.Now()}
 	t.Run("select", func(t *testing.T) {
 		tmp, _ := mgr.FindSqlParser("selectTestTable")
 		md, err := tmp.ParseMetadata(driverName, param)
@@ -169,7 +171,7 @@ func TestParser2(t *testing.T) {
 		if !ok {
 			t.Fatal(ok)
 		}
-		md, err := p.ParseMetadata("mysql",[]TestTable{
+		md, err := p.ParseMetadata("mysql", []TestTable{
 			{Id: 11, UserName: "user11", Password: "pw11"},
 			{Id: 12, UserName: "user12", Password: "pw12"},
 		})

@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+	"time"
 )
 
 const (
@@ -23,16 +24,20 @@ type Dynamic interface {
 	format(string) (string, []interface{})
 }
 
-func dummyUpdateSet(b bool, column string, value interface{}, origin string) string {
+func dummyUpdateSet(b interface{}, column string, value interface{}, origin string) string {
 	return origin
 }
 
-func dummyWhere(b bool, cond, column string, value interface{}, origin string) string {
+func dummyWhere(b interface{}, cond, column string, value interface{}, origin string) string {
 	return origin
 }
 
 func dummyParam(p interface{}) string {
 	return fmt.Sprint(p)
+}
+
+func dummyNil(p interface{}) bool {
+	return true
 }
 
 func commonAdd(a, b int) int {
@@ -44,8 +49,9 @@ type DummyDynamic struct{}
 var dummyFuncMap = template.FuncMap{
 	"set":   dummyUpdateSet,
 	"where": dummyWhere,
-	"add":   commonAdd,
 	"arg":   dummyParam,
+
+	"add": commonAdd,
 }
 
 var gDummyDynamic = &DummyDynamic{}
@@ -72,8 +78,9 @@ func (d *MysqlDynamic) getFuncMap() template.FuncMap {
 	return template.FuncMap{
 		"set":   d.mysqlUpdateSet,
 		"where": d.mysqlWhere,
-		"add":   commonAdd,
 		"arg":   d.Param,
+
+		"add": commonAdd,
 	}
 }
 
@@ -81,8 +88,8 @@ func (d *MysqlDynamic) getParam() []interface{} {
 	return nil
 }
 
-func (d *MysqlDynamic) mysqlUpdateSet(b bool, column string, value interface{}, origin string) string {
-	if !b {
+func (d *MysqlDynamic) mysqlUpdateSet(b interface{}, column string, value interface{}, origin string) string {
+	if !IsTrue(b) {
 		return origin
 	}
 
@@ -113,8 +120,8 @@ func (d *MysqlDynamic) mysqlUpdateSet(b bool, column string, value interface{}, 
 	return buf.String()
 }
 
-func (d *MysqlDynamic) mysqlWhere(b bool, cond, column string, value interface{}, origin string) string {
-	if !b {
+func (d *MysqlDynamic) mysqlWhere(b interface{}, cond, column string, value interface{}, origin string) string {
+	if !IsTrue(b) {
 		return origin
 	}
 
@@ -176,13 +183,14 @@ func (d *PostgresDynamic) getFuncMap() template.FuncMap {
 	return template.FuncMap{
 		"set":   d.postgresUpdateSet,
 		"where": d.postgresWhere,
-		"add":   commonAdd,
 		"arg":   d.Param,
+
+		"add": commonAdd,
 	}
 }
 
-func (d *PostgresDynamic) postgresUpdateSet(b bool, column string, value interface{}, origin string) string {
-	if !b {
+func (d *PostgresDynamic) postgresUpdateSet(b interface{}, column string, value interface{}, origin string) string {
+	if !IsTrue(b) {
 		return origin
 	}
 
@@ -214,8 +222,8 @@ func (d *PostgresDynamic) postgresUpdateSet(b bool, column string, value interfa
 	return buf.String()
 }
 
-func (d *PostgresDynamic) postgresWhere(b bool, cond, column string, value interface{}, origin string) string {
-	if !b {
+func (d *PostgresDynamic) postgresWhere(b interface{}, cond, column string, value interface{}, origin string) string {
+	if !IsTrue(b) {
 		return origin
 	}
 
@@ -325,4 +333,18 @@ func replace(s, old, new string, n int) (string, int) {
 	}
 	w += copy(t[w:], s[start:])
 	return string(t[0:w]), count
+}
+
+func IsTrue(i interface{}) bool {
+	t, _ := template.IsTrue(i)
+	if !t {
+		return t
+	}
+
+	if ti, ok := i.(time.Time); ok {
+		if ti.IsZero() {
+			return false
+		}
+	}
+	return t
 }
