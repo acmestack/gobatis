@@ -151,7 +151,7 @@ func (d *MysqlDynamic) mysqlWhere(b interface{}, cond, columnDesc string, value 
 
 func (d *MysqlDynamic) Param(p interface{}) string {
 	d.index++
-	key := argPlaceHolder + strconv.Itoa(d.index)
+	key := getPlaceHolderKey(d.index)
 	d.paramMap[key] = p
 	d.keys = append(d.keys, key)
 	return key
@@ -252,7 +252,7 @@ func (d *PostgresDynamic) getParam() []interface{} {
 
 func (d *PostgresDynamic) Param(p interface{}) string {
 	d.index++
-	key := argPlaceHolder + strconv.Itoa(d.index)
+	key := getPlaceHolderKey(d.index)
 	d.paramMap[key] = p
 	d.keys = append(d.keys, key)
 	return key
@@ -337,4 +337,8 @@ func IsTrue(i interface{}) bool {
 		}
 	}
 	return t
+}
+
+func getPlaceHolderKey(index int) string {
+	return fmt.Sprintf("%s%06d", argPlaceHolder, index)
 }
