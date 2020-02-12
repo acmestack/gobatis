@@ -138,7 +138,7 @@ func ParseWithParamMap(driverName, sql string, params map[string]interface{}) (*
 	firstIndex, lastIndex := -1, -1
 	var c string
 	var index int = 0
-	holder := selectHolder(driverName)
+	holder := SelectMarker(driverName)
 
 	for {
 		firstIndex = strings.Index(subStr, "{")
@@ -180,31 +180,42 @@ func ParseWithParamMap(driverName, sql string, params map[string]interface{}) (*
 	return &ret, nil
 }
 
-type holder func(int) string
+type Holder func(int) string
 
-var gHolderMap = map[string]holder{
-	"mysql": mysqlHolder, //mysql
-	"postgres": postgresHolder, //postgresql
-	"oci8": oci8Holder, //oracle
-	"adodb": mysqlHolder, //sqlserver
+var gHolderMap = map[string]Holder{
+	"mysql":    MysqlMarker,    //mysql
+	"postgres": PostgresMarker, //postgresql
+	"oci8":     Oci8Marker,     //oracle
+	"adodb":    MysqlMarker,    //sqlserver
 }
 
-func selectHolder(driverName string) holder {
-	if v, ok := gHolderMap[driverName]; ok {
+func RegisterParamMarker(driverName string, h Holder) bool {
+	_, ok := GetMarker(driverName)
+	gHolderMap[driverName] = h
+	return ok
+}
+
+func SelectMarker(driverName string) Holder {
+	if v, ok := GetMarker(driverName); ok {
 		return v
 	}
-	return mysqlHolder
+	return MysqlMarker
 }
 
-func mysqlHolder(int) string {
+func GetMarker(driverName string) (Holder, bool) {
+	v, ok := gHolderMap[driverName]
+	return v, ok
+}
+
+func MysqlMarker(int) string {
 	return "?"
 }
 
-func postgresHolder(i int) string {
+func PostgresMarker(i int) string {
 	return "$" + strconv.Itoa(i)
 }
 
-func oci8Holder(i int) string {
+func Oci8Marker(i int) string {
 	return ":" + strconv.Itoa(i)
 }
 

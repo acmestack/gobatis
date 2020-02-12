@@ -7,21 +7,20 @@ package template
 
 import (
 	"fmt"
-	"strconv"
+	"github.com/xfali/gobatis/parsing/sqlparser"
 	"strings"
 	"text/template"
 	"time"
 )
 
 const (
-	argPlaceHolder    = "_xfali_Arg_Holder"
-	argPlaceHolderLen = 17
+	argPlaceHolder       = "_xfali_Arg_Holder"
+	argPlaceHolderLen    = 17
 	argPlaceHolderFormat = "%s%08d"
 )
 
 type Dynamic interface {
 	getFuncMap() template.FuncMap
-	getParam() []interface{}
 	format(string) (string, []interface{})
 }
 
@@ -71,217 +70,14 @@ func (d *DummyDynamic) format(s string) (string, []interface{}) {
 	return s, nil
 }
 
-type MysqlDynamic struct {
-	index    int
-	keys     []string
-	paramMap map[string]interface{}
-}
-
-func (d *MysqlDynamic) getFuncMap() template.FuncMap {
-	return template.FuncMap{
-		"set":   d.mysqlUpdateSet,
-		"where": d.mysqlWhere,
-		"arg":   d.Param,
-
-		"add": commonAdd,
-	}
-}
-
-func (d *MysqlDynamic) getParam() []interface{} {
-	return nil
-}
-
-func (d *MysqlDynamic) mysqlUpdateSet(b interface{}, columnDesc string, value interface{}, origin string) string {
-	if !IsTrue(b) {
-		return origin
-	}
-
-	buf := strings.Builder{}
-	if origin == "" {
-		buf.WriteString(" SET ")
-	} else {
-		origin = strings.TrimSpace(origin)
-		buf.WriteString(origin)
-		if origin[:len(origin)-1] != "," {
-			buf.WriteString(",")
-		}
-	}
-	buf.WriteString(columnDesc)
-	if s, ok := value.(string); ok {
-		if _, ok := d.paramMap[s]; ok {
-			buf.WriteString(s)
-		} else {
-			buf.WriteString(`'`)
-			buf.WriteString(s)
-			buf.WriteString(`'`)
-		}
-	} else {
-		buf.WriteString(fmt.Sprint(value))
-	}
-	return buf.String()
-}
-
-func (d *MysqlDynamic) mysqlWhere(b interface{}, cond, columnDesc string, value interface{}, origin string) string {
-	if !IsTrue(b) {
-		return origin
-	}
-
-	buf := strings.Builder{}
-	if origin == "" {
-		buf.WriteString(" WHERE ")
-		cond = ""
-	} else {
-		buf.WriteString(strings.TrimSpace(origin))
-		buf.WriteString(" ")
-		buf.WriteString(cond)
-		buf.WriteString(" ")
-	}
-
-	buf.WriteString(columnDesc)
-	if s, ok := value.(string); ok {
-		if _, ok := d.paramMap[s]; ok {
-			buf.WriteString(s)
-		} else {
-			buf.WriteString(`'`)
-			buf.WriteString(s)
-			buf.WriteString(`'`)
-		}
-	} else {
-		buf.WriteString(fmt.Sprint(value))
-	}
-	return buf.String()
-}
-
-func (d *MysqlDynamic) Param(p interface{}) string {
-	d.index++
-	key := getPlaceHolderKey(d.index)
-	d.paramMap[key] = p
-	d.keys = append(d.keys, key)
-	return key
-}
-
-func (d *MysqlDynamic) format(s string) (string, []interface{}) {
-	i := 0
-	var params []interface{}
-	for _, k := range d.keys {
-		s, i = replace(s, k, "?", -1)
-		if i > 0 {
-			params = append(params, d.paramMap[k])
-		}
-	}
-	return s, params
-}
-
-type PostgresDynamic struct {
+type CommonDynamic struct {
 	index    int
 	keys     [] string
 	paramMap map[string]interface{}
+	holder   sqlparser.Holder
 }
 
-func (d *PostgresDynamic) getFuncMap() template.FuncMap {
-	return template.FuncMap{
-		"set":   d.postgresUpdateSet,
-		"where": d.postgresWhere,
-		"arg":   d.Param,
-
-		"add": commonAdd,
-	}
-}
-
-func (d *PostgresDynamic) postgresUpdateSet(b interface{}, columnDesc string, value interface{}, origin string) string {
-	if !IsTrue(b) {
-		return origin
-	}
-
-	buf := strings.Builder{}
-	if origin == "" {
-		buf.WriteString(" SET ")
-	} else {
-		origin = strings.TrimSpace(origin)
-		buf.WriteString(origin)
-		if origin[:len(origin)-1] != "," {
-			buf.WriteString(",")
-		}
-	}
-	buf.WriteString(columnDesc)
-	if s, ok := value.(string); ok {
-		if _, ok := d.paramMap[s]; ok {
-			buf.WriteString(s)
-		} else {
-			buf.WriteString(`'`)
-			buf.WriteString(s)
-			buf.WriteString(`'`)
-		}
-	} else {
-		buf.WriteString(fmt.Sprint(value))
-	}
-	return buf.String()
-}
-
-func (d *PostgresDynamic) postgresWhere(b interface{}, cond, columnDesc string, value interface{}, origin string) string {
-	if !IsTrue(b) {
-		return origin
-	}
-
-	buf := strings.Builder{}
-	if origin == "" {
-		buf.WriteString(" WHERE ")
-		cond = ""
-	} else {
-		buf.WriteString(strings.TrimSpace(origin))
-		buf.WriteString(" ")
-		buf.WriteString(cond)
-		buf.WriteString(" ")
-	}
-
-	buf.WriteString(columnDesc)
-	if s, ok := value.(string); ok {
-		if _, ok := d.paramMap[s]; ok {
-			buf.WriteString(s)
-		} else {
-			buf.WriteString(`'`)
-			buf.WriteString(s)
-			buf.WriteString(`'`)
-		}
-	} else {
-		buf.WriteString(fmt.Sprint(value))
-	}
-	return buf.String()
-}
-
-func (d *PostgresDynamic) getParam() []interface{} {
-	return nil
-}
-
-func (d *PostgresDynamic) Param(p interface{}) string {
-	d.index++
-	key := getPlaceHolderKey(d.index)
-	d.paramMap[key] = p
-	d.keys = append(d.keys, key)
-	return key
-}
-
-func (d *PostgresDynamic) format(s string) (string, []interface{}) {
-	i, index := 0, 1
-	var params []interface{}
-	for _, k := range d.keys {
-		s, i = replace(s, k, "$"+strconv.Itoa(index), -1)
-		if i > 0 {
-			params = append(params, d.paramMap[k])
-			index++
-		}
-	}
-	return s, params
-}
-
-//oracle
-type Oci8Dynamic struct {
-	index    int
-	keys     [] string
-	paramMap map[string]interface{}
-}
-
-func (d *Oci8Dynamic) getFuncMap() template.FuncMap {
+func (d *CommonDynamic) getFuncMap() template.FuncMap {
 	return template.FuncMap{
 		"set":   d.UpdateSet,
 		"where": d.Where,
@@ -291,7 +87,7 @@ func (d *Oci8Dynamic) getFuncMap() template.FuncMap {
 	}
 }
 
-func (d *Oci8Dynamic) UpdateSet(b interface{}, columnDesc string, value interface{}, origin string) string {
+func (d *CommonDynamic) UpdateSet(b interface{}, columnDesc string, value interface{}, origin string) string {
 	if !IsTrue(b) {
 		return origin
 	}
@@ -321,7 +117,7 @@ func (d *Oci8Dynamic) UpdateSet(b interface{}, columnDesc string, value interfac
 	return buf.String()
 }
 
-func (d *Oci8Dynamic) Where(b interface{}, cond, columnDesc string, value interface{}, origin string) string {
+func (d *CommonDynamic) Where(b interface{}, cond, columnDesc string, value interface{}, origin string) string {
 	if !IsTrue(b) {
 		return origin
 	}
@@ -352,11 +148,11 @@ func (d *Oci8Dynamic) Where(b interface{}, cond, columnDesc string, value interf
 	return buf.String()
 }
 
-func (d *Oci8Dynamic) getParam() []interface{} {
+func (d *CommonDynamic) getParam() []interface{} {
 	return nil
 }
 
-func (d *Oci8Dynamic) Param(p interface{}) string {
+func (d *CommonDynamic) Param(p interface{}) string {
 	d.index++
 	key := getPlaceHolderKey(d.index)
 	d.paramMap[key] = p
@@ -364,11 +160,11 @@ func (d *Oci8Dynamic) Param(p interface{}) string {
 	return key
 }
 
-func (d *Oci8Dynamic) format(s string) (string, []interface{}) {
+func (d *CommonDynamic) format(s string) (string, []interface{}) {
 	i, index := 0, 1
 	var params []interface{}
 	for _, k := range d.keys {
-		s, i = replace(s, k, ":"+strconv.Itoa(index), -1)
+		s, i = replace(s, k, d.holder(index), -1)
 		if i > 0 {
 			params = append(params, d.paramMap[k])
 			index++
@@ -377,16 +173,14 @@ func (d *Oci8Dynamic) format(s string) (string, []interface{}) {
 	return s, params
 }
 
-var dynamicMap = map[string]Dynamic{
-	"mysql":    &MysqlDynamic{paramMap: map[string]interface{}{}},
-	"adodb":    &MysqlDynamic{paramMap: map[string]interface{}{}},
-	"postgres": &PostgresDynamic{paramMap: map[string]interface{}{}},
-	"oci8":     &MysqlDynamic{paramMap: map[string]interface{}{}},
-}
-
 func selectDynamic(driverName string) Dynamic {
-	if v, ok := dynamicMap[driverName]; ok {
-		return v
+	if h, ok := sqlparser.GetMarker(driverName); ok {
+		return &CommonDynamic{
+			index:    0,
+			keys:     nil,
+			paramMap: map[string]interface{}{},
+			holder:   h,
+		}
 	}
 	return gDummyDynamic
 }
