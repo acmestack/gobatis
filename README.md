@@ -258,41 +258,49 @@ gobatis.RegisterTemplateFile(filePath)
 
 ```
 {{define "selectTestTable"}}
-{{$COLUMNS := "id, username, password"}}
-SELECT {{$COLUMNS}} FROM test_table
-{{where (ne .Username "") "AND" "username" .Username "" | where (ne .Password "pw") "AND" "password" .Password}}
+SELECT "id","username","password","createtime" FROM "test_table"
+{{where .Id "AND" "\"id\" = " (arg .Id) "" | where .Username "AND" "\"username\" = " (arg .Username) | where .Password "AND" "\"password\" = " (arg .Password) | where .Createtime "AND" "\"createtime\" = " (arg .Createtime)}}
+{{end}}
+
+{{define "selectTestTableCount"}}
+SELECT COUNT(*) FROM "test_table"
+{{where .Id "AND" "\"id\" = " (arg .Id) "" | where .Username "AND" "\"username\" = " (arg .Username) | where .Password "AND" "\"password\" = " (arg .Password) | where .Createtime "AND" "\"createtime\" = " (arg .Createtime)}}
 {{end}}
 
 {{define "insertTestTable"}}
-{{$COLUMNS := "id, username, password"}}
-INSERT INTO test_table ({{$COLUMNS}})
-  VALUES(
-  {{.Id}},
-  '{{.Username}}',
-  '{{.Password}}'
-  )
+INSERT INTO "test_table"("id","username","password","createtime")
+VALUES(
+{{arg .Id}}, {{arg .Username}}, {{arg .Password}}, {{arg .Createtime}})
+{{end}}
+
+{{define "insertBatchTestTable"}}
+{{$size := len . | add -1}}
+INSERT INTO "test_table"("username","password","createtime")
+VALUES {{range $i, $v := .}}
+({{arg $v.Username}}, {{arg $v.Password}}, {{arg $v.Createtime}}){{if lt $i $size}},{{end}}
+{{end}}
 {{end}}
 
 {{define "updateTestTable"}}
-UPDATE test_table
-{{set (ne .Username "") "username" .Username "" | set (ne .Password "") "password" .Password}}
-{{where (ne .Id 0) "AND" "id" .Id ""}}
+UPDATE "test_table"
+{{set .Id "\"id\" = " (arg .Id) "" | set .Username "\"username\" = " (arg .Username) | set .Password "\"password\" = " (arg .Password) | set .Createtime "\"createtime\" = " (arg .Createtime)}}
+{{where .Id "AND" "\"id\" = " (arg .Id) ""}}
 {{end}}
 
 {{define "deleteTestTable"}}
-DELETE FROM test_table
-{{where (ne .Id 0) "AND" "id" .Id "" | where (ne .Username "") "AND" "username" .Username | where (ne .Password "") "AND" "password" .Password}}
+DELETE FROM "test_table"
+{{where .Id "AND" "\"id\" = " (arg .Id) "" | where .Username "AND" "\"username\" = " (arg .Username) | where .Password "AND" "\"password\" = " (arg .Password) | where .Createtime "AND" "\"createtime\" = " (arg .Createtime)}}
 {{end}}
 ```
 其中where、set、arg是gobatis的自定义函数，用于智能生成动态sql
 
 arg用于将对象动态转换为占位符，并保存为SQL参数，如:
 ```cassandraql
-SELECT * FROM TABLENAME WHERE name = {{arg .Name}}
+SELECT * FROM TABLE_NAME WHERE name = {{arg .Name}}
 ```
 以mysql为例，将解析为：
 ```cassandraql
-SELECT * FROM TABLENAME WHERE name = ? 
+SELECT * FROM TABLE_NAME WHERE name = ? 
 ```
 同时Name的值将自动保存为SQL参数，自动传入，起到类似xml中#{MODEL.Name}的效果。
 

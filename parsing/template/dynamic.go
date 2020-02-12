@@ -88,7 +88,7 @@ func (d *MysqlDynamic) getParam() []interface{} {
 	return nil
 }
 
-func (d *MysqlDynamic) mysqlUpdateSet(b interface{}, column string, value interface{}, origin string) string {
+func (d *MysqlDynamic) mysqlUpdateSet(b interface{}, columnDesc string, value interface{}, origin string) string {
 	if !IsTrue(b) {
 		return origin
 	}
@@ -103,9 +103,7 @@ func (d *MysqlDynamic) mysqlUpdateSet(b interface{}, column string, value interf
 			buf.WriteString(",")
 		}
 	}
-	buf.WriteString("`")
-	buf.WriteString(column)
-	buf.WriteString("` = ")
+	buf.WriteString(columnDesc)
 	if s, ok := value.(string); ok {
 		if _, ok := d.paramMap[s]; ok {
 			buf.WriteString(s)
@@ -120,7 +118,7 @@ func (d *MysqlDynamic) mysqlUpdateSet(b interface{}, column string, value interf
 	return buf.String()
 }
 
-func (d *MysqlDynamic) mysqlWhere(b interface{}, cond, column string, value interface{}, origin string) string {
+func (d *MysqlDynamic) mysqlWhere(b interface{}, cond, columnDesc string, value interface{}, origin string) string {
 	if !IsTrue(b) {
 		return origin
 	}
@@ -136,9 +134,7 @@ func (d *MysqlDynamic) mysqlWhere(b interface{}, cond, column string, value inte
 		buf.WriteString(" ")
 	}
 
-	buf.WriteString("`")
-	buf.WriteString(column)
-	buf.WriteString("` = ")
+	buf.WriteString(columnDesc)
 	if s, ok := value.(string); ok {
 		if _, ok := d.paramMap[s]; ok {
 			buf.WriteString(s)
@@ -189,7 +185,7 @@ func (d *PostgresDynamic) getFuncMap() template.FuncMap {
 	}
 }
 
-func (d *PostgresDynamic) postgresUpdateSet(b interface{}, column string, value interface{}, origin string) string {
+func (d *PostgresDynamic) postgresUpdateSet(b interface{}, columnDesc string, value interface{}, origin string) string {
 	if !IsTrue(b) {
 		return origin
 	}
@@ -204,10 +200,7 @@ func (d *PostgresDynamic) postgresUpdateSet(b interface{}, column string, value 
 			buf.WriteString(",")
 		}
 	}
-	buf.WriteString(`"`)
-	buf.WriteString(column)
-	buf.WriteString(`"`)
-	buf.WriteString(" = ")
+	buf.WriteString(columnDesc)
 	if s, ok := value.(string); ok {
 		if _, ok := d.paramMap[s]; ok {
 			buf.WriteString(s)
@@ -222,7 +215,7 @@ func (d *PostgresDynamic) postgresUpdateSet(b interface{}, column string, value 
 	return buf.String()
 }
 
-func (d *PostgresDynamic) postgresWhere(b interface{}, cond, column string, value interface{}, origin string) string {
+func (d *PostgresDynamic) postgresWhere(b interface{}, cond, columnDesc string, value interface{}, origin string) string {
 	if !IsTrue(b) {
 		return origin
 	}
@@ -238,10 +231,7 @@ func (d *PostgresDynamic) postgresWhere(b interface{}, cond, column string, valu
 		buf.WriteString(" ")
 	}
 
-	buf.WriteString(`"`)
-	buf.WriteString(column)
-	buf.WriteString(`"`)
-	buf.WriteString(" = ")
+	buf.WriteString(columnDesc)
 	if s, ok := value.(string); ok {
 		if _, ok := d.paramMap[s]; ok {
 			buf.WriteString(s)

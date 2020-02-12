@@ -65,6 +65,7 @@ func TestInsert(t *testing.T) {
 func TestInsertBatch(t *testing.T) {
 	ret, id, err := InsertBatchTestTable(sessionMgr.NewSession(), []TestTable{
 		{Username: "test_insert_user4", Password: "test_pw4"},
+		{Username: "test_insert_user5", Password: "test_pw5"},
 	})
 	if err != nil {
 		t.Log(err)
@@ -95,7 +96,14 @@ func TestSessionTpl(t *testing.T) {
 	t.Run("select", func(t *testing.T) {
 		sess := sessionMgr.NewSession()
 		var ret []TestTable
-		sess.Select("selectTestTable").Param(TestTable{}).Result(&ret)
+		sess.Select("selectTestTable").Param(TestTable{Id: 1}).Result(&ret)
+		t.Log(ret)
+	})
+
+	t.Run("count", func(t *testing.T) {
+		sess := sessionMgr.NewSession()
+		var ret int
+		sess.Select("selectTestTableCount").Param(TestTable{}).Result(&ret)
 		t.Log(ret)
 	})
 
@@ -103,6 +111,17 @@ func TestSessionTpl(t *testing.T) {
 		sess := sessionMgr.NewSession()
 		var ret int
 		err := sess.Insert("insertTestTable").Param(param).Result(&ret)
+		t.Log(err)
+		t.Log(ret)
+	})
+
+	t.Run("insertBatch", func(t *testing.T) {
+		sess := sessionMgr.NewSession()
+		var ret int
+		err := sess.Insert("insertBatchTestTable").Param([]TestTable{
+			{Username: "test_insert_user14", Password: "test_pw14"},
+			{Username: "test_insert_user15", Password: "test_pw15"},
+		}).Result(&ret)
 		t.Log(err)
 		t.Log(ret)
 	})
