@@ -16,6 +16,7 @@ import (
 const (
 	argPlaceHolder    = "_xfali_Arg_Holder"
 	argPlaceHolderLen = 17
+	argPlaceHolderFormat = "%s%08d"
 )
 
 type Dynamic interface {
@@ -23,6 +24,8 @@ type Dynamic interface {
 	getParam() []interface{}
 	format(string) (string, []interface{})
 }
+
+var ArgPlaceHolderFormat = argPlaceHolderFormat
 
 func dummyUpdateSet(b interface{}, column string, value interface{}, origin string) string {
 	return origin
@@ -271,9 +274,114 @@ func (d *PostgresDynamic) format(s string) (string, []interface{}) {
 	return s, params
 }
 
+//oracle
+type Oci8Dynamic struct {
+	index    int
+	keys     [] string
+	paramMap map[string]interface{}
+}
+
+func (d *Oci8Dynamic) getFuncMap() template.FuncMap {
+	return template.FuncMap{
+		"set":   d.UpdateSet,
+		"where": d.Where,
+		"arg":   d.Param,
+
+		"add": commonAdd,
+	}
+}
+
+func (d *Oci8Dynamic) UpdateSet(b interface{}, columnDesc string, value interface{}, origin string) string {
+	if !IsTrue(b) {
+		return origin
+	}
+
+	buf := strings.Builder{}
+	if origin == "" {
+		buf.WriteString(" SET ")
+	} else {
+		origin = strings.TrimSpace(origin)
+		buf.WriteString(origin)
+		if origin[:len(origin)-1] != "," {
+			buf.WriteString(",")
+		}
+	}
+	buf.WriteString(columnDesc)
+	if s, ok := value.(string); ok {
+		if _, ok := d.paramMap[s]; ok {
+			buf.WriteString(s)
+		} else {
+			buf.WriteString(`'`)
+			buf.WriteString(s)
+			buf.WriteString(`'`)
+		}
+	} else {
+		buf.WriteString(fmt.Sprint(value))
+	}
+	return buf.String()
+}
+
+func (d *Oci8Dynamic) Where(b interface{}, cond, columnDesc string, value interface{}, origin string) string {
+	if !IsTrue(b) {
+		return origin
+	}
+
+	buf := strings.Builder{}
+	if origin == "" {
+		buf.WriteString(" WHERE ")
+		cond = ""
+	} else {
+		buf.WriteString(strings.TrimSpace(origin))
+		buf.WriteString(" ")
+		buf.WriteString(cond)
+		buf.WriteString(" ")
+	}
+
+	buf.WriteString(columnDesc)
+	if s, ok := value.(string); ok {
+		if _, ok := d.paramMap[s]; ok {
+			buf.WriteString(s)
+		} else {
+			buf.WriteString(`'`)
+			buf.WriteString(s)
+			buf.WriteString(`'`)
+		}
+	} else {
+		buf.WriteString(fmt.Sprint(value))
+	}
+	return buf.String()
+}
+
+func (d *Oci8Dynamic) getParam() []interface{} {
+	return nil
+}
+
+func (d *Oci8Dynamic) Param(p interface{}) string {
+	d.index++
+	key := getPlaceHolderKey(d.index)
+	d.paramMap[key] = p
+	d.keys = append(d.keys, key)
+	return key
+}
+
+func (d *Oci8Dynamic) format(s string) (string, []interface{}) {
+	i, index := 0, 1
+	var params []interface{}
+	for _, k := range d.keys {
+		s, i = replace(s, k, ":"+strconv.Itoa(index), -1)
+		if i > 0 {
+			params = append(params, d.paramMap[k])
+			index++
+		}
+	}
+	return s, params
+}
+
 var dynamicMap = map[string]Dynamic{
 	"mysql":    &MysqlDynamic{paramMap: map[string]interface{}{}},
+	"adodb":    &MysqlDynamic{paramMap: map[string]interface{}{}},
 	"postgres": &PostgresDynamic{paramMap: map[string]interface{}{}},
+	"oci8":     &MysqlDynamic{paramMap: map[string]interface{}{}},
 }
 
 func selectDynamic(driverName string) Dynamic {
@@ -340,5 +448,5 @@ func IsTrue(i interface{}) bool {
 }
 
 func getPlaceHolderKey(index int) string {
-	return fmt.Sprintf("%s%06d", argPlaceHolder, index)
+	return fmt.Sprintf(ArgPlaceHolderFormat, argPlaceHolder, index)
 }

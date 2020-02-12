@@ -183,8 +183,10 @@ func ParseWithParamMap(driverName, sql string, params map[string]interface{}) (*
 type holder func(int) string
 
 var gHolderMap = map[string]holder{
-	"mysql":    mysqlHolder,
-	"postgres": postgresHolder,
+	"mysql": mysqlHolder, //mysql
+	"postgres": postgresHolder, //postgresql
+	"oci8": oci8Holder, //oracle
+	"adodb": mysqlHolder, //sqlserver
 }
 
 func selectHolder(driverName string) holder {
@@ -200,6 +202,10 @@ func mysqlHolder(int) string {
 
 func postgresHolder(i int) string {
 	return "$" + strconv.Itoa(i)
+}
+
+func oci8Holder(i int) string {
+	return ":" + strconv.Itoa(i)
 }
 
 func interface2String(i interface{}) string {
