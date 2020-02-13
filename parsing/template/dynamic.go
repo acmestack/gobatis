@@ -17,6 +17,11 @@ const (
 	argPlaceHolder       = "_xfali_Arg_Holder"
 	argPlaceHolderLen    = 17
 	argPlaceHolderFormat = "%s%08d"
+
+	FuncNameSet   = "set"
+	FuncNameWhere = "where"
+	FuncNameArg   = "arg"
+	FuncNameAdd   = "add"
 )
 
 type Dynamic interface {
@@ -34,8 +39,9 @@ func dummyWhere(b interface{}, cond, column string, value interface{}, origin st
 	return origin
 }
 
+//return as fast as possible
 func dummyParam(p interface{}) string {
-	return fmt.Sprint(p)
+	return ""
 }
 
 func dummyNil(p interface{}) bool {
@@ -49,11 +55,11 @@ func commonAdd(a, b int) int {
 type DummyDynamic struct{}
 
 var dummyFuncMap = template.FuncMap{
-	"set":   dummyUpdateSet,
-	"where": dummyWhere,
-	"arg":   dummyParam,
+	FuncNameSet:   dummyUpdateSet,
+	FuncNameWhere: dummyWhere,
+	FuncNameArg:   dummyParam,
 
-	"add": commonAdd,
+	FuncNameAdd: commonAdd,
 }
 
 var gDummyDynamic = &DummyDynamic{}
@@ -79,11 +85,11 @@ type CommonDynamic struct {
 
 func (d *CommonDynamic) getFuncMap() template.FuncMap {
 	return template.FuncMap{
-		"set":   d.UpdateSet,
-		"where": d.Where,
-		"arg":   d.Param,
+		FuncNameSet:   d.UpdateSet,
+		FuncNameWhere: d.Where,
+		FuncNameArg:   d.Param,
 
-		"add": commonAdd,
+		FuncNameAdd: commonAdd,
 	}
 }
 

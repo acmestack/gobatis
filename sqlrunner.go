@@ -19,11 +19,15 @@ import (
 )
 
 type SessionManager struct {
-	factory factory.Factory
+	factory       factory.Factory
+	ParserFactory ParserFactory
 }
 
 func NewSessionManager(factory factory.Factory) *SessionManager {
-	return &SessionManager{factory: factory}
+	return &SessionManager{
+		factory:       factory,
+		ParserFactory: DynamicParserFactory,
+	}
 }
 
 type Runner interface {
@@ -41,10 +45,11 @@ type Runner interface {
 }
 
 type Session struct {
-	ctx     context.Context
-	log     logging.LogFunc
-	session session.SqlSession
-	driver  string
+	ctx           context.Context
+	log           logging.LogFunc
+	session       session.SqlSession
+	driver        string
+	ParserFactory ParserFactory
 }
 
 type BaseRunner struct {
@@ -79,11 +84,17 @@ type DeleteRunner struct {
 //使用一个session操作数据库
 func (this *SessionManager) NewSession() *Session {
 	return &Session{
-		ctx:     context.Background(),
-		log:     this.factory.LogFunc(),
-		session: this.factory.CreateSession(),
-		driver:  this.factory.GetDataSource().DriverName(),
+		ctx:           context.Background(),
+		log:           this.factory.LogFunc(),
+		session:       this.factory.CreateSession(),
+		driver:        this.factory.GetDataSource().DriverName(),
+		ParserFactory: this.ParserFactory,
 	}
+}
+
+//修改sql解析器创建者
+func (this *SessionManager) SetParserFactory(fac ParserFactory) {
+	this.ParserFactory = fac
 }
 
 func (this *Session) SetContext(ctx context.Context) *Session {
@@ -93,6 +104,11 @@ func (this *Session) SetContext(ctx context.Context) *Session {
 
 func (this *Session) GetContext() context.Context {
 	return this.ctx
+}
+
+//修改sql解析器创建者
+func (this *Session) SetParserFactory(fac ParserFactory) {
+	this.ParserFactory = fac
 }
 
 //开启事务执行语句
@@ -115,19 +131,19 @@ func (this *Session) Tx(txFunc func(session *Session) error) {
 }
 
 func (this *Session) Select(sql string) Runner {
-	return this.createSelect(FindSqlParser(sql))
+	return this.createSelect(this.findSqlParser(sql))
 }
 
 func (this *Session) Update(sql string) Runner {
-	return this.createUpdate(FindSqlParser(sql))
+	return this.createUpdate(this.findSqlParser(sql))
 }
 
 func (this *Session) Delete(sql string) Runner {
-	return this.createDelete(FindSqlParser(sql))
+	return this.createDelete(this.findSqlParser(sql))
 }
 
 func (this *Session) Insert(sql string) Runner {
-	return this.createInsert(FindSqlParser(sql))
+	return this.createInsert(this.findSqlParser(sql))
 }
 
 func (this *BaseRunner) Param(params ...interface{}) Runner {
@@ -143,6 +159,11 @@ func (this *BaseRunner) Param(params ...interface{}) Runner {
 	//    }
 	//}
 
+	if this.sqlParser == nil {
+		this.log(logging.WARN, errors.PARSE_PARSER_NIL_ERROR.Error())
+		return this
+	}
+
 	md, err := this.sqlParser.ParseMetadata(this.driver, params...)
 
 	if err == nil {
@@ -152,7 +173,7 @@ func (this *BaseRunner) Param(params ...interface{}) Runner {
 			this.log(logging.WARN, "sql action not match expect %s get %s", this.action, md.Action)
 		}
 	} else {
-		this.log(logging.WARN, "%s", err.Error())
+		this.log(logging.WARN, err.Error())
 	}
 	return this.this
 }
@@ -232,7 +253,7 @@ func (this *BaseRunner) LastInsertId() int64 {
 	return -1
 }
 
-func (this *Session)createSelect(parser sqlparser.SqlParser) Runner {
+func (this *Session) createSelect(parser sqlparser.SqlParser) Runner {
 	ret := &SelectRunner{}
 	ret.action = sqlparser.SELECT
 	ret.log = this.log
@@ -244,7 +265,7 @@ func (this *Session)createSelect(parser sqlparser.SqlParser) Runner {
 	return ret
 }
 
-func (this *Session)createUpdate(parser sqlparser.SqlParser) Runner {
+func (this *Session) createUpdate(parser sqlparser.SqlParser) Runner {
 	ret := &UpdateRunner{}
 	ret.action = sqlparser.UPDATE
 	ret.log = this.log
@@ -256,7 +277,7 @@ func (this *Session)createUpdate(parser sqlparser.SqlParser) Runner {
 	return ret
 }
 
-func (this *Session)createDelete(parser sqlparser.SqlParser) Runner {
+func (this *Session) createDelete(parser sqlparser.SqlParser) Runner {
 	ret := &DeleteRunner{}
 	ret.action = sqlparser.DELETE
 	ret.log = this.log
@@ -268,7 +289,7 @@ func (this *Session)createDelete(parser sqlparser.SqlParser) Runner {
 	return ret
 }
 
-func (this *Session)createInsert(parser sqlparser.SqlParser) Runner {
+func (this *Session) createInsert(parser sqlparser.SqlParser) Runner {
 	ret := &InsertRunner{}
 	ret.action = sqlparser.INSERT
 	ret.log = this.log
@@ -277,5 +298,23 @@ func (this *Session)createInsert(parser sqlparser.SqlParser) Runner {
 	ret.ctx = this.ctx
 	ret.driver = this.driver
 	ret.this = ret
+	return ret
+}
+
+func (this *Session) findSqlParser(sqlId string) sqlparser.SqlParser {
+	ret, ok := FindDynamicSqlParser(sqlId)
+	if !ok {
+		ret, ok = FindTemplateSqlParser(sqlId)
+	}
+	//FIXME: 当没有查找到sqlId对应的sql语句，则尝试使用sqlId直接操作数据库
+	//该设计可能需要设计一个更合理的方式
+	if !ok {
+		d, err := this.ParserFactory(sqlId)
+		if err != nil {
+			this.log(logging.WARN, err.Error())
+			return nil
+		}
+		return d
+	}
 	return ret
 }

@@ -115,8 +115,10 @@ func Run() {
 }
 ```
 
-### 5、说明
+### 5、解析说明
+#### 5.1、内置动态解析
 
+内置动态解析是gobatis类Mybatis的解析方案（目前是xml mapper文件和直接执行sql的默认解析方式）：
 1. ${}表示直接替换，#{}防止sql注入
 2. 与Mybatis类似，语句中${0}、${1}、${2}...${n} 对应的是Param方法中对应的不定参数，最终替换和调用底层Driver
 3. Param方法接受简单类型的不定参数（string、int、time、float等）、struct、map，底层自动解析获得参数，用法为：
@@ -140,7 +142,33 @@ session.Select("select * from test_table where username = #{TestTable.username}"
   
   对应sql参数中的#{StructName.Field1}、#{StructName.Field2}...
   
+#### 5.2、go template解析
 
+使用go template解析，遵循template解析规则，是template mapper文件的解析方式。
+
+如要要修改直接执行sql的默认解析方式，可通过：
+```cassandraql
+    sessionManager.SetParserFactory(gobatis.TemplateParserFactory)
+```
+或者
+```cassandraql
+    session.SetParserFactory(gobatis.TemplateParserFactory)
+```
+调用后可使用template的方式直接解析执行sql：
+```cassandraql
+session.Select("SELECT * FROM test_table WHERE id = {{.}}").Param(2).Result(&ret)
+```
+gobatis内置where、set、arg自定义函数，用于智能生成动态sql
+
+arg用于将对象动态转换为占位符，并保存为sql参数，如:
+```cassandraql
+SELECT * FROM TABLE_NAME WHERE name = {{arg .Name}}
+```
+以mysql为例，将解析为：
+```cassandraql
+SELECT * FROM TABLE_NAME WHERE name = ? 
+```
+同时Name的值将自动保存为SQL参数，自动传入，起到类似内置动态解析中#{MODEL.Name}的效果。
 ### 6、事务
 
 使用
@@ -292,17 +320,6 @@ DELETE FROM test_table
 {{where .Id "AND" "id = " (arg .Id) "" | where .Username "AND" "username = " (arg .Username) | where .Password "AND" "password = " (arg .Password) | where .Createtime "AND" "createtime = " (arg .Createtime)}}
 {{end}}
 ```
-其中where、set、arg是gobatis的自定义函数，用于智能生成动态sql
-
-arg用于将对象动态转换为占位符，并保存为SQL参数，如:
-```cassandraql
-SELECT * FROM TABLE_NAME WHERE name = {{arg .Name}}
-```
-以mysql为例，将解析为：
-```cassandraql
-SELECT * FROM TABLE_NAME WHERE name = ? 
-```
-同时Name的值将自动保存为SQL参数，自动传入，起到类似xml中#{MODEL.Name}的效果。
 
 ### 9、gobatis-cmd生成文件使用示例
 

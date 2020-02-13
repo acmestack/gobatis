@@ -6,6 +6,7 @@
 package template
 
 import (
+	"github.com/xfali/gobatis/errors"
 	"github.com/xfali/gobatis/logging"
 	"github.com/xfali/gobatis/parsing/sqlparser"
 	"io/ioutil"
@@ -18,8 +19,21 @@ type Parser struct {
 	tpl *template.Template
 }
 
+func CreateParser(data []byte) (*Parser, error) {
+	tpl := template.New("")
+	tpl = tpl.Funcs(dummyFuncMap)
+	tpl, err := tpl.Parse(string(data))
+	if err != nil {
+		return nil, err
+	}
+	return &Parser{tpl: tpl}, nil
+}
+
 //only use first param
 func (p *Parser) ParseMetadata(driverName string, params ...interface{}) (*sqlparser.Metadata, error) {
+	if p.tpl == nil {
+		return nil, errors.PARSE_TEMPLATE_NIL_ERROR
+	}
 	b := strings.Builder{}
 	var param interface{} = nil
 	if len(params) > 0 {

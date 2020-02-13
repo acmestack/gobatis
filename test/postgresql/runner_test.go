@@ -250,3 +250,24 @@ func TestTx3(t *testing.T) {
 		return nil
 	})
 }
+
+func TestSession(t *testing.T) {
+	t.Run("default", func(t *testing.T) {
+		mgr := gobatis.NewSessionManager(connect())
+		var ret []TestTable
+		mgr.NewSession().Select("SELECT * FROM test_table WHERE id = #{0}").Param(2).Result(&ret)
+		t.Log(ret)
+	})
+
+	t.Run("default", func(t *testing.T) {
+		mgr := gobatis.NewSessionManager(connect())
+		mgr.SetParserFactory(gobatis.TemplateParserFactory)
+		var ret1 []TestTable
+		mgr.NewSession().Select("SELECT * FROM test_table WHERE id = {{arg .}}").Param(2).Result(&ret1)
+		t.Log(ret1)
+
+		var ret2 []TestTable
+		mgr.NewSession().Select("SELECT * FROM test_table WHERE id = {{.}}").Param(2).Result(&ret2)
+		t.Log(ret2)
+	})
+}

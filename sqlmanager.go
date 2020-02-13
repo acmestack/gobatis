@@ -57,15 +57,12 @@ func FindTemplateSqlParser(sqlId string) (sqlparser.SqlParser, bool) {
 	return g_sql_mgr.templateSqlMgr.FindSqlParser(sqlId)
 }
 
-func FindSqlParser(sqlId string) sqlparser.SqlParser {
-	ret, ok := FindDynamicSqlParser(sqlId)
-	if !ok {
-		ret, ok = FindTemplateSqlParser(sqlId)
-	}
-	//FIXME: 当没有查找到sqlId对应的sql语句，则尝试使用sqlId直接操作数据库
-	//该设计可能需要设计一个更合理的方式
-	if !ok {
-		return &parsing.DynamicData{OriginData: sqlId}
-	}
-	return ret
+type ParserFactory func(sql string) (sqlparser.SqlParser, error)
+
+func DynamicParserFactory(sql string) (sqlparser.SqlParser, error) {
+	return &parsing.DynamicData{OriginData: sql}, nil
+}
+
+func TemplateParserFactory(sql string) (sqlparser.SqlParser, error) {
+	return template.CreateParser([]byte(sql))
 }
