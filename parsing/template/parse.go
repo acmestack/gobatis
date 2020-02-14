@@ -36,8 +36,10 @@ func (p *Parser) ParseMetadata(driverName string, params ...interface{}) (*sqlpa
 	}
 	b := strings.Builder{}
 	var param interface{} = nil
-	if len(params) > 0 {
+	if len(params) == 1 {
 		param = params[0]
+	} else {
+		param = params
 	}
 	dynamic := selectDynamic(driverName)
 	tpl := p.tpl.Funcs(dynamic.getFuncMap())

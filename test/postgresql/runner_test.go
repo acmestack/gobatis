@@ -259,15 +259,27 @@ func TestSession(t *testing.T) {
 		t.Log(ret)
 	})
 
-	t.Run("default", func(t *testing.T) {
+	t.Run("template", func(t *testing.T) {
 		mgr := gobatis.NewSessionManager(connect())
 		mgr.SetParserFactory(gobatis.TemplateParserFactory)
-		var ret1 []TestTable
-		mgr.NewSession().Select("SELECT * FROM test_table WHERE id = {{arg .}}").Param(2).Result(&ret1)
-		t.Log(ret1)
+		var ret []TestTable
+		mgr.NewSession().Select("SELECT * FROM test_table WHERE id = {{.}}").Param(2).Result(&ret)
+		t.Log(ret)
+	})
 
-		var ret2 []TestTable
-		mgr.NewSession().Select("SELECT * FROM test_table WHERE id = {{.}}").Param(2).Result(&ret2)
-		t.Log(ret2)
+	t.Run("template arg", func(t *testing.T) {
+		mgr := gobatis.NewSessionManager(connect())
+		mgr.SetParserFactory(gobatis.TemplateParserFactory)
+		var ret []TestTable
+		mgr.NewSession().Select("SELECT * FROM test_table WHERE id = {{arg .}}").Param(2).Result(&ret)
+		t.Log(ret)
+	})
+
+	t.Run("template 2param", func(t *testing.T) {
+		mgr := gobatis.NewSessionManager(connect())
+		mgr.SetParserFactory(gobatis.TemplateParserFactory)
+		var ret []TestTable
+		mgr.NewSession().Select("SELECT * FROM test_table WHERE id = {{arg (index . 0)}} AND username = {{arg (index . 1)}}").Param(2, "user").Result(&ret)
+		t.Log(ret)
 	})
 }
