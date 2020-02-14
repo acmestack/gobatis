@@ -81,6 +81,10 @@ type DeleteRunner struct {
 	BaseRunner
 }
 
+type ExecRunner struct {
+	BaseRunner
+}
+
 //使用一个session操作数据库
 func (this *SessionManager) NewSession() *Session {
 	return &Session{
@@ -146,6 +150,10 @@ func (this *Session) Insert(sql string) Runner {
 	return this.createInsert(this.findSqlParser(sql))
 }
 
+func (this *Session) Exec(sql string) Runner {
+	return this.createExec(this.findSqlParser(sql))
+}
+
 func (this *BaseRunner) Param(params ...interface{}) Runner {
 	//TODO: 使用缓存加速，避免每次都生成动态sql
 	//测试发现性能提升非常有限，故取消
@@ -167,10 +175,12 @@ func (this *BaseRunner) Param(params ...interface{}) Runner {
 	md, err := this.sqlParser.ParseMetadata(this.driver, params...)
 
 	if err == nil {
-		if this.action == md.Action {
+		if this.action == "" || this.action == md.Action {
 			this.metadata = md
 		} else {
+			//allow different action
 			this.log(logging.WARN, "sql action not match expect %s get %s", this.action, md.Action)
+			this.metadata = md
 		}
 	} else {
 		this.log(logging.WARN, err.Error())
@@ -220,6 +230,18 @@ func (this *InsertRunner) LastInsertId() int64 {
 }
 
 func (this *UpdateRunner) Result(bean interface{}) error {
+	if this.metadata == nil {
+		this.log(logging.WARN, "Sql Matadata is nil")
+		return errors.RUNNER_NOT_READY
+	}
+	i, err := this.session.Update(this.ctx, this.metadata.PrepareSql, this.metadata.Params...)
+	if reflection.CanSet(bean) {
+		reflection.SetValue(reflection.ReflectValue(bean), i)
+	}
+	return err
+}
+
+func (this *ExecRunner) Result(bean interface{}) error {
 	if this.metadata == nil {
 		this.log(logging.WARN, "Sql Matadata is nil")
 		return errors.RUNNER_NOT_READY
@@ -292,6 +314,18 @@ func (this *Session) createDelete(parser sqlparser.SqlParser) Runner {
 func (this *Session) createInsert(parser sqlparser.SqlParser) Runner {
 	ret := &InsertRunner{}
 	ret.action = sqlparser.INSERT
+	ret.log = this.log
+	ret.session = this.session
+	ret.sqlParser = parser
+	ret.ctx = this.ctx
+	ret.driver = this.driver
+	ret.this = ret
+	return ret
+}
+
+func (this *Session) createExec(parser sqlparser.SqlParser) Runner {
+	ret := &ExecRunner{}
+	ret.action = ""
 	ret.log = this.log
 	ret.session = this.session
 	ret.sqlParser = parser

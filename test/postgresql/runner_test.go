@@ -45,12 +45,12 @@ func connect() factory.Factory {
 
 func initTest(t *testing.T) (err error) {
 	sql_table := "CREATE TABLE IF NOT EXISTS test_table (" +
-		"id serial NOT NULL,"+
+		"id serial NOT NULL," +
 		"username varchar(255) DEFAULT NULL," +
 		"password varchar(255) DEFAULT NULL," +
-		"createTime timestamp DEFAULT NULL,"+
+		"createTime timestamp DEFAULT NULL," +
 		"PRIMARY KEY (id)" +
-	")"
+		")"
 
 	db, err := sql.Open("postgres", "host=localhost port=5432 user=test password=test dbname=testdb sslmode=disable")
 	if err != nil {
@@ -280,6 +280,36 @@ func TestSession(t *testing.T) {
 		mgr.SetParserFactory(gobatis.TemplateParserFactory)
 		var ret []TestTable
 		mgr.NewSession().Select("SELECT * FROM test_table WHERE id = {{arg (index . 0)}} AND username = {{arg (index . 1)}}").Param(2, "user").Result(&ret)
+		t.Log(ret)
+	})
+}
+
+func TestExec(t *testing.T) {
+	t.Run("default", func(t *testing.T) {
+		mgr := gobatis.NewSessionManager(connect())
+		sql_table := "CREATE TABLE IF NOT EXISTS exec_test_tbl (" +
+			"id serial NOT NULL," +
+			"username varchar(255) DEFAULT NULL," +
+			"password varchar(255) DEFAULT NULL," +
+			"createTime timestamp DEFAULT NULL," +
+			"PRIMARY KEY (id)" +
+			")"
+		var ret []TestTable
+		err := mgr.NewSession().Exec(sql_table).Param().Result(&ret)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Log(ret)
+	})
+
+	t.Run("default", func(t *testing.T) {
+		mgr := gobatis.NewSessionManager(connect())
+		sql_table := "DROP TABLE exec_test_tbl"
+		var ret []TestTable
+		err := mgr.NewSession().Exec(sql_table).Param().Result(&ret)
+		if err != nil {
+			t.Fatal(err)
+		}
 		t.Log(ret)
 	})
 }
