@@ -211,59 +211,75 @@ gobatis.RegisterMapperFile(filePath)
 2. xml示例
 
 ```
-<mapper namespace="test_package.TestTable">
-    <sql id="columns_id">`id`,`username`,`password`,`update_time`</sql>
+<mapper namespace="test">
+    <sql id="columns_id">id,username,password,createtime</sql>
 
     <select id="selectTestTable">
-        SELECT <include refid="columns_id"> </include> FROM `TEST_TABLE`
+        SELECT <include refid="columns_id"> </include> FROM test_table
         <where>
-            <if test="{TestTable.id} != nil and {TestTable.id} != 0">AND `id` = #{TestTable.id} </if>
-            <if test="{TestTable.username} != nil">AND `username` = #{TestTable.username} </if>
-            <if test="{TestTable.password} != nil">AND `password` = #{TestTable.password} </if>
-            <if test="{TestTable.update_time} != nil">AND `update_time` = #{TestTable.update_time} </if>
+            <if test="{TestTable.id} != nil and {TestTable.id} != 0">AND id = #{TestTable.id} </if>
+            <if test="{TestTable.username} != nil">AND username = #{TestTable.username} </if>
+            <if test="{TestTable.password} != nil">AND password = #{TestTable.password} </if>
+            <if test="{TestTable.createtime} != nil">AND createtime = #{TestTable.createtime} </if>
         </where>
     </select>
 
     <select id="selectTestTableCount">
-        SELECT COUNT(*) FROM `TEST_TABLE`
+        SELECT COUNT(*) FROM test_table
         <where>
-            <if test="{TestTable.id} != nil and {TestTable.id} != 0">AND `id` = #{TestTable.id} </if>
-            <if test="{TestTable.username} != nil">AND `username` = #{TestTable.username} </if>
-            <if test="{TestTable.password} != nil">AND `password` = #{TestTable.password} </if>
-            <if test="{TestTable.update_time} != nil">AND `update_time` = #{TestTable.update_time} </if>
+            <if test="{TestTable.id} != nil and {TestTable.id} != 0">AND id = #{TestTable.id} </if>
+            <if test="{TestTable.username} != nil">AND username = #{TestTable.username} </if>
+            <if test="{TestTable.password} != nil">AND password = #{TestTable.password} </if>
+            <if test="{TestTable.createtime} != nil">AND createtime = #{TestTable.createtime} </if>
         </where>
     </select>
 
     <insert id="insertTestTable">
-        INSERT INTO `TEST_TABLE` (`id`,`username`,`password`,`update_time`)
+        INSERT INTO test_table (id,username,password,createtime)
         VALUES(
         #{TestTable.id},
         #{TestTable.username},
         #{TestTable.password},
-        #{TestTable.update_time}
+        #{TestTable.createtime}
         )
     </insert>
 
+    <insert id="insertBatchTestTable">
+        INSERT INTO test_table (id,username,password,createtime)
+        VALUES
+        <foreach item="item" index="index" collection="{0}" open="" separator="," close="">
+            (#{item.TestTable.id},#{item.TestTable.username},#{item.TestTable.password},#{item.TestTable.createtime})
+        </foreach>
+    </insert>
+
     <update id="updateTestTable">
-        UPDATE `TEST_TABLE`
+        UPDATE test_table
         <set>
-            <if test="{TestTable.username} != nil"> `username` = #{TestTable.username} </if>
-            <if test="{TestTable.password} != nil"> `password` = #{TestTable.password} </if>
-            <if test="{TestTable.update_time} != nil"> `update_time` = #{TestTable.update_time} </if>
+            <if test="{TestTable.username} != nil"> username = #{TestTable.username} </if>
+            <if test="{TestTable.password} != nil"> password = #{TestTable.password} </if>
+            <if test="{TestTable.createtime} != nil"> createtime = #{TestTable.createtime} </if>
         </set>
-        WHERE `id` = #{TestTable.id}
+        WHERE id = #{TestTable.id}
     </update>
 
     <delete id="deleteTestTable">
-        DELETE FROM `TEST_TABLE`
+        DELETE FROM test_table
         <where>
-            <if test="{TestTable.id} != nil and {TestTable.id} != 0">AND `id` = #{TestTable.id} </if>
-            <if test="{TestTable.username} != nil">AND `username` = #{TestTable.username} </if>
-            <if test="{TestTable.password} != nil">AND `password` = #{TestTable.password} </if>
-            <if test="{TestTable.update_time} != nil">AND `update_time` = #{TestTable.update_time} </if>
+            <if test="{TestTable.id} != nil and {TestTable.id} != 0">AND id = #{TestTable.id} </if>
+            <if test="{TestTable.username} != nil">AND username = #{TestTable.username} </if>
+            <if test="{TestTable.password} != nil">AND password = #{TestTable.password} </if>
+            <if test="{TestTable.createtime} != nil">AND createtime = #{TestTable.createtime} </if>
         </where>
     </delete>
 </mapper>
+```
+3. namespace
+
+xml数据或文件注册之后，session参数sqlid与xml action对应关系为：${NAMESPACE}+"."+${ACTION_ID}
+
+以2中的xml为例，调用select的方式为：
+```cassandraql
+sess.Select("test.selectTestTable").Param(model).Result(&dataList)
 ```
 
 ### 8、template
@@ -285,6 +301,8 @@ gobatis.RegisterTemplateFile(filePath)
 2. template示例
 
 ```
+{{define "namespace"}}test{{end}}
+
 {{define "selectTestTable"}}
 SELECT id,username,password,createtime FROM test_table
 {{where .Id "AND" "id = " (arg .Id) "" | where .Username "AND" "username = " (arg .Username) | where .Password "AND" "password = " (arg .Password) | where .Createtime "AND" "createtime = " (arg .Createtime)}}
@@ -319,6 +337,16 @@ UPDATE test_table
 DELETE FROM test_table
 {{where .Id "AND" "id = " (arg .Id) "" | where .Username "AND" "username = " (arg .Username) | where .Password "AND" "password = " (arg .Password) | where .Createtime "AND" "createtime = " (arg .Createtime)}}
 {{end}}
+```
+3. namespace
+
+template数据或文件可定义一个名称为namespace的子模版，用以定义namespace。
+
+template数据或文件注册之后，session参数sql id与模板对应关系为：${NAMESPACE}+"."+${ACTION_ID}
+
+以2中的template为例，调用select的方式为：
+```cassandraql
+sess.Select("test.selectTestTable").Param(model).Result(&dataList)
 ```
 
 ### 9、gobatis-cmd生成文件使用示例

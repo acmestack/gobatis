@@ -1,3 +1,7 @@
+{{/*
+{{define "namespace"}}test{{end}}
+*/}}
+
 {{define "selectTestTable"}}
 {{$COLUMNS := "`id`, `username`, `password`"}}
 SELECT {{$COLUMNS}} FROM `TEST_TABLE`

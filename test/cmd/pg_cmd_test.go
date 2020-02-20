@@ -6,7 +6,7 @@
  * Description:
  */
 
-package test_package
+package test
 
 import (
 	"errors"
@@ -14,7 +14,6 @@ import (
 	"github.com/xfali/gobatis"
 	"github.com/xfali/gobatis/datasource"
 	"testing"
-	"time"
 )
 
 var sessionMgr *gobatis.SessionManager
@@ -95,84 +94,92 @@ func TestSessionTpl(t *testing.T) {
 	var param = TestTable{Id: 1, Username: "user", Password: "pw"}
 	t.Run("select", func(t *testing.T) {
 		sess := sessionMgr.NewSession()
-		var ret []TestTable
-		sess.Select("selectTestTable").Param(TestTable{Id: 1}).Result(&ret)
+		ret, _ := SelectTestTable(sess, TestTable{Id: 1})
 		t.Log(ret)
 	})
 
 	t.Run("count", func(t *testing.T) {
 		sess := sessionMgr.NewSession()
-		var ret int
-		sess.Select("selectTestTableCount").Param(TestTable{}).Result(&ret)
+		ret, _ := SelectTestTableCount(sess, TestTable{Id: 1})
 		t.Log(ret)
 	})
 
 	t.Run("insert", func(t *testing.T) {
 		sess := sessionMgr.NewSession()
-		var ret int
-		err := sess.Insert("insertTestTable").Param(param).Result(&ret)
+		ret, _, err := InsertTestTable(sess, param)
 		t.Log(err)
 		t.Log(ret)
 	})
 
 	t.Run("insertBatch", func(t *testing.T) {
 		sess := sessionMgr.NewSession()
-		var ret int
-		err := sess.Insert("insertBatchTestTable").Param([]TestTable{
+		ret, _, err := InsertBatchTestTable(sess, []TestTable{
 			{Username: "test_insert_user14", Password: "test_pw14"},
 			{Username: "test_insert_user15", Password: "test_pw15"},
-		}).Result(&ret)
+		})
 		t.Log(err)
 		t.Log(ret)
 	})
 
 	t.Run("update", func(t *testing.T) {
 		sess := sessionMgr.NewSession()
-		var ret int
-		err := sess.Update("updateTestTable").Param(TestTable{Id: 1, Username: "user2", Password: "pw2"}).Result(&ret)
+		ret, err := UpdateTestTable(sess, TestTable{Id: 1, Username: "user2", Password: "pw2"})
 		t.Log(err)
 		t.Log(ret)
 	})
 
 	t.Run("delete", func(t *testing.T) {
 		sess := sessionMgr.NewSession()
-		var ret int
-		sess.Delete("deleteTestTable").Param(TestTable{Id: 1}).Result(&ret)
+		ret, err := DeleteTestTable(sess, TestTable{Id: 1})
 		t.Log(ret)
+		t.Log(err)
 	})
 }
 
 func TestSessionXml(t *testing.T) {
 	gobatis.RegisterMapperFile("./xml/test_table_mapper.xml")
-	var param = TestTable{Id: 1, Username: "user", Password: "pw", Createtime: time.Now()}
+	var param = TestTable{Id: 1, Username: "user", Password: "pw"}
 	t.Run("select", func(t *testing.T) {
 		sess := sessionMgr.NewSession()
-		var ret []TestTable
-		sess.Select("selectTestTable").Param(param).Result(&ret)
+		ret, _ := SelectTestTable(sess, TestTable{Id: 1})
+		t.Log(ret)
+	})
+
+	t.Run("count", func(t *testing.T) {
+		sess := sessionMgr.NewSession()
+		ret, _ := SelectTestTableCount(sess, TestTable{Id: 1})
 		t.Log(ret)
 	})
 
 	t.Run("insert", func(t *testing.T) {
 		sess := sessionMgr.NewSession()
-		var ret int
-		err := sess.Insert("insertTestTable").Param(param).Result(&ret)
+		ret, _, err := InsertTestTable(sess, param)
+		t.Log(err)
+		t.Log(ret)
+	})
+
+	t.Run("insertBatch", func(t *testing.T) {
+		sess := sessionMgr.NewSession()
+		ret, _, err := InsertBatchTestTable(sess, []TestTable{
+			{Username: "test_insert_user14", Password: "test_pw14"},
+			{Username: "test_insert_user15", Password: "test_pw15"},
+		})
 		t.Log(err)
 		t.Log(ret)
 	})
 
 	t.Run("update", func(t *testing.T) {
 		sess := sessionMgr.NewSession()
-		var ret int
-		err := sess.Update("updateTestTable").Param(TestTable{Id: 1, Username: "user2", Password: "pw2"}).Result(&ret)
+		ret, err := UpdateTestTable(sess, TestTable{Id: 1, Username: "user2", Password: "pw2"})
 		t.Log(err)
 		t.Log(ret)
 	})
 
 	t.Run("delete", func(t *testing.T) {
 		sess := sessionMgr.NewSession()
-		var ret int
-		sess.Delete("deleteTestTable").Param(TestTable{Id: 1}).Result(&ret)
+		ret, err := DeleteTestTable(sess, TestTable{Id: 1})
 		t.Log(ret)
+		t.Log(err)
 	})
 }
 
@@ -196,7 +203,7 @@ func TestTxSuccess(t *testing.T) {
 	ret, _ := SelectTestTable(sessionMgr.NewSession(), TestTable{Username: "tx_user"})
 
 	for _, v := range ret {
-		t.Logf("value: %v", v)
+		t.Logf("value out tx: %v", v)
 	}
 }
 
@@ -204,14 +211,14 @@ func TestTxFail(t *testing.T) {
 	sessionMgr.NewSession().Tx(func(s *gobatis.Session) error {
 		_, _, err := InsertTestTable(s, TestTable{Username: "tx_user", Password: "tx_pw"})
 		t.Log(err)
-		//select all
-		ret, err := SelectTestTable(s, TestTable{})
-		if err != nil {
-			t.Fatal(err)
-		}
-		for _, v := range ret {
-			t.Logf("value: %v", v)
-		}
+		////select all
+		//ret, err := SelectTestTable(s, TestTable{})
+		//if err != nil {
+		//	t.Fatal(err)
+		//}
+		//for _, v := range ret {
+		//	t.Logf("value: %v", v)
+		//}
 		//will commit
 		return errors.New("rollback")
 	})
@@ -220,6 +227,6 @@ func TestTxFail(t *testing.T) {
 	ret, _ := SelectTestTable(sessionMgr.NewSession(), TestTable{Username: "tx_user"})
 
 	for _, v := range ret {
-		t.Logf("value: %v", v)
+		t.Logf("value out tx: %v\n", v)
 	}
 }

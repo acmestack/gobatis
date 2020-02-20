@@ -15,7 +15,12 @@ import (
 	"text/template"
 )
 
+const (
+	namespaceTmplName = "namespace"
+)
+
 type Parser struct {
+	//template
 	tpl *template.Template
 }
 
@@ -81,9 +86,12 @@ func (m *Manager) RegisterData(data []byte) error {
 		return err
 	}
 
+	ns := getNamespace(tpl)
 	tpls := tpl.Templates()
 	for _, v := range tpls {
-		m.sqlMap[v.Name()] = &Parser{v}
+		if v.Name() != "" && v.Name() != namespaceTmplName {
+			m.sqlMap[ns + v.Name()] = &Parser{tpl: v}
+		}
 	}
 
 	return nil
@@ -106,12 +114,33 @@ func (m *Manager) RegisterFile(file string) error {
 		return err
 	}
 
+	ns := getNamespace(tpl)
 	tpls := tpl.Templates()
 	for _, v := range tpls {
-		m.sqlMap[v.Name()] = &Parser{v}
+		if v.Name() != "" && v.Name() != namespaceTmplName {
+			m.sqlMap[ns + v.Name()] = &Parser{tpl: v}
+		}
 	}
 
 	return nil
+}
+
+func getNamespace(tpl *template.Template) string {
+	ns := strings.Builder{}
+	nsTpl := tpl.Lookup(namespaceTmplName)
+	if nsTpl != nil {
+		err := nsTpl.Execute(&ns, nil)
+		if err != nil {
+			ns.Reset()
+		}
+	}
+
+	ret := strings.TrimSpace(ns.String())
+
+	if ret != "" {
+		ret = ret + "."
+	}
+	return ret
 }
 
 func (m *Manager) FindSqlParser(sqlId string) (*Parser, bool) {

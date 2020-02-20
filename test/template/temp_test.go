@@ -89,6 +89,7 @@ func TestParser(t *testing.T) {
 	mgr := tmp2.NewManager()
 	mgr.RegisterFile("./sql.tpl")
 	var param = TestTable{Id: 1, UserName: "user", Password: "pw", Time: time.Now()}
+
 	t.Run("select", func(t *testing.T) {
 		tmp, _ := mgr.FindSqlParser("selectTestTable")
 		md, err := tmp.ParseMetadata(driverName, param)
