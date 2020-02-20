@@ -49,8 +49,9 @@ type DefaultMultiSource struct {
 
 func NewMultiSource(t LoadBalanceType) *DefaultMultiSource {
 	return &DefaultMultiSource{
-		actionMaps: map[string]loadbalance.LoadBalance{},
-		lbType:     int(t),
+		actionMaps:  map[string]loadbalance.LoadBalance{},
+		factoryMaps: map[Factory]loadbalance.LoadBalance{},
+		lbType:      int(t),
 	}
 }
 
@@ -64,6 +65,7 @@ func (lb *DefaultMultiSource) Bind(action string, weight int, factory Factory) {
 	} else {
 		if f, ok := lb.factoryMaps[factory]; ok {
 			lb.actionMaps[action] = f
+			lb.factoryMaps[factory] = f
 		} else {
 			newlb := loadbalance.Create(lb.lbType)
 			newlb.Add(weight, factory)
