@@ -96,6 +96,10 @@ func (this *SessionManager) NewSession() *Session {
 	}
 }
 
+func (this *SessionManager) Close() error {
+	return this.factory.Close()
+}
+
 //修改sql解析器创建者
 func (this *SessionManager) SetParserFactory(fac ParserFactory) {
 	this.ParserFactory = fac
