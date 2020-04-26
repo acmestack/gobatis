@@ -122,7 +122,7 @@ func (this *Session) SetParserFactory(fac ParserFactory) {
 //开启事务执行语句
 //返回nil则提交，返回error回滚
 //抛出异常错误触发回滚
-func (this *Session) Tx(txFunc func(session *Session) error) {
+func (this *Session) Tx(txFunc func(session *Session) error) error {
 	this.session.Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -131,10 +131,12 @@ func (this *Session) Tx(txFunc func(session *Session) error) {
 		}
 	}()
 
-	if txFunc(this) != nil {
+	if err := txFunc(this); err != nil {
 		this.session.Rollback()
+		return err
 	} else {
 		this.session.Commit()
+		return nil
 	}
 }
 
