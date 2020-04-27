@@ -192,18 +192,26 @@ SELECT * FROM TABLE_NAME WHERE name = ?
 2. 当参数的func返回非nil的错误，则回滚
 3. 当参数的func内抛出panic，则回滚
 
-### 7、xml
+### 7、扫描mapper文件
+```
+err := gobatis.ScanMapperFile(${MAPPER_FILE_DIR})
+if err != nil {
+    t.Fatal(err)
+}
+```
+
+### 8、xml
 
 gobatis支持xml的sql解析及动态sql
 
-1. 注册xml
+1. 直接注册xml
 
 ```
 gobatis.RegisterMapperData([]byte(main_xml))
 ```
 
 或
-    
+
 ```
 gobatis.RegisterMapperFile(filePath)
 ```
@@ -282,11 +290,11 @@ xml数据或文件注册之后，session参数sqlid与xml action对应关系为�
 sess.Select("test.selectTestTable").Param(model).Result(&dataList)
 ```
 
-### 8、template
+### 9、template
 
 gobatis也支持go template的sql解析及动态sql
 
-1. 注册template
+1. 直接注册template
 
 ```
 gobatis.RegisterTemplateData([]byte(main_xml))
@@ -349,11 +357,11 @@ template数据或文件注册之后，session参数sql id与模板对应关系�
 sess.Select("test.selectTestTable").Param(model).Result(&dataList)
 ```
 
-### 9、gobatis-cmd生成文件使用示例
+### 10、gobatis-cmd生成文件使用示例
 
 参考[cmd_test](https://github.com/xfali/gobatis/tree/master/test/cmd)
 
-### 10、 SQL语句构建器
+### 11、 SQL语句构建器
 
 gobatis xml特性有非常强大的动态SQL生成方案，当需要在代码中嵌入SQL语句时，也可使用SQL语句构建器：
 ```
