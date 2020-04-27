@@ -13,6 +13,8 @@ import (
 	"github.com/xfali/gobatis/parsing/sqlparser"
 	"github.com/xfali/gobatis/parsing/template"
 	"github.com/xfali/gobatis/parsing/xml"
+	"os"
+	"path/filepath"
 )
 
 type sqlManager struct {
@@ -65,4 +67,31 @@ func DynamicParserFactory(sql string) (sqlparser.SqlParser, error) {
 
 func TemplateParserFactory(sql string) (sqlparser.SqlParser, error) {
 	return template.CreateParser([]byte(sql))
+}
+
+func ScanMapperFile(dir string) error {
+	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			filename := filepath.Base(path)
+			length := len(filename)
+			if length > 4 {
+				if filename[length-4:] == ".xml" {
+					err := RegisterMapperFile(path)
+					if err != nil {
+						return err
+					}
+				}
+				if filename[length-4:] == ".tpl" {
+					err := RegisterTemplateFile(path)
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
+		return nil
+	})
 }
