@@ -451,3 +451,37 @@ func TestXmlDynamicForeach3(t *testing.T) {
 
 	})
 }
+
+func TestXmlDynamicIfForeach(t *testing.T) {
+	src := `INSERT INTO TEST_TABLE(id, username, password) VALUES
+		<if test="{0} != nil">
+			<foreach item="item" index="index" collection="{0}"
+				open="" separator="," close="">
+				(#{item.testParseStruct.Username}, #{item.testParseStruct.Password})
+			</foreach>
+		</if>
+`
+	logging.SetLevel(logging.DEBUG)
+	m, err := xml.ParseDynamic(src, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Run("foreach first", func(t *testing.T) {
+		params := []testParseStruct{
+			{
+				Username: "user1",
+				Password: "pw1",
+			},
+			{
+				Username: "user2",
+				Password: "pw2",
+			},
+		}
+		ret, err := m.ParseMetadata("mysql", params)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("arg first : %s\n", ret)
+
+	})
+}

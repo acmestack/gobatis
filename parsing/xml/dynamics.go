@@ -45,8 +45,9 @@ type Include struct {
 }
 
 type If struct {
-	Test string `xml:"test,attr"`
-	Data string `xml:",chardata"`
+	Foreach Foreach `xml:"foreach"`
+	Test    string  `xml:"test,attr"`
+	Data    string  `xml:",chardata"`
 }
 
 type Where struct {
@@ -87,6 +88,11 @@ func (de *If) Format(getFunc func(key string) string) string {
 		return ""
 	}
 
+	data := ""
+	if de.Foreach.Data != "" {
+	    data = strings.TrimSpace(de.Foreach.Format(getFunc))
+    }
+	data += strings.TrimSpace(de.Data)
 	if len(andStrs) != 0 && len(orStrs) < 2 {
 		for _, v := range andStrs {
 			ret := Compare(v, getFunc)
@@ -94,7 +100,7 @@ func (de *If) Format(getFunc func(key string) string) string {
 				return ""
 			}
 		}
-		return strings.TrimSpace(de.Data)
+		return data
 	}
 
 	ret := false
@@ -102,7 +108,7 @@ func (de *If) Format(getFunc func(key string) string) string {
 		for _, v := range orStrs {
 			ret = Compare(v, getFunc)
 			if ret == true {
-				return strings.TrimSpace(de.Data)
+				return data
 			}
 		}
 		if ret == false {
