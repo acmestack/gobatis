@@ -78,6 +78,21 @@ func SetValue(f reflect.Value, v interface{}) bool {
 				f.SetBool(d[0] != 0)
 			}
 			break
+		case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
+			hasAssigned = true
+			f.SetBool(vv.Uint() != 0)
+			break
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			hasAssigned = true
+			f.SetBool(vv.Int() != 0)
+			break
+		case reflect.String:
+			b, err := strconv.ParseBool(vv.String())
+			if err == nil {
+				hasAssigned = true
+				f.SetBool(b)
+			}
+			break
 		}
 		break
 	case reflect.String:
@@ -174,6 +189,13 @@ func SetValue(f reflect.Value, v interface{}) bool {
 				}
 			}
 			break
+		case reflect.String:
+			b, err := strconv.ParseInt(vv.String(), 10, 64)
+			if err == nil {
+				hasAssigned = true
+				f.SetInt(b)
+			}
+			break
 		}
 		break
 	case reflect.Float32, reflect.Float64:
@@ -189,6 +211,13 @@ func SetValue(f reflect.Value, v interface{}) bool {
 					hasAssigned = true
 					f.SetFloat(floatV)
 				}
+			}
+			break
+		case reflect.String:
+			b, err := strconv.ParseFloat(vv.String(), 10)
+			if err == nil {
+				hasAssigned = true
+				f.SetFloat(b)
 			}
 			break
 		}
@@ -210,6 +239,13 @@ func SetValue(f reflect.Value, v interface{}) bool {
 					hasAssigned = true
 					f.SetUint(uintV)
 				}
+			}
+			break
+		case reflect.String:
+			b, err := strconv.ParseUint(vv.String(), 10, 64)
+			if err == nil {
+				hasAssigned = true
+				f.SetUint(b)
 			}
 			break
 		}
