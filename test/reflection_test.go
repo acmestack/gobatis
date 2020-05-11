@@ -319,3 +319,33 @@ func printTableInfo(table *reflection.StructInfo) {
 		fmt.Printf("origin : %s, map %s\n", k, v)
 	}
 }
+
+func TestSetInt2Bool(t *testing.T) {
+	t.Run("true", func(t *testing.T) {
+		var i int64 = 1
+		var b bool = false
+
+		set := reflection.SetValue(reflection.ReflectValue(&b), i)
+		if !set {
+			t.Fatal("not set")
+		}
+
+		if !b {
+			t.Fatal("b is false, expect true")
+		}
+	})
+
+	t.Run("false", func(t *testing.T) {
+		var i int64 = 0
+		var b bool = true
+
+		set := reflection.SetValue(reflection.ReflectValue(&b), i)
+		if !set {
+			t.Fatal("not set")
+		}
+
+		if b {
+			t.Fatal("b is true, expect false")
+		}
+	})
+}
