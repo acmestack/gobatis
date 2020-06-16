@@ -1,7 +1,7 @@
 // Copyright (C) 2019-2020, Xiongfa Li.
 // @author xiongfa.li
 // @version V1.0
-// Description: 
+// Description:
 
 package template
 
@@ -78,7 +78,7 @@ func (d *DummyDynamic) format(s string) (string, []interface{}) {
 
 type CommonDynamic struct {
 	index    int
-	keys     [] string
+	keys     []string
 	paramMap map[string]interface{}
 	holder   sqlparser.Holder
 }

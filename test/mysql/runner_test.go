@@ -46,12 +46,12 @@ func connect() factory.Factory {
 
 func initTest(t *testing.T) (err error) {
 	sql_table := "CREATE TABLE IF NOT EXISTS `test_table` (" +
-		"`id` int(11) NOT NULL AUTO_INCREMENT,"+
+		"`id` int(11) NOT NULL AUTO_INCREMENT," +
 		"`username` varchar(255) DEFAULT NULL," +
 		"`password` varchar(255) DEFAULT NULL," +
-		"`createTime` datetime DEFAULT NULL,"+
+		"`createTime` datetime DEFAULT NULL," +
 		"PRIMARY KEY (`id`)" +
-	") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"
+		") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"
 
 	db, err := sql.Open("mysql", "test:test@tcp(localhost8:3306)/test?charset=utf8")
 	if err != nil {

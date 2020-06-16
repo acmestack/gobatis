@@ -1,7 +1,7 @@
 // Copyright (C) 2019-2020, Xiongfa Li.
 // @author xiongfa.li
 // @version V1.0
-// Description: 
+// Description:
 
 package template
 
@@ -90,7 +90,7 @@ func (m *Manager) RegisterData(data []byte) error {
 	tpls := tpl.Templates()
 	for _, v := range tpls {
 		if v.Name() != "" && v.Name() != namespaceTmplName {
-			m.sqlMap[ns + v.Name()] = &Parser{tpl: v}
+			m.sqlMap[ns+v.Name()] = &Parser{tpl: v}
 		}
 	}
 
@@ -118,7 +118,7 @@ func (m *Manager) RegisterFile(file string) error {
 	tpls := tpl.Templates()
 	for _, v := range tpls {
 		if v.Name() != "" && v.Name() != namespaceTmplName {
-			m.sqlMap[ns + v.Name()] = &Parser{tpl: v}
+			m.sqlMap[ns+v.Name()] = &Parser{tpl: v}
 		}
 	}
 

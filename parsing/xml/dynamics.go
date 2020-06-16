@@ -90,8 +90,8 @@ func (de *If) Format(getFunc func(key string) string) string {
 
 	data := ""
 	if de.Foreach.Data != "" {
-	    data = strings.TrimSpace(de.Foreach.Format(getFunc))
-    }
+		data = strings.TrimSpace(de.Foreach.Format(getFunc))
+	}
 	data += strings.TrimSpace(de.Data)
 	if len(andStrs) != 0 && len(orStrs) < 2 {
 		for _, v := range andStrs {
