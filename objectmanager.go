@@ -58,8 +58,8 @@ func ParseObject(bean interface{}) (reflection.Object, error) {
 
 // 注册struct模型，模型描述了column和field之间的关联关系；
 // 目前已非必要条件
-func RegisterModel(model interface{}) {
-	RegisterModelWithName("", model)
+func RegisterModel(model interface{}) error {
+	return RegisterModelWithName("", model)
 }
 
 func RegisterModelWithName(name string, model interface{}) error {

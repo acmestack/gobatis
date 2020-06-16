@@ -64,7 +64,6 @@ type BaseRunner struct {
 }
 
 type SelectRunner struct {
-	count int64
 	BaseRunner
 }
 

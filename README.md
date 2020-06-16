@@ -1,5 +1,6 @@
 # gobatis
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/xfali/gobatis)](https://goreportcard.com/report/github.com/xfali/gobatis)
 [![Appveyor Build status](https://ci.appveyor.com/api/projects/status/oou404q28phtxhwm?svg=true)](https://ci.appveyor.com/project/xfali/gobatis)
 
 ## 介绍
