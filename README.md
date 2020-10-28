@@ -392,8 +392,11 @@ import "github.com/xfali/gobatis/builder"
 go get github.com/xfali/pagehelper
 ```
 ### 2、大于/小于转义
-使用xml mapper文件会出现>、<号解析的问题，gobatis使用<![CDATA[ > ]]> 、<![CDATA[ < ]]>规避此问题。
-
+使用xml mapper文件会出现大于号“ > ”、小于号“ < ”号解析的问题，gobatis使用CDATA规避此问题。
+```
+<![CDATA[ > ]]> 
+<![CDATA[ < ]]>
+```
 ### 3、模糊查询支持
 使用LIKE CONCAT('%',#{field},'%')
 
