@@ -31,16 +31,16 @@ func NewSessionManager(factory factory.Factory) *SessionManager {
 }
 
 type Runner interface {
-	//参数
-	//注意：如果没有参数也必须调用
-	//如果参数个数为1并且为struct，将解析struct获得参数
-	//如果参数个数大于1并且全部为简单类型，或则个数为1且为简单类型，则使用这些参数
+	// 参数
+	// 注意：如果没有参数也必须调用
+	// 如果参数个数为1并且为struct，将解析struct获得参数
+	// 如果参数个数大于1并且全部为简单类型，或则个数为1且为简单类型，则使用这些参数
 	Param(params ...interface{}) Runner
-	//获得结果
+	// 获得结果
 	Result(bean interface{}) error
-	//最后插入的自增id
+	// 最后插入的自增id
 	LastInsertId() int64
-	//设置Context
+	// 设置Context
 	Context(ctx context.Context) Runner
 }
 
@@ -84,7 +84,7 @@ type ExecRunner struct {
 	BaseRunner
 }
 
-//使用一个session操作数据库
+// 使用一个session操作数据库
 func (this *SessionManager) NewSession() *Session {
 	return &Session{
 		ctx:           context.Background(),
@@ -95,11 +95,34 @@ func (this *SessionManager) NewSession() *Session {
 	}
 }
 
+// 包含session的context
+func (this *SessionManager) Context(ctx context.Context) context.Context {
+	sess := &Session{
+		ctx:           ctx,
+		log:           this.factory.LogFunc(),
+		session:       this.factory.CreateSession(),
+		driver:        this.factory.GetDataSource().DriverName(),
+		ParserFactory: this.ParserFactory,
+	}
+	return context.WithValue(ctx, ContextSessionKey, sess)
+}
+
+func WithSession(ctx context.Context, sess *Session) context.Context {
+	return context.WithValue(ctx, ContextSessionKey, sess)
+}
+
+func FindSession(ctx context.Context) *Session {
+	if ctx == nil {
+		return nil
+	}
+	return ctx.Value(ContextSessionKey).(*Session)
+}
+
 func (this *SessionManager) Close() error {
 	return this.factory.Close()
 }
 
-//修改sql解析器创建者
+// 修改sql解析器创建者
 func (this *SessionManager) SetParserFactory(fac ParserFactory) {
 	this.ParserFactory = fac
 }
@@ -113,29 +136,34 @@ func (this *Session) GetContext() context.Context {
 	return this.ctx
 }
 
-//修改sql解析器创建者
+// 修改sql解析器创建者
 func (this *Session) SetParserFactory(fac ParserFactory) {
 	this.ParserFactory = fac
 }
 
-//开启事务执行语句
-//返回nil则提交，返回error回滚
-//抛出异常错误触发回滚
-func (this *Session) Tx(txFunc func(session *Session) error) error {
-	this.session.Begin()
-	defer func() {
+// 开启事务执行语句
+// 返回nil则提交，返回error回滚
+// 抛出异常错误触发回滚
+func (this *Session) Tx(txFunc func(session *Session) error) (err error) {
+	e1 := this.session.Begin()
+	if e1 != nil {
+		return e1
+	}
+	defer func(err *error) {
 		if r := recover(); r != nil {
-			this.session.Rollback()
+			*err = this.session.Rollback()
 			panic(r)
 		}
-	}()
+	}(&err)
 
-	if err := txFunc(this); err != nil {
-		this.session.Rollback()
-		return err
+	if fnErr := txFunc(this); fnErr != nil {
+		e := this.session.Rollback()
+		if e != nil {
+			this.log(logging.WARN, "Rollback error: %v , business error: %v\n", e, fnErr)
+		}
+		return fnErr
 	} else {
-		this.session.Commit()
-		return nil
+		return this.session.Commit()
 	}
 }
 

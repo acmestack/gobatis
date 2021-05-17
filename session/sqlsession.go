@@ -24,9 +24,9 @@ type SqlSession interface {
 
 	Delete(ctx context.Context, sql string, params ...interface{}) (int64, error)
 
-	Begin()
+	Begin() error
 
-	Commit()
+	Commit() error
 
-	Rollback()
+	Rollback() error
 }

@@ -83,6 +83,15 @@ type CommonDynamic struct {
 	holder   sqlparser.Holder
 }
 
+func CreateDynamicHandler(h sqlparser.Holder) Dynamic {
+	return &CommonDynamic{
+		index:    0,
+		keys:     nil,
+		paramMap: map[string]interface{}{},
+		holder:   h,
+	}
+}
+
 func (d *CommonDynamic) getFuncMap() template.FuncMap {
 	return template.FuncMap{
 		FuncNameSet:   d.UpdateSet,
@@ -181,12 +190,7 @@ func (d *CommonDynamic) format(s string) (string, []interface{}) {
 
 func selectDynamic(driverName string) Dynamic {
 	if h, ok := sqlparser.GetMarker(driverName); ok {
-		return &CommonDynamic{
-			index:    0,
-			keys:     nil,
-			paramMap: map[string]interface{}{},
-			holder:   h,
-		}
+		return dynamicFac(h)
 	}
 	return gDummyDynamic
 }
@@ -249,4 +253,10 @@ func IsTrue(i interface{}) bool {
 
 func getPlaceHolderKey(index int) string {
 	return fmt.Sprintf(ArgPlaceHolderFormat, argPlaceHolder, index)
+}
+
+var dynamicFac = CreateDynamicHandler
+
+func SetDynamicFactory(f func(h sqlparser.Holder) Dynamic) {
+	dynamicFac = f
 }

@@ -91,19 +91,19 @@ func (sess *DefaultSqlSession) Delete(ctx context.Context, sql string, params ..
 	return count, nil
 }
 
-func (sess *DefaultSqlSession) Begin() {
+func (sess *DefaultSqlSession) Begin() error {
 	sess.logLastSql("Begin", "")
-	sess.tx.Begin()
+	return sess.tx.Begin()
 }
 
-func (sess *DefaultSqlSession) Commit() {
+func (sess *DefaultSqlSession) Commit() error {
 	sess.logLastSql("Commit", "")
-	sess.tx.Commit()
+	return sess.tx.Commit()
 }
 
-func (sess *DefaultSqlSession) Rollback() {
+func (sess *DefaultSqlSession) Rollback() error {
 	sess.logLastSql("Rollback", "")
-	sess.tx.Rollback()
+	return sess.tx.Rollback()
 }
 
 func (sess *DefaultSqlSession) logLastSql(sql string, params ...interface{}) {
