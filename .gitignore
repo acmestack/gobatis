@@ -14,4 +14,4 @@
 *.zip
 /.idea/
 *.db
-
+vendor/
