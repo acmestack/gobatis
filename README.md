@@ -1,7 +1,12 @@
 # gobatis
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/xfali/gobatis)](https://goreportcard.com/report/github.com/xfali/gobatis)
-[![Appveyor Build status](https://ci.appveyor.com/api/projects/status/oou404q28phtxhwm?svg=true)](https://ci.appveyor.com/project/xfali/gobatis)
+[![license card](https://img.shields.io/badge/License-Apache%202.0-brightgreen.svg?label=license)](https://github.com/openingo/gobatis/blob/master/LICENSE)
+[![go version](https://img.shields.io/github/go-mod/go-version/openingo/gobatis)](#)
+[![Go Report Card](https://goreportcard.com/badge/github.com/openingo/gobatis)](https://goreportcard.com/report/github.com/openingo/gobatis)
+[![codecov report](https://codecov.io/gh/openingo/gobatis/branch/main/graph/badge.svg)](https://codecov.io/gh/openingo/gobatis)
+[![workflow](https://github.com/openingo/gobatis/actions/workflows/go.yml/badge.svg?event=push)](#)
+[![Go Reference](https://pkg.go.dev/badge/github.com/openingo/gobatis.svg)](https://pkg.go.dev/github.com/openingo/gobatis)
+[![lasted release](https://img.shields.io/github/v/release/openingo/gobatis?label=lasted)](https://github.com/openingo/gobatis/releases)
 
 ## 介绍
 
