@@ -19,6 +19,7 @@ package template
 
 import (
 	"fmt"
+	"github.com/Masterminds/sprig/v3"
 	"github.com/xfali/gobatis/parsing/sqlparser"
 	"strings"
 	"text/template"
