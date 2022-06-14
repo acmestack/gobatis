@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, OpeningO
+ * Copyright (c) 2022, AcmeStack
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,9 @@
 package test
 
 import (
+	"github.com/acmestack/gobatis"
+	"github.com/acmestack/gobatis/datasource"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/xfali/gobatis"
-	"github.com/xfali/gobatis/datasource"
 	"testing"
 )
 

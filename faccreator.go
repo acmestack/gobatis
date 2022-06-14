@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, OpeningO
+ * Copyright (c) 2022, AcmeStack
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,11 @@
 package gobatis
 
 import (
-	"github.com/xfali/gobatis/datasource"
-	"github.com/xfali/gobatis/factory"
-	"github.com/xfali/gobatis/logging"
 	"time"
+
+	"github.com/acmestack/gobatis/datasource"
+	"github.com/acmestack/gobatis/factory"
+	"github.com/acmestack/gobatis/logging"
 )
 
 type FacOpt func(f *factory.DefaultFactory)
