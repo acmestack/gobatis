@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, OpeningO
+ * Copyright (c) 2022, AcmeStack
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,11 +20,11 @@ package session
 import (
 	"context"
 	"fmt"
-	"github.com/xfali/gobatis/common"
-	"github.com/xfali/gobatis/executor"
-	"github.com/xfali/gobatis/logging"
-	"github.com/xfali/gobatis/reflection"
-	"github.com/xfali/gobatis/transaction"
+	"github.com/acmestack/gobatis/common"
+	"github.com/acmestack/gobatis/executor"
+	"github.com/acmestack/gobatis/logging"
+	"github.com/acmestack/gobatis/reflection"
+	"github.com/acmestack/gobatis/transaction"
 )
 
 type DefaultSqlSession struct {

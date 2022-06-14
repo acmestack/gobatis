@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, OpeningO
+ * Copyright (c) 2022, AcmeStack
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,10 +21,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/acmestack/gobatis"
+	"github.com/acmestack/gobatis/datasource"
+	"github.com/acmestack/gobatis/factory"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/xfali/gobatis"
-	"github.com/xfali/gobatis/datasource"
-	"github.com/xfali/gobatis/factory"
 	"testing"
 )
 

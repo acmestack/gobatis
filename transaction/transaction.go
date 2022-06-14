@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, OpeningO
+ * Copyright (c) 2022, AcmeStack
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,7 @@
 package transaction
 
 import (
-	"github.com/xfali/gobatis/connection"
+	"github.com/acmestack/gobatis/connection"
 )
 
 type Transaction interface {

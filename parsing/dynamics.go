@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, OpeningO
+ * Copyright (c) 2022, AcmeStack
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,9 @@
 package parsing
 
 import (
-	"github.com/xfali/gobatis/logging"
-	"github.com/xfali/gobatis/parsing/sqlparser"
-	"github.com/xfali/gobatis/reflection"
+	"github.com/acmestack/gobatis/logging"
+	"github.com/acmestack/gobatis/parsing/sqlparser"
+	"github.com/acmestack/gobatis/reflection"
 	"reflect"
 	"strings"
 	"time"

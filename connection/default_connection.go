@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, OpeningO
+ * Copyright (c) 2022, AcmeStack
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,11 +20,11 @@ package connection
 import (
 	"context"
 	"database/sql"
-	"github.com/xfali/gobatis/common"
-	"github.com/xfali/gobatis/errors"
-	"github.com/xfali/gobatis/reflection"
-	"github.com/xfali/gobatis/statement"
-	"github.com/xfali/gobatis/util"
+	"github.com/acmestack/gobatis/common"
+	"github.com/acmestack/gobatis/errors"
+	"github.com/acmestack/gobatis/reflection"
+	"github.com/acmestack/gobatis/statement"
+	"github.com/acmestack/gobatis/util"
 )
 
 type DefaultConnection sql.DB

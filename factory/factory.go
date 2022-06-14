@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, OpeningO
+ * Copyright (c) 2022, AcmeStack
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,11 +18,11 @@
 package factory
 
 import (
-	"github.com/xfali/gobatis/datasource"
-	"github.com/xfali/gobatis/executor"
-	"github.com/xfali/gobatis/logging"
-	"github.com/xfali/gobatis/session"
-	"github.com/xfali/gobatis/transaction"
+	"github.com/acmestack/gobatis/datasource"
+	"github.com/acmestack/gobatis/executor"
+	"github.com/acmestack/gobatis/logging"
+	"github.com/acmestack/gobatis/session"
+	"github.com/acmestack/gobatis/transaction"
 )
 
 type Factory interface {
