@@ -21,11 +21,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"testing"
+
 	"github.com/acmestack/gobatis"
 	"github.com/acmestack/gobatis/datasource"
 	"github.com/acmestack/gobatis/factory"
 	_ "github.com/go-sql-driver/mysql"
-	"testing"
 )
 
 type TestTable struct {
@@ -62,7 +63,7 @@ func initTest(t *testing.T) (err error) {
 		"PRIMARY KEY (`id`)" +
 		") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"
 
-	db, err := sql.Open("mysql", "test:test@tcp(localhost8:3306)/test?charset=utf8")
+	db, err := sql.Open("mysql", "test:test@tcp(localhost:3306)/test?charset=utf8")
 	if err != nil {
 		t.Fatal(err)
 	}
