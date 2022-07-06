@@ -20,12 +20,13 @@ package reflection
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/acmestack/gobatis/errors"
-	"github.com/acmestack/gobatis/logging"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/acmestack/gobatis/errors"
+	"github.com/acmestack/gobatis/logging"
 )
 
 func ReflectValue(bean interface{}) reflect.Value {
@@ -40,7 +41,7 @@ func IsSimpleObject(bean interface{}) bool {
 	return IsSimpleType(rt)
 }
 
-//是否是数据库使用的简单类型，注意不能是PTR
+// IsSimpleType 是否是数据库使用的简单类型，注意不能是PTR
 func IsSimpleType(t reflect.Type) bool {
 	switch t.Kind() {
 	case IntKind, Int8Kind, Int16Kind, Int32Kind, Int64Kind, UintKind, Uint8Kind, Uint16Kind, Uint32Kind, Uint64Kind,
@@ -332,9 +333,9 @@ func MustPtr(bean interface{}) error {
 
 func MustPtrValue(beanValue reflect.Value) error {
 	if beanValue.Kind() != reflect.Ptr {
-		return errors.RESULT_ISNOT_POINTER
+		return errors.ResultIsnotPointer
 	} else if beanValue.Elem().Kind() == reflect.Ptr {
-		return errors.RESULT_PTR_VALUE_IS_POINTER
+		return errors.ResultPtrValueIsPointer
 	}
 	return nil
 }

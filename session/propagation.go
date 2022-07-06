@@ -18,7 +18,7 @@
 package session
 
 //
-//import "github.com/xfali/gobatis/errors"
+//import "github.com/acmestack/gobatis/errors"
 //
 //type Propagation interface {
 //    Begin() error

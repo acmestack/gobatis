@@ -19,6 +19,7 @@ package executor
 
 import (
 	"context"
+
 	"github.com/acmestack/gobatis/common"
 	"github.com/acmestack/gobatis/errors"
 	"github.com/acmestack/gobatis/reflection"
@@ -50,12 +51,12 @@ func (exec *PrepareExecutor) Close(rollback bool) {
 
 func (exec *PrepareExecutor) Query(ctx context.Context, result reflection.Object, sql string, params ...interface{}) error {
 	if exec.closed {
-		return errors.EXECUTOR_QUERY_ERROR
+		return errors.ExecutorQueryError
 	}
 
 	conn := exec.transaction.GetConnection()
 	if conn == nil {
-		return errors.EXECUTOR_GET_CONNECTION_ERROR
+		return errors.ExecutorGetConnectionError
 	}
 
 	//FIXME: stmt must be close, use stmtCache instead
@@ -69,12 +70,12 @@ func (exec *PrepareExecutor) Query(ctx context.Context, result reflection.Object
 
 func (exec *PrepareExecutor) Exec(ctx context.Context, sql string, params ...interface{}) (common.Result, error) {
 	if exec.closed {
-		return nil, errors.EXECUTOR_QUERY_ERROR
+		return nil, errors.ExecutorQueryError
 	}
 
 	conn := exec.transaction.GetConnection()
 	if conn == nil {
-		return nil, errors.EXECUTOR_GET_CONNECTION_ERROR
+		return nil, errors.ExecutorGetConnectionError
 	}
 
 	//FIXME: stmt must be close, use stmtCache instead
@@ -89,7 +90,7 @@ func (exec *PrepareExecutor) Exec(ctx context.Context, sql string, params ...int
 
 func (exec *PrepareExecutor) Begin() error {
 	if exec.closed {
-		return errors.EXECUTOR_BEGIN_ERROR
+		return errors.ExecutorBeginError
 	}
 
 	return exec.transaction.Begin()
@@ -97,7 +98,7 @@ func (exec *PrepareExecutor) Begin() error {
 
 func (exec *PrepareExecutor) Commit(require bool) error {
 	if exec.closed {
-		return errors.EXECUTOR_COMMIT_ERROR
+		return errors.ExecutorCommitError
 	}
 
 	if require {

@@ -20,6 +20,7 @@ package connection
 import (
 	"context"
 	"database/sql"
+
 	"github.com/acmestack/gobatis/common"
 	"github.com/acmestack/gobatis/errors"
 	"github.com/acmestack/gobatis/reflection"
@@ -30,20 +31,20 @@ import (
 type DefaultConnection sql.DB
 type DefaultStatement sql.Stmt
 
-func (c *DefaultConnection) Prepare(sqlStr string) (statement.Statement, error) {
-	db := (*sql.DB)(c)
+func (conn *DefaultConnection) Prepare(sqlStr string) (statement.Statement, error) {
+	db := (*sql.DB)(conn)
 	s, err := db.Prepare(sqlStr)
 	if err != nil {
-		return nil, errors.CONNECTION_PREPARE_ERROR
+		return nil, errors.ConnectionPrepareError
 	}
 	return (*DefaultStatement)(s), nil
 }
 
-func (c *DefaultConnection) Query(ctx context.Context, result reflection.Object, sqlStr string, params ...interface{}) error {
-	db := (*sql.DB)(c)
+func (conn *DefaultConnection) Query(ctx context.Context, result reflection.Object, sqlStr string, params ...interface{}) error {
+	db := (*sql.DB)(conn)
 	rows, err := db.QueryContext(ctx, sqlStr, params...)
 	if err != nil {
-		return errors.STATEMENT_QUERY_ERROR
+		return errors.StatementQueryError
 	}
 	defer rows.Close()
 
@@ -51,8 +52,8 @@ func (c *DefaultConnection) Query(ctx context.Context, result reflection.Object,
 	return nil
 }
 
-func (c *DefaultConnection) Exec(ctx context.Context, sqlStr string, params ...interface{}) (common.Result, error) {
-	db := (*sql.DB)(c)
+func (conn *DefaultConnection) Exec(ctx context.Context, sqlStr string, params ...interface{}) (common.Result, error) {
+	db := (*sql.DB)(conn)
 	return db.ExecContext(ctx, sqlStr, params...)
 }
 
@@ -60,7 +61,7 @@ func (s *DefaultStatement) Query(ctx context.Context, result reflection.Object, 
 	stmt := (*sql.Stmt)(s)
 	rows, err := stmt.QueryContext(ctx, params...)
 	if err != nil {
-		return errors.STATEMENT_QUERY_ERROR
+		return errors.StatementQueryError
 	}
 	defer rows.Close()
 

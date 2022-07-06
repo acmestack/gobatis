@@ -18,49 +18,50 @@
 package reflection
 
 import (
+	"reflect"
+
 	"github.com/acmestack/gobatis/common"
 	"github.com/acmestack/gobatis/errors"
 	"github.com/acmestack/gobatis/logging"
-	"reflect"
 )
 
 const (
-	OBJECT_UNKNOWN = iota
-	OBJECT_SIMPLETYPE
-	OBJECT_STRUCT
-	OBJECT_SLICE
-	OBJECT_MAP
+	ObjectUnknown = iota
+	ObjectSimpletype
+	ObjectStruct
+	ObjectSlice
+	ObjectMap
 
-	OBJECT_COSTOM = 50000
+	ObjectCostom = 50000
 )
 
 type Object interface {
 	Kind() int
-	//生成克隆空对象
+	// New 生成克隆空对象
 	New() Object
-	//获得对象的元素
+	// NewElem 获得对象的元素
 	NewElem() Object
-	//设置字段
-	SetField(name string, v interface{})
-	//添加元素值
+	// SetField 设置字段
+	SetField(name string, v any)
+	// AddValue 添加元素值
 	AddValue(v reflect.Value)
-	//获得对象名称
+	// GetClassName 获得对象名称
 	GetClassName() string
-	//是否能设置field
+	// CanSetField 是否能设置field
 	CanSetField() bool
-	//是否能添加值
+	// CanAddValue 是否能添加值
 	CanAddValue() bool
 
-	//获得值
+	// NewValue 获得值
 	NewValue() reflect.Value
 
-	//是否能够设置
+	// CanSet 是否能够设置
 	CanSet(v reflect.Value) bool
-	//设置值
+	// SetValue 设置值
 	SetValue(v reflect.Value)
-	//获得值
+	// GetValue 获得值
 	GetValue() reflect.Value
-	//变换value对象
+	// ResetValue 变换value对象
 	ResetValue(v reflect.Value)
 }
 
@@ -70,7 +71,7 @@ func SetModelNameType(mtype reflect.Type) {
 	modelNameType = mtype
 }
 
-type Setable struct {
+type Settable struct {
 	//值
 	Value reflect.Value
 }
@@ -87,7 +88,7 @@ type StructInfo struct {
 	//表字段和实体字段映射关系
 	FieldNameMap map[string]string
 
-	Setable
+	Settable
 
 	Newable
 }
@@ -97,7 +98,7 @@ type SliceInfo struct {
 	ClassName string
 	Elem      Object
 
-	Setable
+	Settable
 	Newable
 }
 
@@ -105,7 +106,7 @@ type SimpleTypeInfo struct {
 	//包含pkg的名称
 	ClassName string
 
-	Setable
+	Settable
 	Newable
 }
 
@@ -115,188 +116,188 @@ type MapInfo struct {
 	//元素类型
 	ElemType reflect.Type
 
-	Setable
+	Settable
 	Newable
 }
 
-func (o *Setable) CanSet(v reflect.Value) bool {
-	if o.Value.Kind() != v.Kind() {
+func (settable *Settable) CanSet(v reflect.Value) bool {
+	if settable.Value.Kind() != v.Kind() {
 		logging.Warn("Set value failed")
 		return false
 	}
-	destClass := GetTypeClassName(o.Value.Type())
+	destClass := GetTypeClassName(settable.Value.Type())
 	srcClass := GetTypeClassName(v.Type())
 	if destClass != srcClass {
-		logging.Warn("different type: %s %s\n", destClass, srcClass)
+		logging.Warn("different type: %settable %settable\n", destClass, srcClass)
 		return false
 	}
 	return true
 }
 
-func (o *Setable) SetValue(v reflect.Value) {
-	if !o.Value.IsValid() {
-		o.Value = v
+func (settable *Settable) SetValue(v reflect.Value) {
+	if !settable.Value.IsValid() {
+		settable.Value = v
 	}
 
-	if o.CanSet(v) {
-		o.Value.Set(v)
+	if settable.CanSet(v) {
+		settable.Value.Set(v)
 	}
 }
 
-func (o *Setable) ResetValue(v reflect.Value) {
-	o.Value = v
+func (settable *Settable) ResetValue(v reflect.Value) {
+	settable.Value = v
 }
 
-func (o *Setable) GetValue() reflect.Value {
-	return o.Value
+func (settable *Settable) GetValue() reflect.Value {
+	return settable.Value
 }
 
-func (o *Newable) NewValue() reflect.Value {
-	return reflect.New(o.Type).Elem()
+func (newable *Newable) NewValue() reflect.Value {
+	return reflect.New(newable.Type).Elem()
 }
 
-func (o *StructInfo) New() Object {
+func (structInfo *StructInfo) New() Object {
 	ret := &StructInfo{
-		ClassName:    o.ClassName,
-		Name:         o.Name,
-		FieldNameMap: o.FieldNameMap,
+		ClassName:    structInfo.ClassName,
+		Name:         structInfo.Name,
+		FieldNameMap: structInfo.FieldNameMap,
 	}
-	ret.Type = o.Type
-	ret.Value = reflect.New(o.Type).Elem()
+	ret.Type = structInfo.Type
+	ret.Value = reflect.New(structInfo.Type).Elem()
 	return ret
 }
 
-func (o *StructInfo) NewElem() Object {
+func (structInfo *StructInfo) NewElem() Object {
 	return nil
 }
 
-func (o *StructInfo) SetField(name string, ov interface{}) {
-	fieldName := o.FieldNameMap[name]
+func (structInfo *StructInfo) SetField(name string, ov interface{}) {
+	fieldName := structInfo.FieldNameMap[name]
 	if fieldName != "" {
-		f := o.Value.FieldByName(fieldName)
+		f := structInfo.Value.FieldByName(fieldName)
 		if f.IsValid() {
 			SetValue(f, ov)
 		}
 	}
 }
 
-func (o *StructInfo) AddValue(v reflect.Value) {
+func (structInfo *StructInfo) AddValue(v reflect.Value) {
 
 }
 
-func (o *StructInfo) GetClassName() string {
-	return o.ClassName
+func (structInfo *StructInfo) GetClassName() string {
+	return structInfo.ClassName
 }
 
-func (o *StructInfo) Kind() int {
-	return OBJECT_STRUCT
+func (structInfo *StructInfo) Kind() int {
+	return ObjectStruct
 }
 
-func (o *StructInfo) CanSetField() bool {
+func (structInfo *StructInfo) CanSetField() bool {
 	return true
 }
 
-func (o *StructInfo) CanAddValue() bool {
+func (structInfo *StructInfo) CanAddValue() bool {
 	return false
 }
 
-func (o *SliceInfo) New() Object {
+func (sliceInfo *SliceInfo) New() Object {
 	ret := &SliceInfo{
-		Elem: o.Elem.New(),
+		Elem: sliceInfo.Elem.New(),
 	}
-	ret.Type = o.Type
-	ret.Value = reflect.New(o.Type).Elem()
+	ret.Type = sliceInfo.Type
+	ret.Value = reflect.New(sliceInfo.Type).Elem()
 	return ret
 }
 
-func (o *SliceInfo) NewElem() Object {
-	return o.Elem.New()
+func (sliceInfo *SliceInfo) NewElem() Object {
+	return sliceInfo.Elem.New()
 }
 
-func (o *SliceInfo) SetField(name string, v interface{}) {
+func (sliceInfo *SliceInfo) SetField(name string, v interface{}) {
 	logging.Info("slice not support SetField")
 }
 
-func (o *SliceInfo) AddValue(v reflect.Value) {
-	if !o.Elem.CanSet(v) {
+func (sliceInfo *SliceInfo) AddValue(v reflect.Value) {
+	if !sliceInfo.Elem.CanSet(v) {
 		logging.Warn("Add value failed, different kind")
 		return
 	}
-	newValue := reflect.Append(o.Value, v)
+	newValue := reflect.Append(sliceInfo.Value, v)
 	//直接设置，不使用o.SetValue，效率更高
-	o.Value.Set(newValue)
+	sliceInfo.Value.Set(newValue)
 }
 
-func (o *SliceInfo) GetClassName() string {
-	return o.ClassName
+func (sliceInfo *SliceInfo) GetClassName() string {
+	return sliceInfo.ClassName
 }
 
-func (o *SliceInfo) Kind() int {
-	return OBJECT_SLICE
+func (sliceInfo *SliceInfo) Kind() int {
+	return ObjectSlice
 }
 
-func (o *SliceInfo) CanSetField() bool {
+func (sliceInfo *SliceInfo) CanSetField() bool {
 	return false
 }
 
-func (o *SliceInfo) CanAddValue() bool {
+func (sliceInfo *SliceInfo) CanAddValue() bool {
 	return true
 }
 
-func (o *SimpleTypeInfo) New() Object {
+func (simpleTypeInfo *SimpleTypeInfo) New() Object {
 	ret := &SimpleTypeInfo{
-		ClassName: o.ClassName,
+		ClassName: simpleTypeInfo.ClassName,
 	}
-	ret.Type = o.Type
-	ret.Value = reflect.New(o.Type).Elem()
+	ret.Type = simpleTypeInfo.Type
+	ret.Value = reflect.New(simpleTypeInfo.Type).Elem()
 	return ret
 }
 
-func (o *SimpleTypeInfo) NewElem() Object {
+func (simpleTypeInfo *SimpleTypeInfo) NewElem() Object {
 	return nil
 }
 
-func (o *SimpleTypeInfo) SetField(name string, ov interface{}) {
-	SetValue(o.Value, ov)
+func (simpleTypeInfo *SimpleTypeInfo) SetField(name string, ov interface{}) {
+	SetValue(simpleTypeInfo.Value, ov)
 }
 
-func (o *SimpleTypeInfo) AddValue(v reflect.Value) {
+func (simpleTypeInfo *SimpleTypeInfo) AddValue(v reflect.Value) {
 
 }
 
-func (o *SimpleTypeInfo) GetClassName() string {
-	return o.ClassName
+func (simpleTypeInfo *SimpleTypeInfo) GetClassName() string {
+	return simpleTypeInfo.ClassName
 }
 
-//直接返回true，需要通过SetValue判断
-func (o *SimpleTypeInfo) CanSet(v reflect.Value) bool {
+// CanSet 直接返回true，需要通过SetValue判断
+func (simpleTypeInfo *SimpleTypeInfo) CanSet(v reflect.Value) bool {
 	return true
 }
 
-func (o *SimpleTypeInfo) SetValue(v reflect.Value) {
-	if !o.Value.IsValid() {
-		o.Value = v
+func (simpleTypeInfo *SimpleTypeInfo) SetValue(v reflect.Value) {
+	if !simpleTypeInfo.Value.IsValid() {
+		simpleTypeInfo.Value = v
 	}
 
-	if !SetValue(o.Value, v.Interface()) {
+	if !SetValue(simpleTypeInfo.Value, v.Interface()) {
 		logging.Warn("SimpleTypeInfo SetValue failed")
 	}
 }
 
-func (o *SimpleTypeInfo) Kind() int {
-	return OBJECT_SIMPLETYPE
+func (simpleTypeInfo *SimpleTypeInfo) Kind() int {
+	return ObjectSimpletype
 }
 
-func (o *SimpleTypeInfo) CanSetField() bool {
+func (simpleTypeInfo *SimpleTypeInfo) CanSetField() bool {
 	return false
 }
 
-func (o *SimpleTypeInfo) CanAddValue() bool {
+func (simpleTypeInfo *SimpleTypeInfo) CanAddValue() bool {
 	return false
 }
 
-func (o *MapInfo) CanSet(v reflect.Value) bool {
-	if o.Value.Kind() != v.Kind() {
+func (mapInfo *MapInfo) CanSet(v reflect.Value) bool {
+	if mapInfo.Value.Kind() != v.Kind() {
 		logging.Warn("Set value failed")
 		return false
 	}
@@ -308,52 +309,52 @@ func (o *MapInfo) CanSet(v reflect.Value) bool {
 	return true
 }
 
-//TODO: 目前仅支持map[string]interface{}，需增加其他类型支持
-func (o *MapInfo) SetValue(v reflect.Value) {
-	if o.CanSet(v) {
-		o.Value.Set(v)
+// SetValue TODO: 目前仅支持map[string]interface{}，需增加其他类型支持
+func (mapInfo *MapInfo) SetValue(v reflect.Value) {
+	if mapInfo.CanSet(v) {
+		mapInfo.Value.Set(v)
 	}
 }
 
-func (o *MapInfo) New() Object {
+func (mapInfo *MapInfo) New() Object {
 	ret := &MapInfo{
-		ClassName: o.ClassName,
-		ElemType:  o.ElemType,
+		ClassName: mapInfo.ClassName,
+		ElemType:  mapInfo.ElemType,
 	}
-	ret.Value = reflect.New(o.Type).Elem()
+	ret.Value = reflect.New(mapInfo.Type).Elem()
 	return ret
 }
 
-//FIXME: return nil，需要对map元素解析
-func (o *MapInfo) NewElem() Object {
+// NewElem FIXME: return nil，需要对map元素解析
+func (mapInfo *MapInfo) NewElem() Object {
 	return nil
 }
 
-func (o *MapInfo) SetField(name string, ov interface{}) {
-	v := reflect.New(o.ElemType).Elem()
+func (mapInfo *MapInfo) SetField(name string, ov interface{}) {
+	v := reflect.New(mapInfo.ElemType).Elem()
 	if SetValue(v, ov) {
-		o.Value.SetMapIndex(reflect.ValueOf(name), v)
+		mapInfo.Value.SetMapIndex(reflect.ValueOf(name), v)
 	}
 }
 
-func (o *MapInfo) AddValue(v reflect.Value) {
+func (mapInfo *MapInfo) AddValue(v reflect.Value) {
 
 }
 
-func (o *MapInfo) CanSetField() bool {
+func (mapInfo *MapInfo) CanSetField() bool {
 	return true
 }
 
-func (o *MapInfo) CanAddValue() bool {
+func (mapInfo *MapInfo) CanAddValue() bool {
 	return false
 }
 
-func (o *MapInfo) Kind() int {
-	return OBJECT_MAP
+func (mapInfo *MapInfo) Kind() int {
+	return ObjectMap
 }
 
-func (o *MapInfo) GetClassName() string {
-	return o.ClassName
+func (mapInfo *MapInfo) GetClassName() string {
+	return mapInfo.ClassName
 }
 
 func GetObjectInfo(model interface{}) (Object, error) {
@@ -382,7 +383,7 @@ func GetReflectObjectInfo(rt reflect.Type, rv reflect.Value) (Object, error) {
 	case reflect.Map:
 		return GetReflectMapInfo(rt, rv)
 	}
-	return nil, errors.OBJECT_NOT_SUPPORT
+	return nil, errors.ObjectNotSupport
 }
 
 func GetReflectSimpleTypeInfo(rt reflect.Type, rv reflect.Value) (Object, error) {
@@ -407,7 +408,7 @@ func GetReflectSliceInfo(rt reflect.Type, rv reflect.Value) (Object, error) {
 	kind := rt.Kind()
 
 	if kind != reflect.Slice {
-		return nil, errors.PARSE_OBJECT_NOT_SLICE
+		return nil, errors.ParseObjectNotSlice
 	}
 	//获得元素类型
 	et := rt.Elem()
@@ -418,7 +419,7 @@ func GetReflectSliceInfo(rt reflect.Type, rv reflect.Value) (Object, error) {
 		return nil, err
 	}
 	if elemObj.CanAddValue() {
-		return nil, errors.SLICE_SLICE_NOT_SUPPORT
+		return nil, errors.SliceSliceNotSupport
 	}
 	ret := SliceInfo{Elem: elemObj, ClassName: GetTypeClassName(rt)}
 	ret.Type = rt
@@ -435,17 +436,17 @@ func GetReflectMapInfo(rt reflect.Type, rv reflect.Value) (Object, error) {
 	kind := rt.Kind()
 
 	if kind != reflect.Map {
-		return nil, errors.PARSE_OBJECT_NOT_MAP
+		return nil, errors.ParseObjectNotMap
 	}
 
 	if rt.Key().Kind() != reflect.String {
-		return nil, errors.GET_OBJECTINFO_FAILED
+		return nil, errors.GetObjectinfoFailed
 	}
 
 	//TODO: 目前仅支持map[string]interface{}，需增加其他类型支持
 	if rt.Elem().Kind() != reflect.Interface {
 		logging.Warn("Map type support map[string]interface{} only, but get map[%v]%v \n", rt.Key(), rt.Elem())
-		return nil, errors.GET_OBJECTINFO_FAILED
+		return nil, errors.GetObjectinfoFailed
 	}
 
 	ret := MapInfo{ElemType: rt.Elem(), ClassName: GetTypeClassName(rt)}
@@ -479,7 +480,7 @@ func GetReflectStructInfo(rt reflect.Type, rv reflect.Value) (*StructInfo, error
 	kind := rt.Kind()
 
 	if kind != reflect.Struct {
-		return nil, errors.PARSE_OBJECT_NOT_STRUCT
+		return nil, errors.ParseObjectNotStruct
 	}
 	objInfo := StructInfo{
 		FieldNameMap: map[string]string{},
@@ -514,7 +515,7 @@ func GetReflectStructInfo(rt reflect.Type, rv reflect.Value) (*StructInfo, error
 		}
 
 		fieldName := rtf.Name
-		tagName := rtf.Tag.Get(common.FIELD_NAME)
+		tagName := rtf.Tag.Get(common.FieldName)
 		if tagName == "-" {
 			continue
 		} else if tagName != "" {
@@ -526,21 +527,21 @@ func GetReflectStructInfo(rt reflect.Type, rv reflect.Value) (*StructInfo, error
 	return &objInfo, nil
 }
 
-func (ti *StructInfo) MapValue() map[string]interface{} {
+func (structInfo *StructInfo) MapValue() map[string]interface{} {
 	paramMap := map[string]interface{}{}
-	ti.FillMapValue(&paramMap)
+	structInfo.FillMapValue(&paramMap)
 	return paramMap
 }
 
-func (ti *StructInfo) FillMapValue(paramMap *map[string]interface{}) {
-	for k, v := range ti.FieldNameMap {
-		f := ti.Value.FieldByName(v)
+func (structInfo *StructInfo) FillMapValue(paramMap *map[string]interface{}) {
+	for k, v := range structInfo.FieldNameMap {
+		f := structInfo.Value.FieldByName(v)
 		if !f.CanInterface() {
 			f = reflect.Indirect(f)
 		}
 		(*paramMap)[k] = f.Interface()
 	}
-	//(*paramMap)["tablename"] = ti.Name
+	//(*paramMap)["tablename"] = structInfo.Name
 }
 
 func GetBeanClassName(model interface{}) string {

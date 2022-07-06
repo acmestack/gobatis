@@ -19,10 +19,11 @@ package xml
 
 import (
 	"encoding/xml"
-	"github.com/acmestack/gobatis/logging"
 	"io"
 	"io/ioutil"
 	"os"
+
+	"github.com/acmestack/gobatis/logging"
 )
 
 const (
@@ -55,8 +56,8 @@ func Parse(data []byte) (*Mapper, error) {
 	return &v, nil
 }
 
-func parseInner(r io.Reader) {
-	decoder := xml.NewDecoder(r)
+func parseInner(reader io.Reader) {
+	decoder := xml.NewDecoder(reader)
 	var strName string
 	for {
 		token, err := decoder.Token()
@@ -69,12 +70,12 @@ func parseInner(r io.Reader) {
 			if name.Local == MapperStart {
 				switch t := token.(type) {
 				case xml.StartElement:
-					stelm := xml.StartElement(t)
-					logging.Debug("start: ", stelm.Name.Local)
-					strName = stelm.Name.Local
+					startElement := xml.StartElement(t)
+					logging.Debug("start: ", startElement.Name.Local)
+					strName = startElement.Name.Local
 				case xml.EndElement:
-					endelm := xml.EndElement(t)
-					logging.Debug("end: ", endelm.Name.Local)
+					endElement := xml.EndElement(t)
+					logging.Debug("end: ", endElement.Name.Local)
 				case xml.CharData:
 					data := xml.CharData(t)
 					str := string(data)
@@ -94,9 +95,9 @@ func parseInner(r io.Reader) {
 func getStartElementName(token xml.Token) *xml.Name {
 	switch t := token.(type) {
 	case xml.StartElement:
-		stelm := xml.StartElement(t)
-		logging.Debug("start: ", stelm.Name.Local)
-		return &stelm.Name
+		startElement := xml.StartElement(t)
+		logging.Debug("start: ", startElement.Name.Local)
+		return &startElement.Name
 	}
 	return nil
 }

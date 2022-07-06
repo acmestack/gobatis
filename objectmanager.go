@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * you may not use runner file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *   http://www.apache.org/licenses/LICENSE-2.0
@@ -18,9 +18,10 @@
 package gobatis
 
 import (
+	"sync"
+
 	"github.com/acmestack/gobatis/errors"
 	"github.com/acmestack/gobatis/reflection"
-	"sync"
 )
 
 type ModelName string
@@ -34,7 +35,7 @@ var globalObjectCache = ObjectCache{
 	objCache: map[string]reflection.Object{},
 }
 
-func findObject(bean interface{}) reflection.Object {
+func findObject(bean any) reflection.Object {
 	classname := reflection.GetBeanClassName(bean)
 	globalObjectCache.lock.Lock()
 	defer globalObjectCache.lock.Unlock()
@@ -49,7 +50,7 @@ func cacheObject(obj reflection.Object) {
 	globalObjectCache.objCache[obj.GetClassName()] = obj
 }
 
-func ParseObject(bean interface{}) (reflection.Object, error) {
+func ParseObject(bean any) (reflection.Object, error) {
 	obj := findObject(bean)
 	var err error
 	if obj == nil {
@@ -65,16 +66,16 @@ func ParseObject(bean interface{}) (reflection.Object, error) {
 	return obj, nil
 }
 
-// 注册struct模型，模型描述了column和field之间的关联关系；
+// RegisterModel 注册struct模型，模型描述了column和field之间的关联关系；
 // 目前已非必要条件
-func RegisterModel(model interface{}) error {
+func RegisterModel(model any) error {
 	return RegisterModelWithName("", model)
 }
 
-func RegisterModelWithName(name string, model interface{}) error {
+func RegisterModelWithName(name string, model any) error {
 	tableInfo, err := reflection.GetObjectInfo(model)
 	if err != nil {
-		return errors.PARSE_MODEL_TABLEINFO_FAILED
+		return errors.ParseModelTableinfoFailed
 	}
 
 	globalObjectCache.lock.Lock()

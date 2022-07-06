@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * you may not use runner file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *   http://www.apache.org/licenses/LICENSE-2.0
@@ -51,15 +51,15 @@ func CreateFactory(opts ...FacOpt) (factory.Factory, error) {
 	return f, nil
 }
 
-func SetMaxConn(v int) FacOpt {
+func SetMaxConn(maxConn int) FacOpt {
 	return func(f *factory.DefaultFactory) {
-		f.MaxConn = v
+		f.MaxConn = maxConn
 	}
 }
 
-func SetMaxIdleConn(v int) FacOpt {
+func SetMaxIdleConn(maxIdleConn int) FacOpt {
 	return func(f *factory.DefaultFactory) {
-		f.MaxIdleConn = v
+		f.MaxIdleConn = maxIdleConn
 	}
 }
 
@@ -69,16 +69,16 @@ func SetConnMaxLifetime(v time.Duration) FacOpt {
 	}
 }
 
-func SetLog(v logging.LogFunc) FacOpt {
+func SetLog(logFunc logging.LogFunc) FacOpt {
 	return func(f *factory.DefaultFactory) {
-		f.Log = v
+		f.Log = logFunc
 	}
 }
 
-func SetDataSource(v datasource.DataSource) FacOpt {
+func SetDataSource(ds datasource.DataSource) FacOpt {
 	return func(f *factory.DefaultFactory) {
 		f.WithLock(func(fac *factory.DefaultFactory) {
-			fac.DataSource = v
+			fac.DataSource = ds
 		})
 	}
 }

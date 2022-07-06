@@ -3,7 +3,7 @@
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * you may not use runner file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *   http://www.apache.org/licenses/LICENSE-2.0
@@ -19,6 +19,7 @@ package gobatis
 
 import (
 	"context"
+
 	"github.com/acmestack/gobatis/errors"
 	"github.com/acmestack/gobatis/factory"
 	"github.com/acmestack/gobatis/logging"
@@ -40,16 +41,16 @@ func NewSessionManager(factory factory.Factory) *SessionManager {
 }
 
 type Runner interface {
-	// 参数
+	// Param 参数
 	// 注意：如果没有参数也必须调用
 	// 如果参数个数为1并且为struct，将解析struct获得参数
 	// 如果参数个数大于1并且全部为简单类型，或则个数为1且为简单类型，则使用这些参数
-	Param(params ...interface{}) Runner
-	// 获得结果
-	Result(bean interface{}) error
-	// 最后插入的自增id
+	Param(params ...any) Runner
+	// Result 获得结果
+	Result(bean any) error
+	// LastInsertId 最后插入的自增id
 	LastInsertId() int64
-	// 设置Context
+	// Context 设置Context
 	Context(ctx context.Context) Runner
 }
 
@@ -69,7 +70,7 @@ type BaseRunner struct {
 	log       logging.LogFunc
 	driver    string
 	ctx       context.Context
-	this      Runner
+	runner    Runner
 }
 
 type SelectRunner struct {
@@ -93,25 +94,25 @@ type ExecRunner struct {
 	BaseRunner
 }
 
-// 使用一个session操作数据库
-func (this *SessionManager) NewSession() *Session {
+// NewSession 使用一个session操作数据库
+func (sessionManager *SessionManager) NewSession() *Session {
 	return &Session{
 		ctx:           context.Background(),
-		log:           this.factory.LogFunc(),
-		session:       this.factory.CreateSession(),
-		driver:        this.factory.GetDataSource().DriverName(),
-		ParserFactory: this.ParserFactory,
+		log:           sessionManager.factory.LogFunc(),
+		session:       sessionManager.factory.CreateSession(),
+		driver:        sessionManager.factory.GetDataSource().DriverName(),
+		ParserFactory: sessionManager.ParserFactory,
 	}
 }
 
-// 包含session的context
-func (this *SessionManager) Context(ctx context.Context) context.Context {
+// Context 包含session的context
+func (sessionManager *SessionManager) Context(ctx context.Context) context.Context {
 	sess := &Session{
 		ctx:           ctx,
-		log:           this.factory.LogFunc(),
-		session:       this.factory.CreateSession(),
-		driver:        this.factory.GetDataSource().DriverName(),
-		ParserFactory: this.ParserFactory,
+		log:           sessionManager.factory.LogFunc(),
+		session:       sessionManager.factory.CreateSession(),
+		driver:        sessionManager.factory.GetDataSource().DriverName(),
+		ParserFactory: sessionManager.ParserFactory,
 	}
 	return context.WithValue(ctx, ContextSessionKey, sess)
 }
@@ -127,257 +128,257 @@ func FindSession(ctx context.Context) *Session {
 	return ctx.Value(ContextSessionKey).(*Session)
 }
 
-func (this *SessionManager) Close() error {
-	return this.factory.Close()
+func (sessionManager *SessionManager) Close() error {
+	return sessionManager.factory.Close()
 }
 
-// 修改sql解析器创建者
-func (this *SessionManager) SetParserFactory(fac ParserFactory) {
-	this.ParserFactory = fac
+// SetParserFactory 修改sql解析器创建者
+func (sessionManager *SessionManager) SetParserFactory(fac ParserFactory) {
+	sessionManager.ParserFactory = fac
 }
 
-func (this *Session) SetContext(ctx context.Context) *Session {
-	this.ctx = ctx
-	return this
+func (session *Session) SetContext(ctx context.Context) *Session {
+	session.ctx = ctx
+	return session
 }
 
-func (this *Session) GetContext() context.Context {
-	return this.ctx
+func (session *Session) GetContext() context.Context {
+	return session.ctx
 }
 
-// 修改sql解析器创建者
-func (this *Session) SetParserFactory(fac ParserFactory) {
-	this.ParserFactory = fac
+// SetParserFactory 修改sql解析器创建者
+func (session *Session) SetParserFactory(fac ParserFactory) {
+	session.ParserFactory = fac
 }
 
-// 开启事务执行语句
+// Tx 开启事务执行语句
 // 返回nil则提交，返回error回滚
 // 抛出异常错误触发回滚
-func (this *Session) Tx(txFunc func(session *Session) error) (err error) {
-	e1 := this.session.Begin()
+func (session *Session) Tx(txFunc func(session *Session) error) (err error) {
+	e1 := session.session.Begin()
 	if e1 != nil {
 		return e1
 	}
 	defer func(err *error) {
 		if r := recover(); r != nil {
-			*err = this.session.Rollback()
+			*err = session.session.Rollback()
 			panic(r)
 		}
 	}(&err)
 
-	if fnErr := txFunc(this); fnErr != nil {
-		e := this.session.Rollback()
+	if fnErr := txFunc(session); fnErr != nil {
+		e := session.session.Rollback()
 		if e != nil {
-			this.log(logging.WARN, "Rollback error: %v , business error: %v\n", e, fnErr)
+			session.log(logging.WARN, "Rollback error: %v , business error: %v\n", e, fnErr)
 		}
 		return fnErr
 	} else {
-		return this.session.Commit()
+		return session.session.Commit()
 	}
 }
 
-func (this *Session) Select(sql string) Runner {
-	return this.createSelect(this.findSqlParser(sql))
+func (session *Session) Select(sql string) Runner {
+	return session.createSelect(session.findSqlParser(sql))
 }
 
-func (this *Session) Update(sql string) Runner {
-	return this.createUpdate(this.findSqlParser(sql))
+func (session *Session) Update(sql string) Runner {
+	return session.createUpdate(session.findSqlParser(sql))
 }
 
-func (this *Session) Delete(sql string) Runner {
-	return this.createDelete(this.findSqlParser(sql))
+func (session *Session) Delete(sql string) Runner {
+	return session.createDelete(session.findSqlParser(sql))
 }
 
-func (this *Session) Insert(sql string) Runner {
-	return this.createInsert(this.findSqlParser(sql))
+func (session *Session) Insert(sql string) Runner {
+	return session.createInsert(session.findSqlParser(sql))
 }
 
-func (this *Session) Exec(sql string) Runner {
-	return this.createExec(this.findSqlParser(sql))
+func (session *Session) Exec(sql string) Runner {
+	return session.createExec(session.findSqlParser(sql))
 }
 
-func (this *BaseRunner) Param(params ...interface{}) Runner {
+func (baseRunner *BaseRunner) Param(params ...any) Runner {
 	//TODO: 使用缓存加速，避免每次都生成动态sql
 	//测试发现性能提升非常有限，故取消
-	//key := cache.CalcKey(this.sqlDynamicData.OriginData, paramMap)
+	//key := cache.CalcKey(baseRunner.sqlDynamicData.OriginData, paramMap)
 	//md := cache.FindMetadata(key)
 	//var err error
 	//if md == nil {
-	//    md, err := this.sqlParser.Parse(params...)
+	//    md, err := baseRunner.sqlParser.Parse(params...)
 	//    if err == nil {
 	//        cache.CacheMetadata(key, md)
 	//    }
 	//}
 
-	if this.sqlParser == nil {
-		this.log(logging.WARN, errors.PARSE_PARSER_NIL_ERROR.Error())
-		return this
+	if baseRunner.sqlParser == nil {
+		baseRunner.log(logging.WARN, errors.ParseParserNilError.Error())
+		return baseRunner
 	}
 
-	md, err := this.sqlParser.ParseMetadata(this.driver, params...)
+	md, err := baseRunner.sqlParser.ParseMetadata(baseRunner.driver, params...)
 
 	if err == nil {
-		if this.action == "" || this.action == md.Action {
-			this.metadata = md
+		if baseRunner.action == "" || baseRunner.action == md.Action {
+			baseRunner.metadata = md
 		} else {
 			//allow different action
-			this.log(logging.WARN, "sql action not match expect %s get %s", this.action, md.Action)
-			this.metadata = md
+			baseRunner.log(logging.WARN, "sql action not match expect %s get %s", baseRunner.action, md.Action)
+			baseRunner.metadata = md
 		}
 	} else {
-		this.log(logging.WARN, err.Error())
+		baseRunner.log(logging.WARN, err.Error())
 	}
-	return this.this
+	return baseRunner.runner
 }
 
 //Context 设置执行的context
-func (this *BaseRunner) Context(ctx context.Context) Runner {
-	this.ctx = ctx
-	return this.this
+func (baseRunner *BaseRunner) Context(ctx context.Context) Runner {
+	baseRunner.ctx = ctx
+	return baseRunner.runner
 }
 
-func (this *SelectRunner) Result(bean interface{}) error {
-	if this.metadata == nil {
-		this.log(logging.WARN, "Sql Matadata is nil")
-		return errors.RUNNER_NOT_READY
+func (selectRunner *SelectRunner) Result(bean any) error {
+	if selectRunner.metadata == nil {
+		selectRunner.log(logging.WARN, "Sql Metadata is nil")
+		return errors.RunnerNotReady
 	}
 
 	if reflection.IsNil(bean) {
-		return errors.RESULT_POINTER_IS_NIL
+		return errors.ResultPointerIsNil
 	}
 
 	obj, err := ParseObject(bean)
 	if err != nil {
 		return err
 	}
-	return this.session.Query(this.ctx, obj, this.metadata.PrepareSql, this.metadata.Params...)
+	return selectRunner.session.Query(selectRunner.ctx, obj, selectRunner.metadata.PrepareSql, selectRunner.metadata.Params...)
 
 }
 
-func (this *InsertRunner) Result(bean interface{}) error {
-	if this.metadata == nil {
-		this.log(logging.WARN, "Sql Matadata is nil")
-		return errors.RUNNER_NOT_READY
+func (insertRunner *InsertRunner) Result(bean any) error {
+	if insertRunner.metadata == nil {
+		insertRunner.log(logging.WARN, "Sql Metadata is nil")
+		return errors.RunnerNotReady
 	}
-	i, id, err := this.session.Insert(this.ctx, this.metadata.PrepareSql, this.metadata.Params...)
-	this.lastId = id
+	i, id, err := insertRunner.session.Insert(insertRunner.ctx, insertRunner.metadata.PrepareSql, insertRunner.metadata.Params...)
+	insertRunner.lastId = id
 	if reflection.CanSet(bean) {
 		reflection.SetValue(reflection.ReflectValue(bean), i)
 	}
 	return err
 }
 
-func (this *InsertRunner) LastInsertId() int64 {
-	return this.lastId
+func (insertRunner *InsertRunner) LastInsertId() int64 {
+	return insertRunner.lastId
 }
 
-func (this *UpdateRunner) Result(bean interface{}) error {
-	if this.metadata == nil {
-		this.log(logging.WARN, "Sql Matadata is nil")
-		return errors.RUNNER_NOT_READY
+func (updateRunner *UpdateRunner) Result(bean any) error {
+	if updateRunner.metadata == nil {
+		updateRunner.log(logging.WARN, "Sql Metadata is nil")
+		return errors.RunnerNotReady
 	}
-	i, err := this.session.Update(this.ctx, this.metadata.PrepareSql, this.metadata.Params...)
+	i, err := updateRunner.session.Update(updateRunner.ctx, updateRunner.metadata.PrepareSql, updateRunner.metadata.Params...)
 	if reflection.CanSet(bean) {
 		reflection.SetValue(reflection.ReflectValue(bean), i)
 	}
 	return err
 }
 
-func (this *ExecRunner) Result(bean interface{}) error {
-	if this.metadata == nil {
-		this.log(logging.WARN, "Sql Matadata is nil")
-		return errors.RUNNER_NOT_READY
+func (execRunner *ExecRunner) Result(bean any) error {
+	if execRunner.metadata == nil {
+		execRunner.log(logging.WARN, "Sql Metadata is nil")
+		return errors.RunnerNotReady
 	}
-	i, err := this.session.Update(this.ctx, this.metadata.PrepareSql, this.metadata.Params...)
+	i, err := execRunner.session.Update(execRunner.ctx, execRunner.metadata.PrepareSql, execRunner.metadata.Params...)
 	if reflection.CanSet(bean) {
 		reflection.SetValue(reflection.ReflectValue(bean), i)
 	}
 	return err
 }
 
-func (this *DeleteRunner) Result(bean interface{}) error {
-	if this.metadata == nil {
-		this.log(logging.WARN, "Sql Matadata is nil")
-		return errors.RUNNER_NOT_READY
+func (deleteRunner *DeleteRunner) Result(bean any) error {
+	if deleteRunner.metadata == nil {
+		deleteRunner.log(logging.WARN, "Sql Metadata is nil")
+		return errors.RunnerNotReady
 	}
-	i, err := this.session.Delete(this.ctx, this.metadata.PrepareSql, this.metadata.Params...)
+	i, err := deleteRunner.session.Delete(deleteRunner.ctx, deleteRunner.metadata.PrepareSql, deleteRunner.metadata.Params...)
 	if reflection.CanSet(bean) {
 		reflection.SetValue(reflection.ReflectValue(bean), i)
 	}
 	return err
 }
 
-func (this *BaseRunner) Result(bean interface{}) error {
+func (baseRunner *BaseRunner) Result(bean any) error {
 	//FAKE RETURN
 	panic("Cannot be here")
 	//return nil, nil
 }
 
-func (this *BaseRunner) LastInsertId() int64 {
+func (baseRunner *BaseRunner) LastInsertId() int64 {
 	return -1
 }
 
-func (this *Session) createSelect(parser sqlparser.SqlParser) Runner {
+func (session *Session) createSelect(parser sqlparser.SqlParser) Runner {
 	ret := &SelectRunner{}
 	ret.action = sqlparser.SELECT
-	ret.log = this.log
-	ret.session = this.session
+	ret.log = session.log
+	ret.session = session.session
 	ret.sqlParser = parser
-	ret.ctx = this.ctx
-	ret.driver = this.driver
-	ret.this = ret
+	ret.ctx = session.ctx
+	ret.driver = session.driver
+	ret.runner = ret
 	return ret
 }
 
-func (this *Session) createUpdate(parser sqlparser.SqlParser) Runner {
+func (session *Session) createUpdate(parser sqlparser.SqlParser) Runner {
 	ret := &UpdateRunner{}
 	ret.action = sqlparser.UPDATE
-	ret.log = this.log
-	ret.session = this.session
+	ret.log = session.log
+	ret.session = session.session
 	ret.sqlParser = parser
-	ret.ctx = this.ctx
-	ret.driver = this.driver
-	ret.this = ret
+	ret.ctx = session.ctx
+	ret.driver = session.driver
+	ret.runner = ret
 	return ret
 }
 
-func (this *Session) createDelete(parser sqlparser.SqlParser) Runner {
+func (session *Session) createDelete(parser sqlparser.SqlParser) Runner {
 	ret := &DeleteRunner{}
 	ret.action = sqlparser.DELETE
-	ret.log = this.log
-	ret.session = this.session
+	ret.log = session.log
+	ret.session = session.session
 	ret.sqlParser = parser
-	ret.ctx = this.ctx
-	ret.driver = this.driver
-	ret.this = ret
+	ret.ctx = session.ctx
+	ret.driver = session.driver
+	ret.runner = ret
 	return ret
 }
 
-func (this *Session) createInsert(parser sqlparser.SqlParser) Runner {
+func (session *Session) createInsert(parser sqlparser.SqlParser) Runner {
 	ret := &InsertRunner{}
 	ret.action = sqlparser.INSERT
-	ret.log = this.log
-	ret.session = this.session
+	ret.log = session.log
+	ret.session = session.session
 	ret.sqlParser = parser
-	ret.ctx = this.ctx
-	ret.driver = this.driver
-	ret.this = ret
+	ret.ctx = session.ctx
+	ret.driver = session.driver
+	ret.runner = ret
 	return ret
 }
 
-func (this *Session) createExec(parser sqlparser.SqlParser) Runner {
+func (session *Session) createExec(parser sqlparser.SqlParser) Runner {
 	ret := &ExecRunner{}
 	ret.action = ""
-	ret.log = this.log
-	ret.session = this.session
+	ret.log = session.log
+	ret.session = session.session
 	ret.sqlParser = parser
-	ret.ctx = this.ctx
-	ret.driver = this.driver
-	ret.this = ret
+	ret.ctx = session.ctx
+	ret.driver = session.driver
+	ret.runner = ret
 	return ret
 }
 
-func (this *Session) findSqlParser(sqlId string) sqlparser.SqlParser {
+func (session *Session) findSqlParser(sqlId string) sqlparser.SqlParser {
 	ret, ok := FindDynamicSqlParser(sqlId)
 	if !ok {
 		ret, ok = FindTemplateSqlParser(sqlId)
@@ -385,9 +386,9 @@ func (this *Session) findSqlParser(sqlId string) sqlparser.SqlParser {
 	//FIXME: 当没有查找到sqlId对应的sql语句，则尝试使用sqlId直接操作数据库
 	//该设计可能需要设计一个更合理的方式
 	if !ok {
-		d, err := this.ParserFactory(sqlId)
+		d, err := session.ParserFactory(sqlId)
 		if err != nil {
-			this.log(logging.WARN, err.Error())
+			session.log(logging.WARN, err.Error())
 			return nil
 		}
 		return d

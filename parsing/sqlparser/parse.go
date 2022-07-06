@@ -19,10 +19,11 @@ package sqlparser
 
 import (
 	"fmt"
-	"github.com/acmestack/gobatis/errors"
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/acmestack/gobatis/errors"
 )
 
 const (
@@ -61,7 +62,7 @@ func SimpleParse(sql string) (*Metadata, error) {
 			lastIndex = findFirst(subStr, '}')
 			//lastIndex = strings.Index(subStr, "}")
 			if lastIndex == -1 {
-				return nil, errors.PARSE_SQL_VAR_ERROR
+				return nil, errors.ParseSqlVarError
 			} else {
 				varName := subStr[:lastIndex]
 				if varName != "" {
@@ -101,18 +102,18 @@ func ParseWithParams(sql string, params ...interface{}) (*Metadata, error) {
 			lastIndex = findFirst(subStr, '}')
 			//lastIndex = strings.Index(subStr, "}")
 			if lastIndex == -1 {
-				return nil, errors.PARSE_SQL_VAR_ERROR
+				return nil, errors.ParseSqlVarError
 			} else {
 				varName := subStr[:lastIndex]
 				if varName != "" {
 					ret.Vars = append(ret.Vars, varName)
 					indexV, err := strconv.Atoi(varName)
 					if err != nil {
-						return nil, errors.PARSE_SQL_PARAM_VAR_NUMBER_ERROR
+						return nil, errors.ParseSqlParamVarNumberError
 					}
 					if c == "$" {
 						if len(params) <= indexV {
-							return nil, errors.PARSE_SQL_PARAM_ERROR
+							return nil, errors.ParseSqlParamError
 						}
 						oldStr := "${" + varName + "}"
 						newStr := interface2String(params[indexV])
@@ -120,7 +121,7 @@ func ParseWithParams(sql string, params ...interface{}) (*Metadata, error) {
 						subStr = strings.Replace(subStr, oldStr, newStr, -1)
 					} else if c == "#" {
 						if len(params) < indexV {
-							return nil, errors.PARSE_SQL_PARAM_ERROR
+							return nil, errors.ParseSqlParamError
 						}
 						oldStr := "#{" + varName + "}"
 						ret.PrepareSql = strings.Replace(ret.PrepareSql, oldStr, "?", -1)
@@ -159,7 +160,7 @@ func ParseWithParamMap(driverName, sql string, params map[string]interface{}) (*
 			lastIndex = findFirst(subStr, '}')
 			//lastIndex = strings.Index(subStr, "}")
 			if lastIndex == -1 {
-				return nil, errors.PARSE_SQL_VAR_ERROR
+				return nil, errors.ParseSqlVarError
 			} else {
 				varName := subStr[:lastIndex]
 				if varName != "" {
@@ -178,7 +179,7 @@ func ParseWithParamMap(driverName, sql string, params map[string]interface{}) (*
 							ret.Params = append(ret.Params, value)
 						}
 					} else {
-						return nil, errors.PARSE_SQL_PARAM_ERROR
+						return nil, errors.ParseSqlParamError
 					}
 				}
 			}

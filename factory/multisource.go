@@ -41,16 +41,16 @@ type SingleSource struct {
 	fac Factory
 }
 
-func NewSingleSource(fac Factory) *SingleSource {
-	return &SingleSource{fac: fac}
+func NewSingleSource(factory Factory) *SingleSource {
+	return &SingleSource{fac: factory}
 }
 
-func (lb *SingleSource) Bind(action string, weight int, factory Factory) {
-	lb.fac = factory
+func (singleDs *SingleSource) Bind(action string, weight int, factory Factory) {
+	singleDs.fac = factory
 }
 
-func (lb *SingleSource) Select(action string) Factory {
-	return lb.fac
+func (singleDs *SingleSource) Select(action string) Factory {
+	return singleDs.fac
 }
 
 type DefaultMultiSource struct {
@@ -67,28 +67,28 @@ func NewMultiSource(t LoadBalanceType) *DefaultMultiSource {
 	}
 }
 
-func (lb *DefaultMultiSource) Bind(action string, weight int, factory Factory) {
+func (multiDs *DefaultMultiSource) Bind(action string, weight int, factory Factory) {
 	if action == "" {
 		action = DefaultGroup
 	}
 
-	if v, ok := lb.actionMaps[action]; ok {
+	if v, ok := multiDs.actionMaps[action]; ok {
 		v.Add(weight, factory)
 	} else {
-		if f, ok := lb.factoryMaps[factory]; ok {
-			lb.actionMaps[action] = f
-			lb.factoryMaps[factory] = f
+		if f, ok := multiDs.factoryMaps[factory]; ok {
+			multiDs.actionMaps[action] = f
+			multiDs.factoryMaps[factory] = f
 		} else {
-			newlb := loadbalance.Create(lb.lbType)
-			newlb.Add(weight, factory)
-			lb.actionMaps[action] = newlb
-			lb.factoryMaps[factory] = newlb
+			newlyMds := loadbalance.Create(multiDs.lbType)
+			newlyMds.Add(weight, factory)
+			multiDs.actionMaps[action] = newlyMds
+			multiDs.factoryMaps[factory] = newlyMds
 		}
 	}
 }
 
-func (lb *DefaultMultiSource) Select(action string) Factory {
-	if v, ok := lb.actionMaps[action]; ok {
+func (multiDs *DefaultMultiSource) Select(action string) Factory {
+	if v, ok := multiDs.actionMaps[action]; ok {
 		f := v.Select(nil)
 		if f != nil {
 			return f.(Factory)

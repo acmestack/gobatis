@@ -19,6 +19,7 @@ package executor
 
 import (
 	"context"
+
 	"github.com/acmestack/gobatis/common"
 	"github.com/acmestack/gobatis/errors"
 	"github.com/acmestack/gobatis/reflection"
@@ -50,12 +51,12 @@ func (exec *SimpleExecutor) Close(rollback bool) {
 
 func (exec *SimpleExecutor) Query(ctx context.Context, result reflection.Object, sql string, params ...interface{}) error {
 	if exec.closed {
-		return errors.EXECUTOR_QUERY_ERROR
+		return errors.ExecutorQueryError
 	}
 
 	conn := exec.transaction.GetConnection()
 	if conn == nil {
-		return errors.EXECUTOR_GET_CONNECTION_ERROR
+		return errors.ExecutorGetConnectionError
 	}
 
 	return conn.Query(ctx, result, sql, params...)
@@ -63,12 +64,12 @@ func (exec *SimpleExecutor) Query(ctx context.Context, result reflection.Object,
 
 func (exec *SimpleExecutor) Exec(ctx context.Context, sql string, params ...interface{}) (common.Result, error) {
 	if exec.closed {
-		return nil, errors.EXECUTOR_QUERY_ERROR
+		return nil, errors.ExecutorQueryError
 	}
 
 	conn := exec.transaction.GetConnection()
 	if conn == nil {
-		return nil, errors.EXECUTOR_GET_CONNECTION_ERROR
+		return nil, errors.ExecutorGetConnectionError
 	}
 
 	return conn.Exec(ctx, sql, params...)
@@ -76,7 +77,7 @@ func (exec *SimpleExecutor) Exec(ctx context.Context, sql string, params ...inte
 
 func (exec *SimpleExecutor) Begin() error {
 	if exec.closed {
-		return errors.EXECUTOR_BEGIN_ERROR
+		return errors.ExecutorBeginError
 	}
 
 	return exec.transaction.Begin()
@@ -84,7 +85,7 @@ func (exec *SimpleExecutor) Begin() error {
 
 func (exec *SimpleExecutor) Commit(require bool) error {
 	if exec.closed {
-		return errors.EXECUTOR_COMMIT_ERROR
+		return errors.ExecutorCommitError
 	}
 
 	if require {

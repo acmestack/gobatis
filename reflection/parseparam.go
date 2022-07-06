@@ -25,30 +25,30 @@ import (
 )
 
 const (
-	slice_param_separator = "_&eLEm_"
+	sliceParamSeparator = "_&eLEm_"
 )
 
 type paramParser struct {
-	ret   map[string]interface{}
+	ret   map[string]any
 	index int
 }
 
-func ParseParams(params ...interface{}) map[string]interface{} {
+func ParseParams(params ...any) map[string]any {
 	parser := paramParser{
-		ret:   map[string]interface{}{},
+		ret:   map[string]any{},
 		index: 0,
 	}
 	parser.innerParse(params...)
 	return parser.ret
 }
 
-func (parser *paramParser) innerParse(params ...interface{}) {
+func (parser *paramParser) innerParse(params ...any) {
 	for i := range params {
 		parser.parseOne("", params[i])
 	}
 }
 
-func (parser *paramParser) parseOne(parentKey string, v interface{}) {
+func (parser *paramParser) parseOne(parentKey string, v any) {
 	rt := reflect.TypeOf(v)
 	rv := reflect.ValueOf(v)
 
@@ -123,7 +123,7 @@ func (parser *paramParser) parseOne(parentKey string, v interface{}) {
 }
 
 func ParseSliceParamString(src string) []string {
-	return strings.Split(src, slice_param_separator)
+	return strings.Split(src, sliceParamSeparator)
 }
 
 func (parser *paramParser) setSliceValue(parentKey string) string {
@@ -133,7 +133,7 @@ func (parser *paramParser) setSliceValue(parentKey string) string {
 	for k := range parser.ret {
 		if strings.Index(k, key) == 0 {
 			builder.WriteString(k)
-			builder.WriteString(slice_param_separator)
+			builder.WriteString(sliceParamSeparator)
 		}
 	}
 

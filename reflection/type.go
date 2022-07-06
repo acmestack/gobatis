@@ -23,51 +23,51 @@ import (
 )
 
 var (
-	EMPTY_STRING       string
-	BOOL_DEFAULT       bool
-	BYTE_DEFAULT       byte
-	COMPLEX64_DEFAULT  complex64
-	COMPLEX128_DEFAULT complex128
-	FLOAT32_DEFAULT    float32
-	FLOAT64_DEFAULT    float64
-	INT64_DEFAULT      int64
-	UINT64_DEFAULT     uint64
-	INT32_DEFAULT      int32
-	UINT32_DEFAULT     uint32
-	INT16_DEFAULT      int16
-	UINT16_DEFAULT     uint16
-	INT8_DEFAULT       int8
-	UINT8_DEFAULT      uint8
-	INT_DEFAULT        int
-	UINT_DEFAULT       uint
-	TIME_DEFAULT       time.Time
+	EmptyString       string
+	BoolDefault       bool
+	ByteDefault       byte
+	Complex64Default  complex64
+	Complex128Default complex128
+	Float32Default    float32
+	Float64Default    float64
+	Int64Default      int64
+	Uint64Default     uint64
+	Int32Default      int32
+	Uint32Default     uint32
+	Int16Default      int16
+	Uint16Default     uint16
+	Int8Default       int8
+	Uint8Default      uint8
+	IntDefault        int
+	UintDefault       uint
+	TimeDefault       time.Time
 )
 
 var (
-	IntType   = reflect.TypeOf(INT_DEFAULT)
-	Int8Type  = reflect.TypeOf(INT8_DEFAULT)
-	Int16Type = reflect.TypeOf(INT16_DEFAULT)
-	Int32Type = reflect.TypeOf(INT32_DEFAULT)
-	Int64Type = reflect.TypeOf(INT64_DEFAULT)
+	IntType   = reflect.TypeOf(IntDefault)
+	Int8Type  = reflect.TypeOf(Int8Default)
+	Int16Type = reflect.TypeOf(Int16Default)
+	Int32Type = reflect.TypeOf(Int32Default)
+	Int64Type = reflect.TypeOf(Int64Default)
 
-	UintType   = reflect.TypeOf(UINT_DEFAULT)
-	Uint8Type  = reflect.TypeOf(UINT8_DEFAULT)
-	Uint16Type = reflect.TypeOf(UINT16_DEFAULT)
-	Uint32Type = reflect.TypeOf(UINT32_DEFAULT)
-	Uint64Type = reflect.TypeOf(UINT64_DEFAULT)
+	UintType   = reflect.TypeOf(UintDefault)
+	Uint8Type  = reflect.TypeOf(Uint8Default)
+	Uint16Type = reflect.TypeOf(Uint16Default)
+	Uint32Type = reflect.TypeOf(Uint32Default)
+	Uint64Type = reflect.TypeOf(Uint64Default)
 
-	Float32Type = reflect.TypeOf(FLOAT32_DEFAULT)
-	Float64Type = reflect.TypeOf(FLOAT64_DEFAULT)
+	Float32Type = reflect.TypeOf(Float32Default)
+	Float64Type = reflect.TypeOf(Float64Default)
 
-	Complex64Type  = reflect.TypeOf(COMPLEX64_DEFAULT)
-	Complex128Type = reflect.TypeOf(COMPLEX128_DEFAULT)
+	Complex64Type  = reflect.TypeOf(Complex64Default)
+	Complex128Type = reflect.TypeOf(Complex128Default)
 
-	StringType = reflect.TypeOf(EMPTY_STRING)
-	BoolType   = reflect.TypeOf(BOOL_DEFAULT)
-	ByteType   = reflect.TypeOf(BYTE_DEFAULT)
+	StringType = reflect.TypeOf(EmptyString)
+	BoolType   = reflect.TypeOf(BoolDefault)
+	ByteType   = reflect.TypeOf(ByteDefault)
 	BytesType  = reflect.SliceOf(ByteType)
 
-	TimeType = reflect.TypeOf(TIME_DEFAULT)
+	TimeType = reflect.TypeOf(TimeDefault)
 )
 
 var (
