@@ -18,12 +18,13 @@
 package parsing
 
 import (
-	"github.com/acmestack/gobatis/logging"
-	"github.com/acmestack/gobatis/parsing/sqlparser"
-	"github.com/acmestack/gobatis/reflection"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/acmestack/gobatis/logging"
+	"github.com/acmestack/gobatis/parsing/sqlparser"
+	"github.com/acmestack/gobatis/reflection"
 )
 
 type GetFunc func(key string) string
@@ -37,16 +38,16 @@ type DynamicData struct {
 	DynamicElemMap map[string]DynamicElement
 }
 
-func (m *DynamicData) Replace(params ...interface{}) string {
+func (dynamicData *DynamicData) Replace(params ...interface{}) string {
 	objMap := reflection.ParseParams(params...)
-	return m.ReplaceWithMap(objMap)
+	return dynamicData.ReplaceWithMap(objMap)
 }
 
-//需要外部确保param是一个struct
-func (m *DynamicData) ReplaceWithMap(objParams map[string]interface{}) string {
-	if len(m.DynamicElemMap) == 0 || len(objParams) == 0 {
+// ReplaceWithMap 需要外部确保param是一个struct
+func (dynamicData *DynamicData) ReplaceWithMap(objParams map[string]interface{}) string {
+	if len(dynamicData.DynamicElemMap) == 0 || len(objParams) == 0 {
 		logging.Info("map is empty")
-		//return m.OriginData
+		//return dynamicData.OriginData
 	}
 
 	getFunc := func(s string) string {
@@ -71,15 +72,15 @@ func (m *DynamicData) ReplaceWithMap(objParams map[string]interface{}) string {
 		return ""
 	}
 
-	ret := m.OriginData
-	for k, v := range m.DynamicElemMap {
+	ret := dynamicData.OriginData
+	for k, v := range dynamicData.DynamicElemMap {
 		ret = strings.Replace(ret, k, v.Format(getFunc), -1)
 	}
 	return ret
 }
 
-func (m *DynamicData) ParseMetadata(driverName string, params ...interface{}) (*sqlparser.Metadata, error) {
+func (dynamicData *DynamicData) ParseMetadata(driverName string, params ...interface{}) (*sqlparser.Metadata, error) {
 	paramMap := reflection.ParseParams(params...)
-	sqlStr := m.ReplaceWithMap(paramMap)
+	sqlStr := dynamicData.ReplaceWithMap(paramMap)
 	return sqlparser.ParseWithParamMap(driverName, sqlStr, paramMap)
 }

@@ -23,8 +23,8 @@ import (
 
 func TestReplace(t *testing.T) {
 	old := "ab"
-	new := "cdab"
-	s, i := replace("fhaksfjlabdasdabdasljfabda", old, new, -1)
+	newly := "cdab"
+	s, i := replace("fhaksfjlabdasdabdasljfabda", old, newly, -1)
 	t.Log(s, " ", i)
 }
 

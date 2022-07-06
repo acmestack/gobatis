@@ -18,8 +18,9 @@
 package gobatis
 
 import (
-	"github.com/acmestack/gobatis/reflection"
 	"reflect"
+
+	"github.com/acmestack/gobatis/reflection"
 )
 
 func init() {

@@ -20,6 +20,7 @@ package transaction
 import (
 	"context"
 	"database/sql"
+
 	"github.com/acmestack/gobatis/common"
 	"github.com/acmestack/gobatis/connection"
 	"github.com/acmestack/gobatis/datasource"
@@ -63,24 +64,24 @@ func (trans *DefaultTransaction) Begin() error {
 
 func (trans *DefaultTransaction) Commit() error {
 	if trans.tx == nil {
-		return errors.TRANSACTION_WITHOUT_BEGIN
+		return errors.TransactionWithoutBegin
 	}
 
 	err := trans.tx.Commit()
 	if err != nil {
-		return errors.TRANSACTION_COMMIT_ERROR
+		return errors.TransactionCommitError
 	}
 	return nil
 }
 
 func (trans *DefaultTransaction) Rollback() error {
 	if trans.tx == nil {
-		return errors.TRANSACTION_WITHOUT_BEGIN
+		return errors.TransactionWithoutBegin
 	}
 
 	err := trans.tx.Rollback()
 	if err != nil {
-		return errors.TRANSACTION_COMMIT_ERROR
+		return errors.TransactionCommitError
 	}
 	return nil
 }
@@ -94,19 +95,19 @@ type TransactionStatement struct {
 	sql string
 }
 
-func (c *TransactionConnection) Prepare(sqlStr string) (statement.Statement, error) {
+func (transConnection *TransactionConnection) Prepare(sqlStr string) (statement.Statement, error) {
 	ret := &TransactionStatement{
-		tx:  c.tx,
+		tx:  transConnection.tx,
 		sql: sqlStr,
 	}
 	return ret, nil
 }
 
-func (c *TransactionConnection) Query(ctx context.Context, result reflection.Object, sqlStr string, params ...interface{}) error {
-	db := c.tx
+func (transConnection *TransactionConnection) Query(ctx context.Context, result reflection.Object, sqlStr string, params ...interface{}) error {
+	db := transConnection.tx
 	rows, err := db.QueryContext(ctx, sqlStr, params...)
 	if err != nil {
-		return errors.STATEMENT_QUERY_ERROR
+		return errors.StatementQueryError
 	}
 	defer rows.Close()
 
@@ -114,15 +115,15 @@ func (c *TransactionConnection) Query(ctx context.Context, result reflection.Obj
 	return nil
 }
 
-func (c *TransactionConnection) Exec(ctx context.Context, sqlStr string, params ...interface{}) (common.Result, error) {
-	db := c.tx
+func (transConnection *TransactionConnection) Exec(ctx context.Context, sqlStr string, params ...interface{}) (common.Result, error) {
+	db := transConnection.tx
 	return db.ExecContext(ctx, sqlStr, params...)
 }
 
-func (s *TransactionStatement) Query(ctx context.Context, result reflection.Object, params ...interface{}) error {
-	rows, err := s.tx.QueryContext(ctx, s.sql, params...)
+func (transStatement *TransactionStatement) Query(ctx context.Context, result reflection.Object, params ...interface{}) error {
+	rows, err := transStatement.tx.QueryContext(ctx, transStatement.sql, params...)
 	if err != nil {
-		return errors.STATEMENT_QUERY_ERROR
+		return errors.StatementQueryError
 	}
 	defer rows.Close()
 
@@ -130,10 +131,10 @@ func (s *TransactionStatement) Query(ctx context.Context, result reflection.Obje
 	return nil
 }
 
-func (s *TransactionStatement) Exec(ctx context.Context, params ...interface{}) (common.Result, error) {
-	return s.tx.ExecContext(ctx, s.sql, params...)
+func (transStatement *TransactionStatement) Exec(ctx context.Context, params ...interface{}) (common.Result, error) {
+	return transStatement.tx.ExecContext(ctx, transStatement.sql, params...)
 }
 
-func (s *TransactionStatement) Close() {
+func (transStatement *TransactionStatement) Close() {
 	//Will be closed when commit or rollback
 }

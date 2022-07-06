@@ -32,7 +32,7 @@ const (
 	FATAL
 )
 
-var gLogTag map[int]string = map[int]string{}
+var gLogTag = map[int]string{}
 var gLogLevel = INFO
 
 func init() {

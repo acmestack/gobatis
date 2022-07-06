@@ -18,13 +18,14 @@
 package template
 
 import (
-	"github.com/acmestack/gobatis/errors"
-	"github.com/acmestack/gobatis/logging"
-	"github.com/acmestack/gobatis/parsing/sqlparser"
 	"io/ioutil"
 	"strings"
 	"sync"
 	"text/template"
+
+	"github.com/acmestack/gobatis/errors"
+	"github.com/acmestack/gobatis/logging"
+	"github.com/acmestack/gobatis/parsing/sqlparser"
 )
 
 const (
@@ -46,10 +47,10 @@ func CreateParser(data []byte) (*Parser, error) {
 	return &Parser{tpl: tpl}, nil
 }
 
-//only use first param
+// ParseMetadata only use first param
 func (p *Parser) ParseMetadata(driverName string, params ...interface{}) (*sqlparser.Metadata, error) {
 	if p.tpl == nil {
-		return nil, errors.PARSE_TEMPLATE_NIL_ERROR
+		return nil, errors.ParseTemplateNilError
 	}
 	b := strings.Builder{}
 	var param interface{} = nil
@@ -86,9 +87,9 @@ func NewManager() *Manager {
 	}
 }
 
-func (m *Manager) RegisterData(data []byte) error {
-	m.lock.Lock()
-	defer m.lock.Unlock()
+func (manager *Manager) RegisterData(data []byte) error {
+	manager.lock.Lock()
+	defer manager.lock.Unlock()
 
 	tpl := template.New("")
 	tpl = tpl.Funcs(dummyFuncMap)
@@ -102,16 +103,16 @@ func (m *Manager) RegisterData(data []byte) error {
 	tpls := tpl.Templates()
 	for _, v := range tpls {
 		if v.Name() != "" && v.Name() != namespaceTmplName {
-			m.sqlMap[ns+v.Name()] = &Parser{tpl: v}
+			manager.sqlMap[ns+v.Name()] = &Parser{tpl: v}
 		}
 	}
 
 	return nil
 }
 
-func (m *Manager) RegisterFile(file string) error {
-	m.lock.Lock()
-	defer m.lock.Unlock()
+func (manager *Manager) RegisterFile(file string) error {
+	manager.lock.Lock()
+	defer manager.lock.Unlock()
 
 	tpl := template.New("")
 	data, err := ioutil.ReadFile(file)
@@ -130,7 +131,7 @@ func (m *Manager) RegisterFile(file string) error {
 	tpls := tpl.Templates()
 	for _, v := range tpls {
 		if v.Name() != "" && v.Name() != namespaceTmplName {
-			m.sqlMap[ns+v.Name()] = &Parser{tpl: v}
+			manager.sqlMap[ns+v.Name()] = &Parser{tpl: v}
 		}
 	}
 
@@ -155,10 +156,10 @@ func getNamespace(tpl *template.Template) string {
 	return ret
 }
 
-func (m *Manager) FindSqlParser(sqlId string) (*Parser, bool) {
-	m.lock.Lock()
-	defer m.lock.Unlock()
+func (manager *Manager) FindSqlParser(sqlId string) (*Parser, bool) {
+	manager.lock.Lock()
+	defer manager.lock.Unlock()
 
-	v, ok := m.sqlMap[sqlId]
+	v, ok := manager.sqlMap[sqlId]
 	return v, ok
 }

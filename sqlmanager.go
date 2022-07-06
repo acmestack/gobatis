@@ -18,12 +18,13 @@
 package gobatis
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/acmestack/gobatis/parsing"
 	"github.com/acmestack/gobatis/parsing/sqlparser"
 	"github.com/acmestack/gobatis/parsing/template"
 	"github.com/acmestack/gobatis/parsing/xml"
-	"os"
-	"path/filepath"
 )
 
 type sqlManager struct {
@@ -31,41 +32,41 @@ type sqlManager struct {
 	templateSqlMgr *template.Manager
 }
 
-var g_sql_mgr = sqlManager{
+var sqlMgr = sqlManager{
 	dynamicSqlMgr:  xml.NewManager(),
 	templateSqlMgr: template.NewManager(),
 }
 
 func RegisterSql(sqlId string, sql string) error {
-	return g_sql_mgr.dynamicSqlMgr.RegisterSql(sqlId, sql)
+	return sqlMgr.dynamicSqlMgr.RegisterSql(sqlId, sql)
 }
 
 func UnregisterSql(sqlId string) {
-	g_sql_mgr.dynamicSqlMgr.UnregisterSql(sqlId)
+	sqlMgr.dynamicSqlMgr.UnregisterSql(sqlId)
 }
 
 func RegisterMapperData(data []byte) error {
-	return g_sql_mgr.dynamicSqlMgr.RegisterData(data)
+	return sqlMgr.dynamicSqlMgr.RegisterData(data)
 }
 
 func RegisterMapperFile(file string) error {
-	return g_sql_mgr.dynamicSqlMgr.RegisterFile(file)
+	return sqlMgr.dynamicSqlMgr.RegisterFile(file)
 }
 
 func FindDynamicSqlParser(sqlId string) (sqlparser.SqlParser, bool) {
-	return g_sql_mgr.dynamicSqlMgr.FindSqlParser(sqlId)
+	return sqlMgr.dynamicSqlMgr.FindSqlParser(sqlId)
 }
 
 func RegisterTemplateData(data []byte) error {
-	return g_sql_mgr.templateSqlMgr.RegisterData(data)
+	return sqlMgr.templateSqlMgr.RegisterData(data)
 }
 
 func RegisterTemplateFile(file string) error {
-	return g_sql_mgr.templateSqlMgr.RegisterFile(file)
+	return sqlMgr.templateSqlMgr.RegisterFile(file)
 }
 
 func FindTemplateSqlParser(sqlId string) (sqlparser.SqlParser, bool) {
-	return g_sql_mgr.templateSqlMgr.FindSqlParser(sqlId)
+	return sqlMgr.templateSqlMgr.FindSqlParser(sqlId)
 }
 
 type ParserFactory func(sql string) (sqlparser.SqlParser, error)
