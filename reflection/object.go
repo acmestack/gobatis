@@ -42,7 +42,7 @@ type Object interface {
 	// NewElem 获得对象的元素
 	NewElem() Object
 	// SetField 设置字段
-	SetField(name string, v any)
+	SetField(name string, v interface{})
 	// AddValue 添加元素值
 	AddValue(v reflect.Value)
 	// GetClassName 获得对象名称

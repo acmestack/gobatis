@@ -39,25 +39,25 @@ const (
 
 type Dynamic interface {
 	getFuncMap() template.FuncMap
-	format(string) (string, []any)
+	format(string) (string, []interface{})
 }
 
 var ArgPlaceHolderFormat = argPlaceHolderFormat
 
-func dummyUpdateSet(b any, column string, value any, origin string) string {
+func dummyUpdateSet(b interface{}, column string, value interface{}, origin string) string {
 	return origin
 }
 
-func dummyWhere(b any, cond, column string, value any, origin string) string {
+func dummyWhere(b interface{}, cond, column string, value interface{}, origin string) string {
 	return origin
 }
 
 //return as fast as possible
-func dummyParam(p any) string {
+func dummyParam(p interface{}) string {
 	return ""
 }
 
-func dummyNil(p any) bool {
+func dummyNil(p interface{}) bool {
 	return true
 }
 
@@ -81,18 +81,18 @@ func (dummyDynamic *DummyDynamic) getFuncMap() template.FuncMap {
 	return dummyFuncMap
 }
 
-func (dummyDynamic *DummyDynamic) getParam() []any {
+func (dummyDynamic *DummyDynamic) getParam() []interface{} {
 	return nil
 }
 
-func (dummyDynamic *DummyDynamic) format(s string) (string, []any) {
+func (dummyDynamic *DummyDynamic) format(s string) (string, []interface{}) {
 	return s, nil
 }
 
 type CommonDynamic struct {
 	index    int
 	keys     []string
-	paramMap map[string]any
+	paramMap map[string]interface{}
 	holder   sqlparser.Holder
 }
 
@@ -100,7 +100,7 @@ func CreateDynamicHandler(holder sqlparser.Holder) Dynamic {
 	return &CommonDynamic{
 		index:    0,
 		keys:     nil,
-		paramMap: map[string]any{},
+		paramMap: map[string]interface{}{},
 		holder:   holder,
 	}
 }
@@ -115,7 +115,7 @@ func (dynamic *CommonDynamic) getFuncMap() template.FuncMap {
 	}
 }
 
-func (dynamic *CommonDynamic) UpdateSet(b any, columnDesc string, value any, origin string) string {
+func (dynamic *CommonDynamic) UpdateSet(b interface{}, columnDesc string, value interface{}, origin string) string {
 	if !IsTrue(b) {
 		return origin
 	}
@@ -145,7 +145,7 @@ func (dynamic *CommonDynamic) UpdateSet(b any, columnDesc string, value any, ori
 	return buf.String()
 }
 
-func (dynamic *CommonDynamic) Where(b any, cond, columnDesc string, value any, origin string) string {
+func (dynamic *CommonDynamic) Where(b interface{}, cond, columnDesc string, value interface{}, origin string) string {
 	if !IsTrue(b) {
 		return origin
 	}
@@ -176,11 +176,11 @@ func (dynamic *CommonDynamic) Where(b any, cond, columnDesc string, value any, o
 	return buf.String()
 }
 
-func (dynamic *CommonDynamic) getParam() []any {
+func (dynamic *CommonDynamic) getParam() []interface{} {
 	return nil
 }
 
-func (dynamic *CommonDynamic) Param(p any) string {
+func (dynamic *CommonDynamic) Param(p interface{}) string {
 	dynamic.index++
 	key := getPlaceHolderKey(dynamic.index)
 	dynamic.paramMap[key] = p
@@ -188,9 +188,9 @@ func (dynamic *CommonDynamic) Param(p any) string {
 	return key
 }
 
-func (dynamic *CommonDynamic) format(s string) (string, []any) {
+func (dynamic *CommonDynamic) format(s string) (string, []interface{}) {
 	i, index := 0, 1
-	var params []any
+	var params []interface{}
 	for _, k := range dynamic.keys {
 		s, i = replace(s, k, dynamic.holder(index), -1)
 		if i > 0 {
@@ -250,7 +250,7 @@ func replace(s, old, new string, n int) (string, int) {
 	return string(t[0:w]), count
 }
 
-func IsTrue(i any) bool {
+func IsTrue(i interface{}) bool {
 	t, _ := template.IsTrue(i)
 	if !t {
 		return t

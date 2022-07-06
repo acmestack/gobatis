@@ -45,9 +45,9 @@ type Runner interface {
 	// 注意：如果没有参数也必须调用
 	// 如果参数个数为1并且为struct，将解析struct获得参数
 	// 如果参数个数大于1并且全部为简单类型，或则个数为1且为简单类型，则使用这些参数
-	Param(params ...any) Runner
+	Param(params ...interface{}) Runner
 	// Result 获得结果
-	Result(bean any) error
+	Result(bean interface{}) error
 	// LastInsertId 最后插入的自增id
 	LastInsertId() int64
 	// Context 设置Context
@@ -197,7 +197,7 @@ func (session *Session) Exec(sql string) Runner {
 	return session.createExec(session.findSqlParser(sql))
 }
 
-func (baseRunner *BaseRunner) Param(params ...any) Runner {
+func (baseRunner *BaseRunner) Param(params ...interface{}) Runner {
 	//TODO: 使用缓存加速，避免每次都生成动态sql
 	//测试发现性能提升非常有限，故取消
 	//key := cache.CalcKey(baseRunner.sqlDynamicData.OriginData, paramMap)
@@ -237,7 +237,7 @@ func (baseRunner *BaseRunner) Context(ctx context.Context) Runner {
 	return baseRunner.runner
 }
 
-func (selectRunner *SelectRunner) Result(bean any) error {
+func (selectRunner *SelectRunner) Result(bean interface{}) error {
 	if selectRunner.metadata == nil {
 		selectRunner.log(logging.WARN, "Sql Metadata is nil")
 		return errors.RunnerNotReady
@@ -255,7 +255,7 @@ func (selectRunner *SelectRunner) Result(bean any) error {
 
 }
 
-func (insertRunner *InsertRunner) Result(bean any) error {
+func (insertRunner *InsertRunner) Result(bean interface{}) error {
 	if insertRunner.metadata == nil {
 		insertRunner.log(logging.WARN, "Sql Metadata is nil")
 		return errors.RunnerNotReady
@@ -272,7 +272,7 @@ func (insertRunner *InsertRunner) LastInsertId() int64 {
 	return insertRunner.lastId
 }
 
-func (updateRunner *UpdateRunner) Result(bean any) error {
+func (updateRunner *UpdateRunner) Result(bean interface{}) error {
 	if updateRunner.metadata == nil {
 		updateRunner.log(logging.WARN, "Sql Metadata is nil")
 		return errors.RunnerNotReady
@@ -284,7 +284,7 @@ func (updateRunner *UpdateRunner) Result(bean any) error {
 	return err
 }
 
-func (execRunner *ExecRunner) Result(bean any) error {
+func (execRunner *ExecRunner) Result(bean interface{}) error {
 	if execRunner.metadata == nil {
 		execRunner.log(logging.WARN, "Sql Metadata is nil")
 		return errors.RunnerNotReady
@@ -296,7 +296,7 @@ func (execRunner *ExecRunner) Result(bean any) error {
 	return err
 }
 
-func (deleteRunner *DeleteRunner) Result(bean any) error {
+func (deleteRunner *DeleteRunner) Result(bean interface{}) error {
 	if deleteRunner.metadata == nil {
 		deleteRunner.log(logging.WARN, "Sql Metadata is nil")
 		return errors.RunnerNotReady
@@ -308,7 +308,7 @@ func (deleteRunner *DeleteRunner) Result(bean any) error {
 	return err
 }
 
-func (baseRunner *BaseRunner) Result(bean any) error {
+func (baseRunner *BaseRunner) Result(bean interface{}) error {
 	//FAKE RETURN
 	panic("Cannot be here")
 	//return nil, nil

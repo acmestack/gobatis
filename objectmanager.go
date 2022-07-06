@@ -35,7 +35,7 @@ var globalObjectCache = ObjectCache{
 	objCache: map[string]reflection.Object{},
 }
 
-func findObject(bean any) reflection.Object {
+func findObject(bean interface{}) reflection.Object {
 	classname := reflection.GetBeanClassName(bean)
 	globalObjectCache.lock.Lock()
 	defer globalObjectCache.lock.Unlock()
@@ -50,7 +50,7 @@ func cacheObject(obj reflection.Object) {
 	globalObjectCache.objCache[obj.GetClassName()] = obj
 }
 
-func ParseObject(bean any) (reflection.Object, error) {
+func ParseObject(bean interface{}) (reflection.Object, error) {
 	obj := findObject(bean)
 	var err error
 	if obj == nil {
@@ -68,11 +68,11 @@ func ParseObject(bean any) (reflection.Object, error) {
 
 // RegisterModel 注册struct模型，模型描述了column和field之间的关联关系；
 // 目前已非必要条件
-func RegisterModel(model any) error {
+func RegisterModel(model interface{}) error {
 	return RegisterModelWithName("", model)
 }
 
-func RegisterModelWithName(name string, model any) error {
+func RegisterModelWithName(name string, model interface{}) error {
 	tableInfo, err := reflection.GetObjectInfo(model)
 	if err != nil {
 		return errors.ParseModelTableinfoFailed

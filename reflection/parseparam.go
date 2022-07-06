@@ -10,7 +10,7 @@
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * WITHOUT WARRANTIES OR CONDITIONS OF interface{} KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
@@ -29,26 +29,26 @@ const (
 )
 
 type paramParser struct {
-	ret   map[string]any
+	ret   map[string]interface{}
 	index int
 }
 
-func ParseParams(params ...any) map[string]any {
+func ParseParams(params ...interface{}) map[string]interface{} {
 	parser := paramParser{
-		ret:   map[string]any{},
+		ret:   map[string]interface{}{},
 		index: 0,
 	}
 	parser.innerParse(params...)
 	return parser.ret
 }
 
-func (parser *paramParser) innerParse(params ...any) {
+func (parser *paramParser) innerParse(params ...interface{}) {
 	for i := range params {
 		parser.parseOne("", params[i])
 	}
 }
 
-func (parser *paramParser) parseOne(parentKey string, v any) {
+func (parser *paramParser) parseOne(parentKey string, v interface{}) {
 	rt := reflect.TypeOf(v)
 	rv := reflect.ValueOf(v)
 
