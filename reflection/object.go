@@ -32,7 +32,7 @@ const (
 	ObjectSlice
 	ObjectMap
 
-	ObjectCostom = 50000
+	ObjectCustom = 50000
 )
 
 type Object interface {
