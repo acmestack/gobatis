@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, OpeningO
+ * Copyright (c) 2022, AcmeStack
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@ const (
 	FATAL
 )
 
-var gLogTag map[int]string = map[int]string{}
+var gLogTag = map[int]string{}
 var gLogLevel = INFO
 
 func init() {

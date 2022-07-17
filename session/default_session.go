@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, OpeningO
+ * Copyright (c) 2022, AcmeStack
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,11 +20,12 @@ package session
 import (
 	"context"
 	"fmt"
-	"github.com/xfali/gobatis/common"
-	"github.com/xfali/gobatis/executor"
-	"github.com/xfali/gobatis/logging"
-	"github.com/xfali/gobatis/reflection"
-	"github.com/xfali/gobatis/transaction"
+
+	"github.com/acmestack/gobatis/common"
+	"github.com/acmestack/gobatis/executor"
+	"github.com/acmestack/gobatis/logging"
+	"github.com/acmestack/gobatis/reflection"
+	"github.com/acmestack/gobatis/transaction"
 )
 
 type DefaultSqlSession struct {
@@ -44,18 +45,18 @@ func NewDefaultSqlSession(log logging.LogFunc, tx transaction.Transaction, e exe
 	return ret
 }
 
-func (sess *DefaultSqlSession) Close(rollback bool) {
-	sess.executor.Close(rollback)
+func (session *DefaultSqlSession) Close(rollback bool) {
+	session.executor.Close(rollback)
 }
 
-func (sess *DefaultSqlSession) Query(ctx context.Context, result reflection.Object, sql string, params ...interface{}) error {
-	sess.logLastSql(sql, params...)
-	return sess.executor.Query(ctx, result, sql, params...)
+func (session *DefaultSqlSession) Query(ctx context.Context, result reflection.Object, sql string, params ...interface{}) error {
+	session.logLastSql(sql, params...)
+	return session.executor.Query(ctx, result, sql, params...)
 }
 
-func (sess *DefaultSqlSession) Insert(ctx context.Context, sql string, params ...interface{}) (int64, int64, error) {
-	sess.logLastSql(sql, params...)
-	ret, err := sess.exec(ctx, sql, params...)
+func (session *DefaultSqlSession) Insert(ctx context.Context, sql string, params ...interface{}) (int64, int64, error) {
+	session.logLastSql(sql, params...)
+	ret, err := session.exec(ctx, sql, params...)
 	if err != nil {
 		return 0, -1, err
 	}
@@ -72,9 +73,9 @@ func (sess *DefaultSqlSession) Insert(ctx context.Context, sql string, params ..
 	return count, id, nil
 }
 
-func (sess *DefaultSqlSession) Update(ctx context.Context, sql string, params ...interface{}) (int64, error) {
-	sess.logLastSql(sql, params...)
-	ret, err := sess.exec(ctx, sql, params...)
+func (session *DefaultSqlSession) Update(ctx context.Context, sql string, params ...interface{}) (int64, error) {
+	session.logLastSql(sql, params...)
+	ret, err := session.exec(ctx, sql, params...)
 	if err != nil {
 		return 0, err
 	}
@@ -86,9 +87,9 @@ func (sess *DefaultSqlSession) Update(ctx context.Context, sql string, params ..
 	return count, nil
 }
 
-func (sess *DefaultSqlSession) Delete(ctx context.Context, sql string, params ...interface{}) (int64, error) {
-	sess.logLastSql(sql, params...)
-	ret, err := sess.exec(ctx, sql, params...)
+func (session *DefaultSqlSession) Delete(ctx context.Context, sql string, params ...interface{}) (int64, error) {
+	session.logLastSql(sql, params...)
+	ret, err := session.exec(ctx, sql, params...)
 	if err != nil {
 		return 0, err
 	}
@@ -100,25 +101,25 @@ func (sess *DefaultSqlSession) Delete(ctx context.Context, sql string, params ..
 	return count, nil
 }
 
-func (sess *DefaultSqlSession) Begin() error {
-	sess.logLastSql("Begin", "")
-	return sess.tx.Begin()
+func (session *DefaultSqlSession) Begin() error {
+	session.logLastSql("Begin", "")
+	return session.tx.Begin()
 }
 
-func (sess *DefaultSqlSession) Commit() error {
-	sess.logLastSql("Commit", "")
-	return sess.tx.Commit()
+func (session *DefaultSqlSession) Commit() error {
+	session.logLastSql("Commit", "")
+	return session.tx.Commit()
 }
 
-func (sess *DefaultSqlSession) Rollback() error {
-	sess.logLastSql("Rollback", "")
-	return sess.tx.Rollback()
+func (session *DefaultSqlSession) Rollback() error {
+	session.logLastSql("Rollback", "")
+	return session.tx.Rollback()
 }
 
-func (sess *DefaultSqlSession) logLastSql(sql string, params ...interface{}) {
-	sess.Log(logging.INFO, "sql: [%s], param: %s\n", sql, fmt.Sprint(params))
+func (session *DefaultSqlSession) logLastSql(sql string, params ...interface{}) {
+	session.Log(logging.INFO, "sql: [%s], param: %s\n", sql, fmt.Sprint(params...))
 }
 
-func (sess *DefaultSqlSession) exec(ctx context.Context, sql string, params ...interface{}) (common.Result, error) {
-	return sess.executor.Exec(ctx, sql, params...)
+func (session *DefaultSqlSession) exec(ctx context.Context, sql string, params ...interface{}) (common.Result, error) {
+	return session.executor.Exec(ctx, sql, params...)
 }

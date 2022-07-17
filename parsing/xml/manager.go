@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, OpeningO
+ * Copyright (c) 2022, AcmeStack
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,11 +18,12 @@
 package xml
 
 import (
-	"github.com/xfali/gobatis/errors"
-	"github.com/xfali/gobatis/logging"
-	"github.com/xfali/gobatis/parsing"
-	"github.com/xfali/gobatis/parsing/sqlparser"
 	"sync"
+
+	"github.com/acmestack/gobatis/errors"
+	"github.com/acmestack/gobatis/logging"
+	"github.com/acmestack/gobatis/parsing"
+	"github.com/acmestack/gobatis/parsing/sqlparser"
 )
 
 type Manager struct {
@@ -36,9 +37,9 @@ func NewManager() *Manager {
 	}
 }
 
-func (m *Manager) RegisterData(data []byte) error {
-	m.lock.Lock()
-	defer m.lock.Unlock()
+func (manager *Manager) RegisterData(data []byte) error {
+	manager.lock.Lock()
+	defer manager.lock.Unlock()
 
 	mapper, err := Parse(data)
 	if err != nil {
@@ -46,12 +47,12 @@ func (m *Manager) RegisterData(data []byte) error {
 		return err
 	}
 
-	return m.formatMapper(mapper)
+	return manager.formatMapper(mapper)
 }
 
-func (m *Manager) RegisterFile(file string) error {
-	m.lock.Lock()
-	defer m.lock.Unlock()
+func (manager *Manager) RegisterFile(file string) error {
+	manager.lock.Lock()
+	defer manager.lock.Unlock()
 
 	mapper, err := ParseFile(file)
 	if err != nil {
@@ -59,45 +60,45 @@ func (m *Manager) RegisterFile(file string) error {
 		return err
 	}
 
-	return m.formatMapper(mapper)
+	return manager.formatMapper(mapper)
 }
 
-func (m *Manager) formatMapper(mapper *Mapper) error {
+func (manager *Manager) formatMapper(mapper *Mapper) error {
 	ret := mapper.Format()
 	for k, v := range ret {
-		if _, ok := m.sqlMap[k]; ok {
-			return errors.SQL_ID_DUPLICATES
+		if _, ok := manager.sqlMap[k]; ok {
+			return errors.SqlIdDuplicates
 		} else {
-			m.sqlMap[k] = v
+			manager.sqlMap[k] = v
 		}
 	}
 	return nil
 }
 
-func (m *Manager) FindSqlParser(sqlId string) (sqlparser.SqlParser, bool) {
-	m.lock.Lock()
-	defer m.lock.Unlock()
+func (manager *Manager) FindSqlParser(sqlId string) (sqlparser.SqlParser, bool) {
+	manager.lock.Lock()
+	defer manager.lock.Unlock()
 
-	v, ok := m.sqlMap[sqlId]
+	v, ok := manager.sqlMap[sqlId]
 	return v, ok
 }
 
-func (m *Manager) RegisterSql(sqlId string, sql string) error {
-	m.lock.Lock()
-	defer m.lock.Unlock()
+func (manager *Manager) RegisterSql(sqlId string, sql string) error {
+	manager.lock.Lock()
+	defer manager.lock.Unlock()
 
-	if _, ok := m.sqlMap[sqlId]; ok {
-		return errors.SQL_ID_DUPLICATES
+	if _, ok := manager.sqlMap[sqlId]; ok {
+		return errors.SqlIdDuplicates
 	} else {
 		dd := &parsing.DynamicData{OriginData: sql}
-		m.sqlMap[sqlId] = dd
+		manager.sqlMap[sqlId] = dd
 	}
 	return nil
 }
 
-func (m *Manager) UnregisterSql(sqlId string) {
-	m.lock.Lock()
-	defer m.lock.Unlock()
+func (manager *Manager) UnregisterSql(sqlId string) {
+	manager.lock.Lock()
+	defer manager.lock.Unlock()
 
-	delete(m.sqlMap, sqlId)
+	delete(manager.sqlMap, sqlId)
 }

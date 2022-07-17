@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, OpeningO
+ * Copyright (c) 2022, AcmeStack
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,10 @@
 package xml
 
 import (
-	"github.com/xfali/gobatis/logging"
-	"github.com/xfali/gobatis/parsing"
 	"strings"
+
+	"github.com/acmestack/gobatis/logging"
+	"github.com/acmestack/gobatis/parsing"
 )
 
 type Mapper struct {
@@ -34,48 +35,48 @@ type Mapper struct {
 	Delete []Delete `xml:"delete"`
 }
 
-func (m *Mapper) Format() map[string]*parsing.DynamicData {
+func (mapper *Mapper) Format() map[string]*parsing.DynamicData {
 	ret := map[string]*parsing.DynamicData{}
-	keyPre := strings.TrimSpace(m.Namespace)
+	keyPre := strings.TrimSpace(mapper.Namespace)
 	if keyPre != "" {
 		keyPre = keyPre + "."
 	}
-	for _, v := range m.Insert {
+	for _, v := range mapper.Insert {
 		key := keyPre + v.Id
 		if d, ok := ret[key]; ok {
 			logging.Warn("Insert Sql id is duplicates, id: %s, before: %s, after %s\n", v.Id, d, v.Data)
 		}
-		d, err := ParseDynamic(strings.TrimSpace(v.Data), m.Sql)
+		d, err := ParseDynamic(strings.TrimSpace(v.Data), mapper.Sql)
 		if err == nil {
 			ret[key] = d
 		}
 	}
-	for _, v := range m.Update {
+	for _, v := range mapper.Update {
 		key := keyPre + v.Id
 		if d, ok := ret[key]; ok {
 			logging.Warn("Update Sql id is duplicates, id: %s, before: %s, after %s\n", v.Id, d, v.Data)
 		}
-		d, err := ParseDynamic(strings.TrimSpace(v.Data), m.Sql)
+		d, err := ParseDynamic(strings.TrimSpace(v.Data), mapper.Sql)
 		if err == nil {
 			ret[key] = d
 		}
 	}
-	for _, v := range m.Select {
+	for _, v := range mapper.Select {
 		key := keyPre + v.Id
 		if d, ok := ret[key]; ok {
 			logging.Warn("Select Sql id is duplicates, id: %s, before: %s, after %s\n", v.Id, d, v.Data)
 		}
-		d, err := ParseDynamic(strings.TrimSpace(v.Data), m.Sql)
+		d, err := ParseDynamic(strings.TrimSpace(v.Data), mapper.Sql)
 		if err == nil {
 			ret[key] = d
 		}
 	}
-	for _, v := range m.Delete {
+	for _, v := range mapper.Delete {
 		key := keyPre + v.Id
 		if d, ok := ret[v.Id]; ok {
 			logging.Warn("Delete Sql id is duplicates, id: %s, before: %s, after %s\n", v.Id, d, v.Data)
 		}
-		d, err := ParseDynamic(strings.TrimSpace(v.Data), m.Sql)
+		d, err := ParseDynamic(strings.TrimSpace(v.Data), mapper.Sql)
 		if err == nil {
 			ret[key] = d
 		}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, OpeningO
+ * Copyright (c) 2022, AcmeStack
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@
 
 package common
 
-//参数
+// IterFunc 参数
 //  idx:迭代数
 //  bean:序列化后的值
 //返回值:
@@ -25,5 +25,5 @@ package common
 type IterFunc func(idx int64, bean interface{}) bool
 
 const (
-	FIELD_NAME = "xfield"
+	FieldName = "xfield"
 )

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, OpeningO
+ * Copyright (c) 2022, AcmeStack
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,11 @@
 package gobatis
 
 import (
-	"github.com/xfali/gobatis/datasource"
-	"github.com/xfali/gobatis/factory"
-	"github.com/xfali/gobatis/logging"
 	"time"
+
+	"github.com/acmestack/gobatis/datasource"
+	"github.com/acmestack/gobatis/factory"
+	"github.com/acmestack/gobatis/logging"
 )
 
 type FacOpt func(f *factory.DefaultFactory)
@@ -50,15 +51,15 @@ func CreateFactory(opts ...FacOpt) (factory.Factory, error) {
 	return f, nil
 }
 
-func SetMaxConn(v int) FacOpt {
+func SetMaxConn(maxConn int) FacOpt {
 	return func(f *factory.DefaultFactory) {
-		f.MaxConn = v
+		f.MaxConn = maxConn
 	}
 }
 
-func SetMaxIdleConn(v int) FacOpt {
+func SetMaxIdleConn(maxIdleConn int) FacOpt {
 	return func(f *factory.DefaultFactory) {
-		f.MaxIdleConn = v
+		f.MaxIdleConn = maxIdleConn
 	}
 }
 
@@ -68,16 +69,16 @@ func SetConnMaxLifetime(v time.Duration) FacOpt {
 	}
 }
 
-func SetLog(v logging.LogFunc) FacOpt {
+func SetLog(logFunc logging.LogFunc) FacOpt {
 	return func(f *factory.DefaultFactory) {
-		f.Log = v
+		f.Log = logFunc
 	}
 }
 
-func SetDataSource(v datasource.DataSource) FacOpt {
+func SetDataSource(ds datasource.DataSource) FacOpt {
 	return func(f *factory.DefaultFactory) {
 		f.WithLock(func(fac *factory.DefaultFactory) {
-			fac.DataSource = v
+			fac.DataSource = ds
 		})
 	}
 }

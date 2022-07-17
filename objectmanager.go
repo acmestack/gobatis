@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, OpeningO
+ * Copyright (c) 2022, AcmeStack
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,10 @@
 package gobatis
 
 import (
-	"github.com/xfali/gobatis/errors"
-	"github.com/xfali/gobatis/reflection"
 	"sync"
+
+	"github.com/acmestack/gobatis/errors"
+	"github.com/acmestack/gobatis/reflection"
 )
 
 type ModelName string
@@ -65,7 +66,7 @@ func ParseObject(bean interface{}) (reflection.Object, error) {
 	return obj, nil
 }
 
-// 注册struct模型，模型描述了column和field之间的关联关系；
+// RegisterModel 注册struct模型，模型描述了column和field之间的关联关系；
 // 目前已非必要条件
 func RegisterModel(model interface{}) error {
 	return RegisterModelWithName("", model)
@@ -74,7 +75,7 @@ func RegisterModel(model interface{}) error {
 func RegisterModelWithName(name string, model interface{}) error {
 	tableInfo, err := reflection.GetObjectInfo(model)
 	if err != nil {
-		return errors.PARSE_MODEL_TABLEINFO_FAILED
+		return errors.ParseModelTableinfoFailed
 	}
 
 	globalObjectCache.lock.Lock()

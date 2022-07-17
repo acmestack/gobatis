@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, OpeningO
+ * Copyright (c) 2022, AcmeStack
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,14 +19,15 @@ package factory
 
 import (
 	"database/sql"
-	"github.com/xfali/gobatis/datasource"
-	"github.com/xfali/gobatis/errors"
-	"github.com/xfali/gobatis/executor"
-	"github.com/xfali/gobatis/logging"
-	"github.com/xfali/gobatis/session"
-	"github.com/xfali/gobatis/transaction"
 	"sync"
 	"time"
+
+	"github.com/acmestack/gobatis/datasource"
+	"github.com/acmestack/gobatis/errors"
+	"github.com/acmestack/gobatis/executor"
+	"github.com/acmestack/gobatis/logging"
+	"github.com/acmestack/gobatis/session"
+	"github.com/acmestack/gobatis/transaction"
 )
 
 type DefaultFactory struct {
@@ -41,66 +42,66 @@ type DefaultFactory struct {
 	mutex sync.Mutex
 }
 
-func (f *DefaultFactory) Open(ds datasource.DataSource) error {
-	f.mutex.Lock()
-	defer f.mutex.Unlock()
+func (factory *DefaultFactory) Open(ds datasource.DataSource) error {
+	factory.mutex.Lock()
+	defer factory.mutex.Unlock()
 
-	if f.db != nil {
-		return errors.FACTORY_INITED
+	if factory.db != nil {
+		return errors.FactoryInited
 	}
 
 	if ds != nil {
-		f.DataSource = ds
+		factory.DataSource = ds
 	}
 
-	db, err := sql.Open(f.DataSource.DriverName(), f.DataSource.DriverInfo())
+	db, err := sql.Open(factory.DataSource.DriverName(), factory.DataSource.DriverInfo())
 	if err != nil {
 		return err
 	}
 
-	db.SetMaxOpenConns(f.MaxConn)
-	db.SetMaxIdleConns(f.MaxIdleConn)
-	db.SetConnMaxLifetime(f.ConnMaxLifetime)
+	db.SetMaxOpenConns(factory.MaxConn)
+	db.SetMaxIdleConns(factory.MaxIdleConn)
+	db.SetConnMaxLifetime(factory.ConnMaxLifetime)
 
-	f.db = db
+	factory.db = db
 	return nil
 }
 
-func (f *DefaultFactory) Close() error {
-	if f.db != nil {
-		return f.db.Close()
+func (factory *DefaultFactory) Close() error {
+	if factory.db != nil {
+		return factory.db.Close()
 	}
 	return nil
 }
 
-func (f *DefaultFactory) GetDataSource() datasource.DataSource {
-	return f.DataSource
+func (factory *DefaultFactory) GetDataSource() datasource.DataSource {
+	return factory.DataSource
 }
 
-func (f *DefaultFactory) CreateTransaction() transaction.Transaction {
-	return transaction.NewDefaultTransaction(f.DataSource, f.db)
+func (factory *DefaultFactory) CreateTransaction() transaction.Transaction {
+	return transaction.NewDefaultTransaction(factory.DataSource, factory.db)
 }
 
-func (f *DefaultFactory) CreateExecutor(transaction transaction.Transaction) executor.Executor {
+func (factory *DefaultFactory) CreateExecutor(transaction transaction.Transaction) executor.Executor {
 	return executor.NewSimpleExecutor(transaction)
 }
 
-func (f *DefaultFactory) CreateSession() session.SqlSession {
-	tx := f.CreateTransaction()
-	return session.NewDefaultSqlSession(f.Log, tx, f.CreateExecutor(tx), false)
+func (factory *DefaultFactory) CreateSession() session.SqlSession {
+	tx := factory.CreateTransaction()
+	return session.NewDefaultSqlSession(factory.Log, tx, factory.CreateExecutor(tx), false)
 }
 
-func (f *DefaultFactory) LogFunc() logging.LogFunc {
-	return f.Log
+func (factory *DefaultFactory) LogFunc() logging.LogFunc {
+	return factory.Log
 }
 
-func (f *DefaultFactory) WithLock(lockFunc func(fac *DefaultFactory)) {
-	f.mutex.Lock()
-	lockFunc(f)
-	f.mutex.Unlock()
+func (factory *DefaultFactory) WithLock(lockFunc func(fac *DefaultFactory)) {
+	factory.mutex.Lock()
+	lockFunc(factory)
+	factory.mutex.Unlock()
 }
 
 // Deprecated: Use Open instead
-func (f *DefaultFactory) InitDB() error {
-	return f.Open(f.DataSource)
+func (factory *DefaultFactory) InitDB() error {
+	return factory.Open(factory.DataSource)
 }

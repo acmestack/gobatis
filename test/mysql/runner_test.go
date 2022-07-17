@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, OpeningO
+ * Copyright (c) 2022, AcmeStack
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,11 +21,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/xfali/gobatis"
-	"github.com/xfali/gobatis/datasource"
-	"github.com/xfali/gobatis/factory"
 	"testing"
+
+	"github.com/acmestack/gobatis"
+	"github.com/acmestack/gobatis/datasource"
+	"github.com/acmestack/gobatis/factory"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type TestTable struct {
@@ -62,7 +63,7 @@ func initTest(t *testing.T) (err error) {
 		"PRIMARY KEY (`id`)" +
 		") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"
 
-	db, err := sql.Open("mysql", "test:test@tcp(localhost8:3306)/test?charset=utf8")
+	db, err := sql.Open("mysql", "test:test@tcp(localhost:3306)/test?charset=utf8")
 	if err != nil {
 		t.Fatal(err)
 	}

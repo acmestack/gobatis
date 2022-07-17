@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, OpeningO
+ * Copyright (c) 2022, AcmeStack
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,9 @@
 package gobatis
 
 import (
-	"github.com/xfali/gobatis/reflection"
 	"reflect"
+
+	"github.com/acmestack/gobatis/reflection"
 )
 
 func init() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, OpeningO
+ * Copyright (c) 2022, AcmeStack
  * All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,10 +19,11 @@ package executor
 
 import (
 	"context"
-	"github.com/xfali/gobatis/common"
-	"github.com/xfali/gobatis/errors"
-	"github.com/xfali/gobatis/reflection"
-	"github.com/xfali/gobatis/transaction"
+
+	"github.com/acmestack/gobatis/common"
+	"github.com/acmestack/gobatis/errors"
+	"github.com/acmestack/gobatis/reflection"
+	"github.com/acmestack/gobatis/transaction"
 )
 
 type SimpleExecutor struct {
@@ -50,12 +51,12 @@ func (exec *SimpleExecutor) Close(rollback bool) {
 
 func (exec *SimpleExecutor) Query(ctx context.Context, result reflection.Object, sql string, params ...interface{}) error {
 	if exec.closed {
-		return errors.EXECUTOR_QUERY_ERROR
+		return errors.ExecutorQueryError
 	}
 
 	conn := exec.transaction.GetConnection()
 	if conn == nil {
-		return errors.EXECUTOR_GET_CONNECTION_ERROR
+		return errors.ExecutorGetConnectionError
 	}
 
 	return conn.Query(ctx, result, sql, params...)
@@ -63,12 +64,12 @@ func (exec *SimpleExecutor) Query(ctx context.Context, result reflection.Object,
 
 func (exec *SimpleExecutor) Exec(ctx context.Context, sql string, params ...interface{}) (common.Result, error) {
 	if exec.closed {
-		return nil, errors.EXECUTOR_QUERY_ERROR
+		return nil, errors.ExecutorQueryError
 	}
 
 	conn := exec.transaction.GetConnection()
 	if conn == nil {
-		return nil, errors.EXECUTOR_GET_CONNECTION_ERROR
+		return nil, errors.ExecutorGetConnectionError
 	}
 
 	return conn.Exec(ctx, sql, params...)
@@ -76,7 +77,7 @@ func (exec *SimpleExecutor) Exec(ctx context.Context, sql string, params ...inte
 
 func (exec *SimpleExecutor) Begin() error {
 	if exec.closed {
-		return errors.EXECUTOR_BEGIN_ERROR
+		return errors.ExecutorBeginError
 	}
 
 	return exec.transaction.Begin()
@@ -84,7 +85,7 @@ func (exec *SimpleExecutor) Begin() error {
 
 func (exec *SimpleExecutor) Commit(require bool) error {
 	if exec.closed {
-		return errors.EXECUTOR_COMMIT_ERROR
+		return errors.ExecutorCommitError
 	}
 
 	if require {
