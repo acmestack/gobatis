@@ -24,7 +24,7 @@ import (
 	"github.com/acmestack/gobatis/reflection"
 )
 
-type ModelName string
+type TableName string
 
 type ObjectCache struct {
 	objCache map[string]reflection.Object

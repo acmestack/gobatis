@@ -460,10 +460,10 @@ func GetReflectMapInfo(rt reflect.Type, rv reflect.Value) (Object, error) {
 // a)、如果含有tag，则使用tag作为tablename；
 // b)、如果不含有tag，则使用fieldName作为tablename。
 //2、如果结构体中不含有gobatis.ModelName类型的字段，则使用结构体名称作为tablename
-//3、如果结构体中含有xfield的tag，则：
+//3、如果结构体中含有column的tag，则：
 // a）、如果tag为‘-’，则不进行columne与field的映射；
 // b）、如果tag不为‘-’使用tag name作为column名称与field映射。
-//4、如果结构体中不含有xfield的tag，则使用field name作为column名称与field映射
+//4、如果结构体中不含有column的tag，则使用field name作为column名称与field映射
 //5、如果字段的tag为‘-’，则不进行columne与field的映射；
 func GetStructInfo(bean interface{}) (*StructInfo, error) {
 	return GetReflectStructInfo(reflect.TypeOf(bean), reflect.ValueOf(bean))
@@ -515,7 +515,7 @@ func GetReflectStructInfo(rt reflect.Type, rv reflect.Value) (*StructInfo, error
 		}
 
 		fieldName := rtf.Name
-		tagName := rtf.Tag.Get(common.FieldName)
+		tagName := rtf.Tag.Get(common.ColumnName)
 		if tagName == "-" {
 			continue
 		} else if tagName != "" {

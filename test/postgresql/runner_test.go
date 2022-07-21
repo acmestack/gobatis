@@ -29,10 +29,10 @@ import (
 )
 
 type TestTable struct {
-	TestTable gobatis.ModelName "test_table"
-	Id        int64             `xfield:"id"`
-	Username  string            `xfield:"username"`
-	Password  string            `xfield:"password"`
+	TestTable gobatis.TableName "test_table"
+	Id        int64             `column:"id"`
+	Username  string            `column:"username"`
+	Password  string            `column:"password"`
 }
 
 func (t *TestTable) String() string {

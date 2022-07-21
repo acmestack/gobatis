@@ -77,18 +77,18 @@ if err != nil {
 
 ### 2、定义Model
 
-使用tag（"xfield"）定义struct，tag指定数据库表中的column name。
+使用tag（"column"）定义struct，tag指定数据库表中的column name。
 
 ```
 type TestTable struct {
     //指定table name
     TestTable gobatis.ModelName "test_table"
     //指定表字段id
-    Id        int64             `xfield:"id"`
+    Id        int64             `column:"id"`
     //指定表字段username
-    Username  string            `xfield:"username"`
+    Username  string            `column:"username"`
     //指定表字段password
-    Password  string            `xfield:"password"`
+    Password  string            `column:"password"`
 }
 ```
 

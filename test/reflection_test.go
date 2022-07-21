@@ -27,9 +27,9 @@ import (
 )
 
 type TestStruct1 struct {
-	TestTable gobatis.ModelName "test_table"
-	Username  string            `xfield:"username"`
-	Password  string            `xfield:"password"`
+	TestTable gobatis.TableName "test_table"
+	Username  string            `column:"username"`
+	Password  string            `column:"password"`
 }
 
 func TestReflection1(t *testing.T) {
@@ -39,8 +39,8 @@ func TestReflection1(t *testing.T) {
 }
 
 type TestStruct2 struct {
-	TestTable gobatis.ModelName
-	Username  string `xfield:"-"`
+	TestTable gobatis.TableName
+	Username  string `column:"-"`
 	Password  string `-`
 }
 
@@ -134,7 +134,7 @@ func TestReflectionParseMap(t *testing.T) {
 }
 
 type testParseStruct struct {
-	Name     gobatis.ModelName `parse_struct`
+	Name     gobatis.TableName `parse_struct`
 	Username string
 	Password string
 }

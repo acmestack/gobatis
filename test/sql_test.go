@@ -25,9 +25,9 @@ import (
 )
 
 type SqlTest struct {
-	Id       int64  `xfield:"id"`
-	Username string `xfield:"username"`
-	Password string `xfield:"password"`
+	Id       int64  `column:"id"`
+	Username string `column:"username"`
+	Password string `column:"password"`
 }
 
 var sessionMgr *gobatis.SessionManager
