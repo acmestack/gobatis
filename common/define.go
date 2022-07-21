@@ -25,5 +25,5 @@ package common
 type IterFunc func(idx int64, bean interface{}) bool
 
 const (
-	FieldName = "xfield"
+	ColumnName = "column"
 )

@@ -24,6 +24,6 @@ import (
 )
 
 func init() {
-	var typeModelName ModelName
+	var typeModelName TableName
 	reflection.SetModelNameType(reflect.TypeOf(typeModelName))
 }

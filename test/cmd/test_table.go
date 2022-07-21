@@ -23,11 +23,11 @@ import (
 )
 
 type TestTable struct {
-	//TableName gobatis.ModelName `test_table`
-	Id         int       `xfield:"id"`
-	Username   string    `xfield:"username"`
-	Password   string    `xfield:"password"`
-	Createtime time.Time `xfield:"createtime"`
+	//TableName gobatis.TableName `test_table`
+	Id         int       `column:"id"`
+	Username   string    `column:"username"`
+	Password   string    `column:"password"`
+	Createtime time.Time `column:"createtime"`
 }
 
 func (m *TestTable) Select(sess *gobatis.Session) ([]TestTable, error) {

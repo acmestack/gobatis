@@ -178,9 +178,9 @@ func TestSqlParserWithParamMap3(t *testing.T) {
 }
 
 type TestSqlParserStruct struct {
-	TestTable gobatis.ModelName "test_table"
-	Id        int               `xfield:"id"`
-	Name      string            `xfield:"name"`
+	TestTable gobatis.TableName "test_table"
+	Id        int               `column:"id"`
+	Name      string            `column:"name"`
 }
 
 func TestSqlParserWithParamMap4(t *testing.T) {
