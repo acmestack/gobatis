@@ -14,10 +14,38 @@ func TestUserMapperImpl_SelectList(t *testing.T) {
 	mgr := gobatis.NewSessionManager(connect())
 	userMapper := UserMapperImpl[TestTable]{mapper.BaseMapper[TestTable]{SessMgr: mgr}}
 	queryWrapper := &mapper.QueryWrapper[TestTable]{}
-	queryWrapper.Eq("username", "user1").Or().Eq("username", "user2").Select("username")
-	list, _ := userMapper.SelectList(queryWrapper)
+	queryWrapper.Eq("username", "user123").Select("username")
+	list, err := userMapper.SelectList(queryWrapper)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 	marshal, _ := json.Marshal(list)
 	fmt.Println(string(marshal))
+}
+
+func TestUserMapperImpl_SelectOne(t *testing.T) {
+	mgr := gobatis.NewSessionManager(connect())
+	userMapper := UserMapperImpl[TestTable]{mapper.BaseMapper[TestTable]{SessMgr: mgr}}
+	queryWrapper := &mapper.QueryWrapper[TestTable]{}
+	queryWrapper.Eq("username", "user1").Select("username", "password")
+	entity, err := userMapper.SelectOne(queryWrapper)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	marshal, _ := json.Marshal(entity)
+	fmt.Println(string(marshal))
+}
+
+func TestUserMapperImpl_SelectCount(t *testing.T) {
+	mgr := gobatis.NewSessionManager(connect())
+	userMapper := UserMapperImpl[TestTable]{mapper.BaseMapper[TestTable]{SessMgr: mgr}}
+	queryWrapper := &mapper.QueryWrapper[TestTable]{}
+	queryWrapper.Eq("username", "user123")
+	count, err := userMapper.SelectCount(queryWrapper)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	fmt.Println(count)
 }
 
 func connect() factory.Factory {

@@ -32,9 +32,9 @@ type Base[T any] interface {
 
 	SelectBatchIds(ids []any) []T
 
-	SelectOne(entity T) T
+	SelectOne(entity T) (T, error)
 
-	SelectCount(entity T) int64
+	SelectCount(entity T) (int64, error)
 
 	SelectList(queryWrapper QueryWrapper[T]) ([]T, error)
 }

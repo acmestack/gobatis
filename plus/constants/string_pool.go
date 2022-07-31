@@ -24,4 +24,5 @@ const (
 	SPACE           = " "
 	ASTERISK        = "*"
 	CONNECTION      = "-"
+	COUNT           = "count(*)"
 )

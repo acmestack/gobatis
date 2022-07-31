@@ -34,6 +34,8 @@ type BaseMapper[T any] struct {
 	ParamNameSeq int32
 }
 
+type BuildSqlFunc func(columns string, tableName string) string
+
 func (userMapper *BaseMapper[T]) Insert(entity T) int64 {
 	return 0
 }
@@ -57,21 +59,58 @@ func (userMapper *BaseMapper[T]) SelectBatchIds(ids []any) []T {
 	var arr []T
 	return arr
 }
-func (userMapper *BaseMapper[T]) SelectOne(entity T) T {
-	return *new(T)
+
+func (userMapper *BaseMapper[T]) SelectOne(queryWrapper *QueryWrapper[T]) (T, error) {
+	queryWrapper = userMapper.init(queryWrapper)
+
+	columns := userMapper.buildSelectColumns(queryWrapper)
+
+	sqlId, sql, paramMap := userMapper.buildSelectSql(queryWrapper, columns, buildSelectSqlFirstPart)
+
+	var entity T
+	err := gobatis.RegisterSql(sqlId, sql)
+	if err != nil {
+		return entity, err
+	}
+
+	sess := userMapper.SessMgr.NewSession()
+
+	err = sess.Select(sqlId).Param(paramMap).Result(&entity)
+	if err != nil {
+		return entity, err
+	}
+
+	// delete sqlId
+	gobatis.UnregisterSql(sqlId)
+	return entity, nil
 }
-func (userMapper *BaseMapper[T]) SelectCount(entity T) int64 {
-	return 0
+
+func (userMapper *BaseMapper[T]) SelectCount(queryWrapper *QueryWrapper[T]) (int64, error) {
+	queryWrapper = userMapper.init(queryWrapper)
+
+	sqlId, sql, paramMap := userMapper.buildSelectSql(queryWrapper, constants.COUNT, buildSelectSqlFirstPart)
+
+	err := gobatis.RegisterSql(sqlId, sql)
+	if err != nil {
+		return 0, err
+	}
+
+	sess := userMapper.SessMgr.NewSession()
+	var count int64
+	err = sess.Select(sqlId).Param(paramMap).Result(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (userMapper *BaseMapper[T]) SelectList(queryWrapper *QueryWrapper[T]) ([]T, error) {
-	if queryWrapper == nil {
-		queryWrapper = &QueryWrapper[T]{}
-	}
+	queryWrapper = userMapper.init(queryWrapper)
 
-	sqlCondition, paramMap := userMapper.buildCondition(queryWrapper)
+	columns := userMapper.buildSelectColumns(queryWrapper)
 
-	sqlId, sql := userMapper.buildSelectSql(queryWrapper, sqlCondition)
+	sqlId, sql, paramMap := userMapper.buildSelectSql(queryWrapper, columns, buildSelectSqlFirstPart)
 
 	err := gobatis.RegisterSql(sqlId, sql)
 	if err != nil {
@@ -88,6 +127,23 @@ func (userMapper *BaseMapper[T]) SelectList(queryWrapper *QueryWrapper[T]) ([]T,
 	// delete sqlId
 	gobatis.UnregisterSql(sqlId)
 	return arr, nil
+}
+
+func (userMapper *BaseMapper[T]) buildSelectColumns(queryWrapper *QueryWrapper[T]) string {
+	var columns string
+	if len(queryWrapper.Columns) > 0 {
+		columns = strings.Join(queryWrapper.Columns, ",")
+	} else {
+		columns = constants.ASTERISK
+	}
+	return columns
+}
+
+func (userMapper *BaseMapper[T]) init(queryWrapper *QueryWrapper[T]) *QueryWrapper[T] {
+	if queryWrapper == nil {
+		queryWrapper = &QueryWrapper[T]{}
+	}
+	return queryWrapper
 }
 
 func (userMapper *BaseMapper[T]) buildCondition(queryWrapper *QueryWrapper[T]) (string, map[string]any) {
@@ -107,21 +163,15 @@ func (userMapper *BaseMapper[T]) buildCondition(queryWrapper *QueryWrapper[T]) (
 	return build.String(), paramMap
 }
 
-func (userMapper *BaseMapper[T]) buildSelectSql(queryWrapper *QueryWrapper[T], sqlCondition string) (string, string) {
+func (userMapper *BaseMapper[T]) buildSelectSql(queryWrapper *QueryWrapper[T], columns string, buildSqlFunc BuildSqlFunc) (string, string, map[string]any) {
+
+	sqlCondition, paramMap := userMapper.buildCondition(queryWrapper)
 
 	tableName := userMapper.getTableName()
 
 	sqlId := buildSqlId(constants.SELECT)
 
-	var sqlFirstPart string
-	if len(queryWrapper.Columns) > 0 {
-		columns := strings.Join(queryWrapper.Columns, ",")
-		// For example: select username,password from table
-		sqlFirstPart = buildSelectSqlFirstPart(columns, tableName)
-	} else {
-		// For example: select * from table
-		sqlFirstPart = buildSelectSqlFirstPart(constants.ASTERISK, tableName)
-	}
+	sqlFirstPart := buildSqlFunc(columns, tableName)
 
 	var sql string
 	if len(queryWrapper.Expression) > 0 {
@@ -130,7 +180,7 @@ func (userMapper *BaseMapper[T]) buildSelectSql(queryWrapper *QueryWrapper[T], s
 		sql = sqlFirstPart
 	}
 
-	return sqlId, sql
+	return sqlId, sql, paramMap
 }
 
 func (userMapper *BaseMapper[T]) getTableName() string {
