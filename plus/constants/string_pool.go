@@ -25,4 +25,7 @@ const (
 	ASTERISK        = "*"
 	CONNECTION      = "-"
 	COUNT           = "count(*)"
+	LEFT_BRACKET    = "("
+	RIGHT_BRACKET   = ")"
+	COMMA           = ","
 )

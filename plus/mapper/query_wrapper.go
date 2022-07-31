@@ -26,7 +26,6 @@ type QueryWrapper[T any] struct {
 	Columns           []string
 	SqlBuild          *builder.SQLFragment
 	Expression        []any
-	ParamNameSeq      int
 	LastConditionType string
 }
 

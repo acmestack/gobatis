@@ -44,4 +44,5 @@ const (
 	DELETE    = "delete"
 	WHERE     = "where"
 	FROM      = "from"
+	ID        = "id"
 )
