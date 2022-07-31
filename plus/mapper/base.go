@@ -24,7 +24,7 @@ type Base[T any] interface {
 
 	UpdateById(entity T) int64
 
-	SelectById(id any) T
+	SelectById(id any) (T, error)
 
 	SelectBatchIds(queryWrapper *QueryWrapper[T]) ([]T, error)
 
