@@ -14,8 +14,7 @@ func TestUserMapperImpl_SelectList(t *testing.T) {
 	mgr := gobatis.NewSessionManager(connect())
 	userMapper := UserMapperImpl[TestTable]{mapper.BaseMapper[TestTable]{SessMgr: mgr}}
 	queryWrapper := &mapper.QueryWrapper[TestTable]{}
-	queryWrapper.Like("username", "user1")
-
+	queryWrapper.Eq("username", "user1").Or().Eq("username", "user2").Select("username")
 	list, _ := userMapper.SelectList(queryWrapper)
 	marshal, _ := json.Marshal(list)
 	fmt.Println(string(marshal))
@@ -36,7 +35,8 @@ func connect() factory.Factory {
 }
 
 type TestTable struct {
-	Id       int64  `column:"id"`
-	Username string `column:"username"`
-	Password string `column:"password"`
+	TableName gobatis.TableName `test_table`
+	Id        int64             `column:"id"`
+	Username  string            `column:"username"`
+	Password  string            `column:"password"`
 }

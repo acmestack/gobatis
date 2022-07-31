@@ -20,14 +20,11 @@ package mapper
 import (
 	"github.com/acmestack/gobatis/builder"
 	"github.com/acmestack/gobatis/plus/constants"
-	"reflect"
 )
 
 type QueryWrapper[T any] struct {
 	Columns           []string
-	Entity            *T
 	SqlBuild          *builder.SQLFragment
-	TableName         string
 	Expression        []any
 	ParamNameSeq      int
 	LastConditionType string
@@ -100,17 +97,8 @@ func (queryWrapper *QueryWrapper[T]) Or() Wrapper[T] {
 }
 
 func (queryWrapper *QueryWrapper[T]) Select(columns ...string) Wrapper[T] {
-	queryWrapper.SqlBuild.Select(columns...)
+	queryWrapper.Columns = append(queryWrapper.Columns, columns...)
 	return queryWrapper
-}
-
-func (queryWrapper *QueryWrapper[T]) init() {
-	if queryWrapper.Entity == nil {
-		queryWrapper.Entity = new(T)
-	}
-	if queryWrapper.TableName == "" {
-		queryWrapper.setTableName()
-	}
 }
 
 type ParamValue struct {
@@ -128,41 +116,4 @@ func (queryWrapper *QueryWrapper[T]) setCondition(column string, val any, condit
 	queryWrapper.Expression = append(queryWrapper.Expression, conditionType)
 
 	queryWrapper.Expression = append(queryWrapper.Expression, ParamValue{val})
-
-}
-
-func setField(entityValueRef reflect.Value, field reflect.StructField, val any) {
-	ft := field.Type
-	switch ft.Kind() {
-	case reflect.String:
-		entityValueRef.FieldByName(field.Name).SetString(val.(string))
-	case reflect.Int:
-		i := val.(int)
-		entityValueRef.FieldByName(field.Name).SetInt(int64(i))
-	}
-}
-
-func (queryWrapper *QueryWrapper[T]) setTableName() {
-	// todo The future is through annotations get the tableName
-	entityRef := reflect.TypeOf(queryWrapper.Entity).Elem()
-	tableName := entityRef.Field(0).Tag
-	queryWrapper.TableName = string(tableName)
-
-	queryWrapper.checkColumns()
-
-	queryWrapper.SqlBuild = builder.Select(queryWrapper.Columns...).From(string(tableName))
-}
-
-func (queryWrapper *QueryWrapper[T]) checkColumns() {
-	if len(queryWrapper.Columns) == 0 {
-		entityRef := reflect.TypeOf(queryWrapper.Entity).Elem()
-		numField := entityRef.NumField()
-		for i := 0; i < numField; i++ {
-			field := entityRef.Field(i)
-			filedName := field.Tag.Get("xfield")
-			if filedName != "" {
-				queryWrapper.Columns = append(queryWrapper.Columns, filedName)
-			}
-		}
-	}
 }

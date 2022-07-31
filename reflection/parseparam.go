@@ -115,7 +115,7 @@ func (parser *paramParser) parseOne(parentKey string, v interface{}) {
 					if !value.CanInterface() {
 						value = reflect.Indirect(value)
 					}
-					parser.ret[parentKey+key.String()] = value
+					parser.ret[parentKey+key.String()] = value.String()
 				}
 			}
 		}

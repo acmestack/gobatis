@@ -21,6 +21,7 @@ import (
 	"context"
 	"github.com/acmestack/gobatis"
 	constants "github.com/acmestack/gobatis/plus/constants"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -31,7 +32,6 @@ type BaseMapper[T any] struct {
 	Ctx          context.Context
 	Columns      []string
 	ParamNameSeq int32
-	ParamMap     map[string]any
 }
 
 func (userMapper *BaseMapper[T]) Insert(entity T) int64 {
@@ -67,37 +67,84 @@ func (userMapper *BaseMapper[T]) SelectCount(entity T) int64 {
 func (userMapper *BaseMapper[T]) SelectList(queryWrapper *QueryWrapper[T]) ([]T, error) {
 	if queryWrapper == nil {
 		queryWrapper = &QueryWrapper[T]{}
-		queryWrapper.init()
 	}
-	if userMapper.ParamMap == nil {
-		userMapper.ParamMap = map[string]any{}
+
+	sqlCondition, paramMap := userMapper.buildCondition(queryWrapper)
+
+	sqlId, sql := userMapper.buildSelectSql(queryWrapper, sqlCondition)
+
+	err := gobatis.RegisterSql(sqlId, sql)
+	if err != nil {
+		return nil, err
 	}
+
+	sess := userMapper.SessMgr.NewSession()
+	var arr []T
+	err = sess.Select(sqlId).Param(paramMap).Result(&arr)
+	if err != nil {
+		return nil, err
+	}
+
+	// delete sqlId
+	gobatis.UnregisterSql(sqlId)
+	return arr, nil
+}
+
+func (userMapper *BaseMapper[T]) buildCondition(queryWrapper *QueryWrapper[T]) (string, map[string]any) {
+	var paramMap = map[string]any{}
 	expression := queryWrapper.Expression
 	build := strings.Builder{}
 	for _, v := range expression {
 		if paramValue, ok := v.(ParamValue); ok {
 			queryWrapper.ParamNameSeq = queryWrapper.ParamNameSeq + 1
 			mapping := constants.MAPPING + strconv.Itoa(queryWrapper.ParamNameSeq)
-			userMapper.ParamMap[mapping] = paramValue.value
+			paramMap[mapping] = paramValue.value
 			build.WriteString(constants.HASH_LEFT_BRACE + mapping + constants.RIGHT_BRACE + constants.SPACE)
 		} else {
 			build.WriteString(v.(string) + constants.SPACE)
 		}
 	}
-	sqlCondition := build.String()
-	sqlId := constants.SELECT + constants.CONNECTION + strconv.Itoa(time.Now().Nanosecond())
-	sql := constants.SELECT + constants.SPACE + constants.ASTERISK + constants.SPACE + constants.FROM + constants.SPACE + "test_table" +
-		constants.SPACE + constants.WHERE + constants.SPACE + sqlCondition
-	err := gobatis.RegisterSql(sqlId, sql)
-	if err != nil {
-		return nil, err
+	return build.String(), paramMap
+}
+
+func (userMapper *BaseMapper[T]) buildSelectSql(queryWrapper *QueryWrapper[T], sqlCondition string) (string, string) {
+
+	tableName := userMapper.getTableName()
+
+	sqlId := buildSqlId(constants.SELECT)
+
+	var sqlFirstPart string
+	if len(queryWrapper.Columns) > 0 {
+		columns := strings.Join(queryWrapper.Columns, ",")
+		// For example: select username,password from table
+		sqlFirstPart = buildSelectSqlFirstPart(columns, tableName)
+	} else {
+		// For example: select * from table
+		sqlFirstPart = buildSelectSqlFirstPart(constants.ASTERISK, tableName)
 	}
-	sess := userMapper.SessMgr.NewSession()
-	var arr []T
-	err = sess.Select(sqlId).Param(userMapper.ParamMap).Result(&arr)
-	if err != nil {
-		return nil, err
+
+	var sql string
+	if len(queryWrapper.Expression) > 0 {
+		sql = sqlFirstPart + constants.SPACE + constants.WHERE + constants.SPACE + sqlCondition
+	} else {
+		sql = sqlFirstPart
 	}
-	gobatis.UnregisterSql(sqlId)
-	return arr, nil
+
+	return sqlId, sql
+}
+
+func (userMapper *BaseMapper[T]) getTableName() string {
+	entityRef := reflect.TypeOf(new(T)).Elem()
+	tableNameTag := entityRef.Field(0).Tag
+	tableName := string(tableNameTag)
+	return tableName
+}
+
+func buildSqlId(sqlType string) string {
+	sqlId := sqlType + constants.CONNECTION + strconv.Itoa(time.Now().Nanosecond())
+	return sqlId
+}
+
+func buildSelectSqlFirstPart(columns string, tableName string) string {
+	return constants.SELECT + constants.SPACE + columns + constants.SPACE + constants.FROM + constants.SPACE + tableName
 }
