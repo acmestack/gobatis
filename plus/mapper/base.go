@@ -18,23 +18,23 @@
 package mapper
 
 type Base[T any] interface {
-	Insert(entity T) int64
+	Save(entity T) int64
 
-	InsertBatch(entities ...T) (int64, int64)
-
-	DeleteById(id any) int64
-
-	DeleteBatchIds(ids []any) int64
+	SaveBatch(entities ...T) (int64, int64)
 
 	UpdateById(entity T) int64
 
 	SelectById(id any) T
 
-	SelectBatchIds(ids []any) []T
+	SelectBatchIds(queryWrapper *QueryWrapper[T]) ([]T, error)
 
-	SelectOne(entity T) (T, error)
+	SelectOne(queryWrapper *QueryWrapper[T]) (T, error)
 
-	SelectCount(entity T) (int64, error)
+	SelectCount(queryWrapper *QueryWrapper[T]) (int64, error)
 
-	SelectList(queryWrapper QueryWrapper[T]) ([]T, error)
+	SelectList(queryWrapper *QueryWrapper[T]) ([]T, error)
+
+	DeleteById(id any) int64
+
+	DeleteBatchIds(ids []any) int64
 }

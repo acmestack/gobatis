@@ -36,11 +36,11 @@ type BaseMapper[T any] struct {
 
 type BuildSqlFunc func(columns string, tableName string) string
 
-func (userMapper *BaseMapper[T]) Insert(entity T) int64 {
+func (userMapper *BaseMapper[T]) Save(entity T) int64 {
 	return 0
 }
 
-func (userMapper *BaseMapper[T]) InsertBatch(entities ...T) (int64, int64) {
+func (userMapper *BaseMapper[T]) SaveBatch(entities ...T) (int64, int64) {
 	return 0, 0
 }
 func (userMapper *BaseMapper[T]) DeleteById(id any) int64 {
@@ -55,9 +55,16 @@ func (userMapper *BaseMapper[T]) UpdateById(entity T) int64 {
 func (userMapper *BaseMapper[T]) SelectById(id any) T {
 	return *new(T)
 }
-func (userMapper *BaseMapper[T]) SelectBatchIds(ids []any) []T {
+func (userMapper *BaseMapper[T]) SelectBatchIds(queryWrapper *QueryWrapper[T]) ([]T, error) {
+
+	queryWrapper = userMapper.init(queryWrapper)
+
+	//columns := userMapper.buildSelectColumns(queryWrapper)
+
+	//sqlId, sql, paramMap := userMapper.buildSelectSql(queryWrapper, columns, buildSelectSqlFirstPart)
+	//
 	var arr []T
-	return arr
+	return arr, nil
 }
 
 func (userMapper *BaseMapper[T]) SelectOne(queryWrapper *QueryWrapper[T]) (T, error) {

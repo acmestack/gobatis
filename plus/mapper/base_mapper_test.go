@@ -1,4 +1,4 @@
-package impl
+package mapper
 
 import (
 	"encoding/json"
@@ -6,14 +6,14 @@ import (
 	"github.com/acmestack/gobatis"
 	"github.com/acmestack/gobatis/datasource"
 	"github.com/acmestack/gobatis/factory"
-	"github.com/acmestack/gobatis/plus/mapper"
+	_ "github.com/go-sql-driver/mysql"
 	"testing"
 )
 
 func TestUserMapperImpl_SelectList(t *testing.T) {
 	mgr := gobatis.NewSessionManager(connect())
-	userMapper := UserMapperImpl[TestTable]{mapper.BaseMapper[TestTable]{SessMgr: mgr}}
-	queryWrapper := &mapper.QueryWrapper[TestTable]{}
+	userMapper := BaseMapper[TestTable]{SessMgr: mgr}
+	queryWrapper := &QueryWrapper[TestTable]{}
 	queryWrapper.Eq("username", "user123").Select("username")
 	list, err := userMapper.SelectList(queryWrapper)
 	if err != nil {
@@ -25,8 +25,8 @@ func TestUserMapperImpl_SelectList(t *testing.T) {
 
 func TestUserMapperImpl_SelectOne(t *testing.T) {
 	mgr := gobatis.NewSessionManager(connect())
-	userMapper := UserMapperImpl[TestTable]{mapper.BaseMapper[TestTable]{SessMgr: mgr}}
-	queryWrapper := &mapper.QueryWrapper[TestTable]{}
+	userMapper := BaseMapper[TestTable]{SessMgr: mgr}
+	queryWrapper := &QueryWrapper[TestTable]{}
 	queryWrapper.Eq("username", "user1").Select("username", "password")
 	entity, err := userMapper.SelectOne(queryWrapper)
 	if err != nil {
@@ -38,8 +38,8 @@ func TestUserMapperImpl_SelectOne(t *testing.T) {
 
 func TestUserMapperImpl_SelectCount(t *testing.T) {
 	mgr := gobatis.NewSessionManager(connect())
-	userMapper := UserMapperImpl[TestTable]{mapper.BaseMapper[TestTable]{SessMgr: mgr}}
-	queryWrapper := &mapper.QueryWrapper[TestTable]{}
+	userMapper := BaseMapper[TestTable]{SessMgr: mgr}
+	queryWrapper := &QueryWrapper[TestTable]{}
 	queryWrapper.Eq("username", "user123")
 	count, err := userMapper.SelectCount(queryWrapper)
 	if err != nil {
