@@ -47,7 +47,7 @@ func (factory *DefaultFactory) Open(ds datasource.DataSource) error {
 	defer factory.mutex.Unlock()
 
 	if factory.db != nil {
-		return errors.FactoryInited
+		return errors.FactoryInitialized
 	}
 
 	if ds != nil {
