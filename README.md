@@ -82,7 +82,7 @@ if err != nil {
 ```
 type TestTable struct {
     //指定table name
-    TestTable gobatis.ModelName "test_table"
+    TestTable gobatis.TableName "test_table"
     //指定表字段id
     Id        int64             `column:"id"`
     //指定表字段username

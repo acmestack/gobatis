@@ -71,5 +71,5 @@ func gobatisError(code, message string) errCode {
 }
 
 func (e errCode) Error() string {
-	return fmt.Sprintf("%s: %s", e.code, e.message)
+	return fmt.Sprintf("%s - %s", e.code, e.message)
 }
