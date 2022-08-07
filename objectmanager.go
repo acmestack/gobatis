@@ -75,7 +75,7 @@ func RegisterModel(model interface{}) error {
 func RegisterModelWithName(name string, model interface{}) error {
 	tableInfo, err := reflection.GetObjectInfo(model)
 	if err != nil {
-		return errors.ParseModelTableinfoFailed
+		return errors.ParseModelTableInfoFailed
 	}
 
 	globalObjectCache.lock.Lock()

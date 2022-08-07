@@ -440,13 +440,13 @@ func GetReflectMapInfo(rt reflect.Type, rv reflect.Value) (Object, error) {
 	}
 
 	if rt.Key().Kind() != reflect.String {
-		return nil, errors.GetObjectinfoFailed
+		return nil, errors.GetObjectInfoFailed
 	}
 
 	//TODO: 目前仅支持map[string]interface{}，需增加其他类型支持
 	if rt.Elem().Kind() != reflect.Interface {
 		logging.Warn("Map type support map[string]interface{} only, but get map[%v]%v \n", rt.Key(), rt.Elem())
-		return nil, errors.GetObjectinfoFailed
+		return nil, errors.GetObjectInfoFailed
 	}
 
 	ret := MapInfo{ElemType: rt.Elem(), ClassName: GetTypeClassName(rt)}
