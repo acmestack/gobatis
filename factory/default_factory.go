@@ -19,6 +19,8 @@ package factory
 
 import (
 	"database/sql"
+	"github.com/acmestack/gobatis/extension"
+	"github.com/xfali/aop"
 	"sync"
 	"time"
 
@@ -30,6 +32,14 @@ import (
 	"github.com/acmestack/gobatis/transaction"
 )
 
+type Advisor struct {
+	// PointCut for extension
+	PointCut aop.PointCut
+
+	// Implementation of extension points
+	Advice aop.Advice
+}
+
 type DefaultFactory struct {
 	MaxConn         int
 	MaxIdleConn     int
@@ -37,6 +47,8 @@ type DefaultFactory struct {
 	Log             logging.LogFunc
 
 	DataSource datasource.DataSource
+
+	Extensions []Advisor
 
 	db    *sql.DB
 	mutex sync.Mutex
@@ -83,6 +95,13 @@ func (factory *DefaultFactory) CreateTransaction() transaction.Transaction {
 }
 
 func (factory *DefaultFactory) CreateExecutor(transaction transaction.Transaction) executor.Executor {
+	if factory.Extensions != nil {
+		executorEx := extension.NewExecutorExtension(executor.NewSimpleExecutor(transaction))
+		for _, ex := range factory.Extensions {
+			executorEx.Extend(ex.PointCut, ex.Advice)
+		}
+		return executorEx
+	}
 	return executor.NewSimpleExecutor(transaction)
 }
 

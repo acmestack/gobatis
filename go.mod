@@ -1,6 +1,6 @@
 module github.com/acmestack/gobatis
 
-go 1.18
+go 1.14
 
 require (
 	github.com/Masterminds/sprig/v3 v3.2.2
@@ -20,5 +20,6 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
+	github.com/xfali/aop v0.0.0-20220808144352-257bcdfe05eb // indirect
 	golang.org/x/crypto v0.0.0-20200414173820-0848c9571904 // indirect
 )

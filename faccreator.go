@@ -82,3 +82,9 @@ func SetDataSource(ds datasource.DataSource) FacOpt {
 		})
 	}
 }
+
+func AddExtensions(advisors ...factory.Advisor) FacOpt {
+	return func(f *factory.DefaultFactory) {
+		f.Extensions = advisors
+	}
+}
